@@ -1,0 +1,14 @@
+{
+  "name": "SYSCEDC – Sistema de Laudos",
+  "short_name": "SYSCEDC",
+  "description": "Sistema de Informação do Centro Especializado de Diagnóstico do Câncer",
+  "start_url": "./syscedc_laudos_v0_3_9_12_corrigido.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "orientation": "landscape",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
