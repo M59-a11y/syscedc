@@ -267,7 +267,9 @@ function exportarSYSCEDC(){
   }, 600);
 }
 
+var _nomeExtraido = "";
 async function carregarPDF(e){
+  _nomeExtraido = "";
   const file = e.target.files[0];
   if(!file) return;
 
@@ -292,12 +294,27 @@ async function carregarPDF(e){
       const tc = await page.getTextContent();
 
       // Ordenar itens por posição Y decrescente (topo da página primeiro)
-      // Isso garante que Nome: venha antes de Nome Social: no texto final
       const itensSorted = tc.items.slice().sort(function(a,b){
         const ya = a.transform ? a.transform[5] : 0;
         const yb = b.transform ? b.transform[5] : 0;
         return yb - ya;
       });
+
+      // Extrair nome diretamente dos itens: pegar o item logo após "Nome:"
+      // ignorando "Nome Social:", "Nome da Mãe:", "Nome do Pai:", "Nome do Logradouro:"
+      if(!_nomeExtraido){
+        for(let ii=0; ii<itensSorted.length-1; ii++){
+          const s = (itensSorted[ii].str||"").trim();
+          if(/^Nomes*:$/i.test(s)){
+            const proximo = (itensSorted[ii+1].str||"").trim();
+            if(proximo && proximo.length > 3 && !/^(Social|das|dos)/i.test(proximo)){
+              _nomeExtraido = proximo;
+              break;
+            }
+          }
+        }
+      }
+
       let textoPagina = itensSorted.map(function(i){ return i.str||""; }).join(" ");
       textoPagina = normalizarTexto(textoPagina);
 
@@ -588,8 +605,12 @@ function extrairDados(texto){
   var partes = texto.split("Nome Social");
   var textoLimpo = partes.length > 1 ? partes[0] + partes.slice(1).join(" ").replace(/^[^N]*/, "") : texto;
   if(!textoLimpo || textoLimpo.trim().length < 30) textoLimpo = texto;
+  // Usar nome extraído diretamente dos itens PDF se disponível (mais confiável que regex)
+  var nomeDefinitivo = (_nomeExtraido && _nomeExtraido.length > 3)
+    ? acentuarNome(_nomeExtraido)
+    : acentuarNome(extrairNomePaciente(textoLimpo));
   return {
-    nome:       acentuarNome(extrairNomePaciente(textoLimpo)),
+    nome:       nomeDefinitivo,
     nascimento: extrairNascimento(textoLimpo),
     mae:        acentuarNome(extrairNomeMae(textoLimpo)),
     sus:        extrairSUS(textoLimpo),
