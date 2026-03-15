@@ -437,7 +437,7 @@ function extrairNomePaciente(texto){
   }
 
   // Fallback CADSUS WEB: Nome antes de "Nome da Mae" ou "Nome do Pai"
-  const mCadsus = textoLimpo.match(/\bNome\s*:\s*([A-Z\xC0-\xFF](?:[A-Z\xC0-\xFFa-z]+\s+){1,6}[A-Z\xC0-\xFFa-z]+)\s+(?=Nome\s+(?:da|do|Social)|CNS|CPF|Data\s+de\s+Nasc)/i);
+  const mCadsus = texto.match(/\bNome\s*:\s*([A-Z\xC0-\xFF](?:[A-Z\xC0-\xFFa-z]+\s+){1,6}[A-Z\xC0-\xFFa-z]+)\s+(?=Nome\s+(?:da|do|Social)|CNS|CPF|Data\s+de\s+Nasc)/i);
   if(mCadsus){ const n = mCadsus[1].trim(); if(n && n.split(" ").length >= 2) return n; }
   return nome;
 }
