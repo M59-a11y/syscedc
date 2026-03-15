@@ -602,8 +602,7 @@ function formatarTelefone(digitos){
 function extrairDados(texto){
   // Remover "Nome Social: ..." do texto antes de qualquer extração
   // para não confundir com o nome do paciente
-  const textoLimpo = texto.replace(/Nome\s+Social\s*:?[^
-]*/gi, "");
+  const textoLimpo = (function(t){ var idx=t.search(/Nome\s+Social/i); if(idx===-1) return t; var fim=t.indexOf("Nome",idx+10); return fim===-1 ? t.substring(0,idx) : t.substring(0,idx)+t.substring(fim); })(texto);
   return {
     nome:       acentuarNome(extrairNomePaciente(textoLimpo)),
     nascimento: extrairNascimento(textoLimpo),
