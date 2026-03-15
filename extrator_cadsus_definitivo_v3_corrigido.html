@@ -291,8 +291,14 @@ async function carregarPDF(e){
       const page = await pdf.getPage(p);
       const tc = await page.getTextContent();
 
-      // Extrair com posição (x,y) para reconstruir melhor
-      let textoPagina = tc.items.map(i => i.str).join(" ");
+      // Ordenar itens por posição Y decrescente (topo da página primeiro)
+      // Isso garante que Nome: venha antes de Nome Social: no texto final
+      const itensSorted = tc.items.slice().sort(function(a,b){
+        const ya = a.transform ? a.transform[5] : 0;
+        const yb = b.transform ? b.transform[5] : 0;
+        return yb - ya;
+      });
+      let textoPagina = itensSorted.map(function(i){ return i.str||""; }).join(" ");
       textoPagina = normalizarTexto(textoPagina);
 
       if(textoPagina.replace(/\s/g, "").length < 30){
