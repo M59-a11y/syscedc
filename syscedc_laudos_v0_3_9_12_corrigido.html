@@ -1911,7 +1911,7 @@ function snippetExpandir(textarea){
   var lista=snippetCarregar();
   var snip=lista.find(function(s){return s.atalho===atalho;});
   if(!snip) return false;
-  var texto=snip.texto.toUpperCase();
+  var texto=snip.texto;
   var novoVal=val.substring(0,inicio)+texto+val.substring(pos);
   textarea.value=novoVal;
   // posicionar cursor no primeiro __ (marcador de posição)
