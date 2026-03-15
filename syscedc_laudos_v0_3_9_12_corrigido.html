@@ -478,14 +478,9 @@ if('serviceWorker' in navigator){
   <div class="card">
     <div class="ch ch-purple">✍️ Assinatura do Patologista</div>
     <div class="cb">
-      <div id="pat-cards-lista" style="margin-bottom:12px;"></div>
-      <div id="pat-ativo-wrap" style="display:none;padding:8px 12px;background:#f0fff4;border:1.5px solid #27ae60;border-radius:6px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:.8rem;color:#27ae60;font-weight:700;">✔ PATOLOGISTA ATIVO:</span>
-        <span id="pat-ativo-nome" style="font-size:.85rem;font-weight:700;color:#1a5276;"></span>
-        <img id="pat-ativo-assin" src="" alt="" style="max-height:36px;margin-left:auto;border:1px solid #ddd;border-radius:4px;padding:2px;">
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
-        <button class="btn btn-blue btn-sm" id="btn-assin-avulso">📎 Carregar PNG avulso</button>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-blue btn-sm" id="btn-assin-avulso">📎 Carregar PNG</button>
+        <span id="assin-nome-arq" style="font-size:.82rem;color:#666;">Nenhuma imagem carregada</span>
         <button class="btn btn-sm" style="background:#e74c3c;color:#fff;display:none;" id="btn-rem-assin">✖ Remover</button>
       </div>
       <input type="file" id="inp-assin" accept="image/png" style="display:none;">
@@ -1059,55 +1054,6 @@ function _salvarTipoMat(val){
 
 // ===== PATOLOGISTAS =====
 
-function _atualizarVisualPat(){
-  var wrap = document.getElementById('pat-ativo-wrap');
-  var nomeEl = document.getElementById('pat-ativo-nome');
-  var assinEl = document.getElementById('pat-ativo-assin');
-  if(_patSelecionado){
-    var pat = PATOLOGISTAS.find(function(p){return p.id===_patSelecionado;});
-    if(pat){
-      if(wrap) { wrap.style.display='flex'; }
-      if(nomeEl) nomeEl.textContent = pat.nome + ' · ' + pat.crm;
-      if(assinEl && pat.assinSrc){ assinEl.src=pat.assinSrc; assinEl.style.display=''; }
-    }
-  } else {
-    if(wrap) wrap.style.display='none';
-    if(assinEl) assinEl.src='';
-  }
-  // Atualizar cards
-  document.querySelectorAll('.pat-card').forEach(function(c){
-    c.classList.toggle('sel', c.getAttribute('data-id')===_patSelecionado);
-  });
-}
-
-function selecionarPatologista(id){
-  var pat = PATOLOGISTAS.find(function(p){return p.id===id;});
-  if(!pat) return;
-  _patSelecionado = id;
-  _assinaturaDataURL = pat.assinSrc || '';
-  _ls.set('cedc_pat', id);
-  _ls.remove('cedc_assin');
-  _atualizarVisualPat();
-}
-
-function renderPatologistas(){
-  var lista = document.getElementById('pat-cards-lista');
-  if(!lista) return;
-  lista.innerHTML = '';
-  PATOLOGISTAS.forEach(function(pat){
-    var div = document.createElement('div');
-    div.className = 'pat-card' + (_patSelecionado===pat.id ? ' sel' : '');
-    div.setAttribute('data-id', pat.id);
-    div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 14px;border:2px solid #ddd;border-radius:8px;cursor:pointer;margin-bottom:6px;background:#fafafa;transition:all .2s;';
-    div.innerHTML = '<img src="'+pat.assinSrc+'" alt="" style="height:28px;width:70px;object-fit:contain;">'
-      + '<div><div style="font-size:.82rem;font-weight:700;color:#333;">'+pat.nome+'</div>'
-      + '<div style="font-size:.72rem;color:#888;">'+pat.crm+'</div></div>';
-    div.addEventListener('click', function(){ selecionarPatologista(pat.id); });
-    lista.appendChild(div);
-  });
-  _atualizarVisualPat();
-}
-
 
 // ===== ASSINATURA AVULSA =====
 function carregarAssinaturaAvulsa(inp){
@@ -1614,9 +1560,8 @@ function limparSilencioso(){
   _materiais=[];renderMateriais();
   _manualLaudos=[]; _manualIdx=-1;
   // Preserva patologista e assinatura para o próximo laudo
-  // Restaurar visual do patologista ativo
-  _atualizarVisualPat();
-  if(_assinaturaDataURL && !_patSelecionado){
+  // Restaurar preview visual da assinatura
+  if(_assinaturaDataURL){
     document.getElementById('assin-preview-img').src=_assinaturaDataURL;
     document.getElementById('assin-preview-wrap').style.display='block';
     document.getElementById('btn-rem-assin').style.display='inline-flex';
@@ -1688,17 +1633,23 @@ mudarTipo('anatomo');
 document.getElementById('numAno').value=String(new Date().getFullYear());
 renderMateriais();
 
-// Restaurar patologista salvo
+// Restaurar assinatura salva — mostrar visualmente ao abrir
 (function(){
-  var savedPat = _ls.get('cedc_pat');
+  var savedPat=_ls.get('cedc_pat');
+  var savedAssin=_ls.get('cedc_assin');
   if(savedPat){
-    var pat = PATOLOGISTAS.find(function(p){return p.id===savedPat;});
-    if(pat){ _patSelecionado=savedPat; _assinaturaDataURL=pat.assinSrc||''; }
-  } else {
-    var savedAssin = _ls.get('cedc_assin');
-    if(savedAssin){ _assinaturaDataURL=savedAssin; }
+    var pat=PATOLOGISTAS.find(function(p){return p.id===savedPat;});
+    if(pat){_patSelecionado=savedPat;_assinaturaDataURL=pat.assinSrc||'';}
+  } else if(savedAssin){
+    _assinaturaDataURL=savedAssin;
   }
-  renderPatologistas();
+  if(_assinaturaDataURL){
+    document.getElementById('assin-preview-img').src=_assinaturaDataURL;
+    document.getElementById('assin-preview-wrap').style.display='block';
+    document.getElementById('btn-rem-assin').style.display='inline-flex';
+    var pat2=_patSelecionado?PATOLOGISTAS.find(function(p){return p.id===_patSelecionado;}):null;
+    document.getElementById('assin-nome-arq').textContent=pat2?(pat2.nome+' · '+pat2.crm):'Assinatura carregada';
+  }
 })();
 
 // Verificar se há dados do CADSUS aguardando
