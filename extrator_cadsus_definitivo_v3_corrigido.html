@@ -292,7 +292,28 @@ async function carregarPDF(e){
       const tc = await page.getTextContent();
 
       // Extrair com posição (x,y) para reconstruir melhor
-      let textoPagina = tc.items.map(i => i.str).join(" ");
+      // Juntar itens na mesma linha sem espaço, linhas diferentes com espaço
+      let textoPagina = "";
+      let lastY = null;
+      for(const item of tc.items){
+        if(!item.str) continue;
+        if(lastY === null){
+          textoPagina += item.str;
+        } else {
+          const diffY = Math.abs((item.transform ? item.transform[5] : 0) - lastY);
+          // mesmo bloco (diff pequeno) — juntar sem espaço extra se o item anterior não termina com espaço
+          if(diffY < 2){
+            if(textoPagina.length && !textoPagina.endsWith(" ") && !item.str.startsWith(" ")){
+              textoPagina += item.str;
+            } else {
+              textoPagina += item.str;
+            }
+          } else {
+            textoPagina += " " + item.str;
+          }
+        }
+        lastY = item.transform ? item.transform[5] : lastY;
+      }
       textoPagina = normalizarTexto(textoPagina);
 
       if(textoPagina.replace(/\s/g, "").length < 30){
@@ -423,7 +444,14 @@ function extrairNomePaciente(texto){
   nome = somenteNome(nome);
   if(nome && nome.split(" ").filter(Boolean).length >= 2) return nome;
 
-  // 2) Regex direto: "Nome: NOME COMPLETO" antes de linha Nova ou campo
+  // 2) Padrão CADSUS WEB: "Nome: NOME COMPLETO CNS:..." — nome antes do CNS na mesma linha
+  const m2 = texto.match(/\bNome\s*:\s*([A-ZÀÁÂÃÄÅÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝŸ][A-ZÀ-ÿ\s]{3,}?)\s*(?=CNS\s*:|CPF\s*:|Data\s*:|Nome\s+Social|Nome\s+da|Nome\s+do|Nascimento|Sexo|Ra[cç]a)/i);
+  if(m2){
+    const n = somenteNome(m2[1]);
+    if(n && n.split(" ").filter(Boolean).length >= 2) return n;
+  }
+
+  // 3) Regex direto: "Nome: NOME COMPLETO" antes de campo conhecido
   const m = texto.match(/\bNome\s*:\s*([A-ZÀÁÂÃÄÅÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝŸ][A-ZÀ-ÿa-z\s]{3,}?)(?=\s+(?:Nome\s+Social|CNS|CPF|Nascimento|Sexo|Ra[cç]a|Naturaliz|Nome\s+da\s+M[aã]e|Nome\s+do\s+Pai))/i);
   if(m){
     const n = somenteNome(m[1]);
@@ -572,13 +600,17 @@ function formatarTelefone(digitos){
 // EXTRAÇÃO GERAL
 // ─────────────────────────────────────────────
 function extrairDados(texto){
+  // Remover "Nome Social: ..." do texto antes de qualquer extração
+  // para não confundir com o nome do paciente
+  const textoLimpo = texto.replace(/Nome\s+Social\s*:?[^
+]*/gi, "");
   return {
-    nome:       acentuarNome(extrairNomePaciente(texto)),
-    nascimento: extrairNascimento(texto),
-    mae:        acentuarNome(extrairNomeMae(texto)),
-    sus:        extrairSUS(texto),
-    cpf:        extrairCPF(texto),
-    telefone:   extrairTelefone(texto)
+    nome:       acentuarNome(extrairNomePaciente(textoLimpo)),
+    nascimento: extrairNascimento(textoLimpo),
+    mae:        acentuarNome(extrairNomeMae(textoLimpo)),
+    sus:        extrairSUS(textoLimpo),
+    cpf:        extrairCPF(textoLimpo),
+    telefone:   extrairTelefone(textoLimpo)
   };
 }
 
