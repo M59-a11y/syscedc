@@ -1914,13 +1914,12 @@ function snippetExpandir(textarea){
   var texto=snip.texto;
   var novoVal=val.substring(0,inicio)+texto+val.substring(pos);
   textarea.value=novoVal;
-  // posicionar cursor no primeiro __ (marcador de posição)
+  // posicionar cursor no primeiro __ ou no final do texto expandido
   var posCursor=novoVal.indexOf('__',inicio);
-  if(posCursor!==-1){
-    textarea.setSelectionRange(posCursor,posCursor+2);
-  } else {
-    textarea.setSelectionRange(inicio+texto.length,inicio+texto.length);
-  }
+  var posF=posCursor!==-1?posCursor:(inicio+texto.length);
+  var posF2=posCursor!==-1?posCursor+2:(inicio+texto.length);
+  textarea.focus();
+  setTimeout(function(){ textarea.setSelectionRange(posF,posF2); },0);
   autoBackup();
   return true;
 }
