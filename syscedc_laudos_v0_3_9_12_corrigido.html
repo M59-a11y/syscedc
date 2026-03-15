@@ -2350,4 +2350,18 @@ document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('cad-inp-medico').addEventListener('keydown', function(e){if(e.key==='Enter')cadAdicionar('medicos');});
   // Navegação importação (botões usam onclick inline para evitar disparo duplicado)
   // Input importar json
-  document.getElementBy
+  document.getElementById('inp-importar-json').addEventListener('change', function(){_processarBackup(this.files[0]);this.value='';});
+  document.getElementById('inp-cadsus').addEventListener('change', function(){_processarCadsus(this.files[0]);this.value='';});
+  var inpData=document.getElementById('dataEntrada');
+  if(inpData) inpData.addEventListener('keydown', function(e){
+    if(e.key==='Tab' && !e.shiftKey){
+      e.preventDefault();
+      _focarCampoMaterial();
+    }
+  });
+  var inpAno=document.getElementById('numAno');
+  if(inpAno) inpAno.addEventListener('input', function(){ _atualizarNavImportacao(); _atualizarRotulosConteudo(); });
+});
+</script>
+</body>
+</html>
