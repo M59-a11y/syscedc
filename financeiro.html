@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão Laboratorial — CEDC</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0d0f1a;
+  --surface:  #13162a;
+  --card:     #181c30;
+  --border:   rgba(255,255,255,.07);
+  --gold:     #c9a96e;
+  --gold2:    #e8c98a;
+  --anatomo:  #4ade80;
+  --cito:     #60a5fa;
+  --histo:    #c084fc;
+  --paaf:     #fb923c;
+  --text:     #e2e8f0;
+  --muted:    #64748b;
+  --danger:   #ef4444;
+  --fixed:    #f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* fundo animado */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(201,169,110,.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,165,250,.04) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+.wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:32px 24px;}
+
+/* HEADER */
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:36px;gap:16px;flex-wrap:wrap;}
+.header-left h1{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:var(--gold);letter-spacing:.5px;}
+.header-left p{font-size:.82rem;color:var(--muted);margin-top:3px;letter-spacing:.5px;}
+.mes-nav{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;}
+.mes-nav button{background:none;border:none;color:var(--gold);cursor:pointer;font-size:1.2rem;padding:2px 6px;border-radius:4px;transition:background .15s;}
+.mes-nav button:hover{background:rgba(201,169,110,.15);}
+.mes-label{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--text);min-width:160px;text-align:center;}
+
+/* GRADE DE DIAS */
+.grade-wrap{margin-bottom:20px;}
+.grade-titulo{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.grade-titulo .dot{width:9px;height:9px;border-radius:50%;}
+.grade-titulo span{font-size:.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.grade{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.grade-row{display:grid;grid-template-columns:repeat(31,1fr);}
+.grade-row.dias{border-bottom:1px solid var(--border);}
+.dia-num{text-align:center;padding:7px 2px;font-size:.7rem;font-weight:600;color:var(--muted);border-right:1px solid var(--border);}
+.dia-num:last-child{border-right:none;}
+.dia-num.hoje{color:var(--gold);font-weight:700;}
+.dia-val{text-align:center;padding:6px 2px;font-size:.82rem;font-weight:500;color:var(--text);border-right:1px solid var(--border);cursor:pointer;transition:background .15s;position:relative;}
+.dia-val:last-child{border-right:none;}
+.dia-val:hover{background:rgba(255,255,255,.04);}
+.dia-val.tem-valor.anatomo{color:var(--anatomo);font-weight:700;}
+.dia-val.tem-valor.cito{color:var(--cito);font-weight:700;}
+.dia-val.inativo{color:var(--muted);opacity:.4;}
+
+/* TOTAIS + GRÁFICO */
+.bottom{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;}
+.totais-card{order:2;}
+.grafico-card{order:1;}
+@media(max-width:700px){.bottom{grid-template-columns:1fr;}}
+
+.totais-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;}
+.totais-card .linha{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+.totais-card .linha:last-child{border-bottom:none;}
+.totais-card .linha .label{font-size:.88rem;color:var(--muted);}
+.totais-card .linha .valor{font-size:1.1rem;font-weight:700;}
+.totais-card .linha .valor.anatomo{color:var(--anatomo);}
+.totais-card .linha .valor.cito{color:var(--cito);}
+.totais-card .linha .valor.total{color:var(--text);font-size:1.3rem;}
+
+.valor-receber{margin-top:16px;background:linear-gradient(135deg,#0f2a1a,#0a1628);border:1px solid rgba(201,169,110,.3);border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;}
+.valor-receber .vr-label{font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.valor-receber .vr-valor{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:var(--gold2);}
+
+.grafico-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;}
+.grafico-titulo{font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:20px;}
+.barra-item{margin-bottom:14px;}
+.barra-label{font-size:.8rem;color:var(--muted);margin-bottom:5px;display:flex;justify-content:space-between;}
+.barra-label span:last-child{color:var(--text);font-weight:600;}
+.barra-bg{height:10px;background:rgba(255,255,255,.06);border-radius:6px;overflow:hidden;}
+.barra-fill{height:100%;border-radius:6px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.barra-fill.anatomo{background:linear-gradient(90deg,#16a34a,#4ade80);}
+.barra-fill.cito{background:linear-gradient(90deg,#1d4ed8,#60a5fa);}
+.barra-fill.paaf{background:linear-gradient(90deg,#c2410c,#fb923c);}
+
+/* BOTÕES RODAPÉ */
+.footer-btns{display:flex;justify-content:center;gap:12px;margin-top:32px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 22px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.3px;}
+.btn-imprimir{background:var(--gold);color:#0d0f1a;}
+.btn-imprimir:hover{background:var(--gold2);}
+.btn-voltar{background:var(--surface);color:var(--muted);border:1px solid var(--border);}
+.btn-voltar:hover{color:var(--text);border-color:var(--gold);}
+.btn-limpar{background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.2);}
+.btn-limpar:hover{background:rgba(239,68,68,.25);}
+
+/* TOOLTIP EDITOR */
+.tooltip-editor{position:fixed;z-index:9999;background:#1e2540;border:1px solid var(--gold);border-radius:8px;padding:10px 14px;box-shadow:0 8px 30px rgba(0,0,0,.5);display:none;gap:8px;align-items:center;}
+.tooltip-editor input{width:64px;background:#0d0f1a;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:1rem;text-align:center;padding:4px 6px;outline:none;}
+.tooltip-editor input:focus{border-color:var(--gold);}
+.tooltip-editor .te-label{font-size:.75rem;color:var(--muted);}
+.tooltip-editor .te-ok{background:var(--gold);color:#0d0f1a;border:none;border-radius:5px;padding:5px 12px;font-weight:700;cursor:pointer;font-size:.82rem;}
+.tooltip-editor .te-cancel{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;}
+
+.dia-val.tem-valor.histo{color:var(--histo);font-weight:700;}
+.dia-val.tem-valor.paaf{color:var(--paaf);font-weight:700;}
+
+/* RODAPÉ DE ASSINATURA */
+.rodape-assinatura{display:none;margin-top:24px;text-align:center;}
+.rodape-bloco{display:inline-block;text-align:center;}
+.rodape-data{font-size:.78rem;color:var(--muted);letter-spacing:.4px;margin-bottom:10px;}
+.rodape-img-assinatura{width:200px;display:block;margin:0 auto -18px;}
+.rodape-linha{width:240px;height:1px;background:var(--muted);margin:0 auto 3px;opacity:.4;}
+.rodape-nome{font-size:.88rem;font-weight:700;color:var(--text);letter-spacing:.5px;margin-bottom:1px;}
+.rodape-cargo{font-size:.7rem;color:var(--muted);letter-spacing:.5px;}
+
+/* SEPARADOR */
+.sep{height:1px;background:var(--border);margin:24px 0;}
+@media print{
+  @page{size:A4 landscape;margin:8mm 10mm;}
+  body{background:#fff;color:#000;font-size:9px;}
+  body::before{display:none;}
+  .footer-btns,.btn-voltar,.btn-limpar,.tooltip-editor{display:none!important;}
+  .wrap{padding:0;max-width:100%;}
+  .header{margin-bottom:10px;}
+  .header-left h1{color:#000;font-size:1.2rem;}
+  .header-left p{font-size:.65rem;}
+  .mes-nav{padding:4px 10px;}
+  .mes-nav button{display:none;}
+  .mes-label{font-size:.85rem;}
+  .grade-wrap{margin-bottom:8px;}
+  .grade-titulo span{font-size:.65rem;letter-spacing:1px;}
+  .grade,.totais-card,.grafico-card{border:1px solid #ccc;background:#fff;border-radius:4px;}
+  .dia-num{padding:3px 1px;font-size:.6rem;}
+  .dia-val{padding:3px 1px;font-size:.7rem;}
+  .dia-val.tem-valor.anatomo{color:#16a34a;}
+  .dia-val.tem-valor.cito{color:#1d4ed8;}
+  .dia-val.tem-valor.histo{color:#7e22ce;}
+  .sep{margin:8px 0;}
+  .bottom{margin-top:8px;gap:10px;grid-template-columns:1fr;}
+  .totais-card{display:none!important;}
+  .grafico-card{order:1;padding:10px;}
+  .grafico-titulo{font-size:.65rem;margin-bottom:10px;}
+  .barra-item{margin-bottom:8px;}
+  .barra-label{font-size:.7rem;}
+  .barra-bg{height:7px;background:#eee;}
+  .valor-receber{display:none!important;}
+  .rodape-assinatura{display:block!important;margin-top:14px;}
+  .rodape-data{color:#666;font-size:.68rem;margin-bottom:8px;}
+  .rodape-img-assinatura{width:180px;display:block;margin:0 auto -16px;}
+  .rodape-linha{width:220px;height:1px;background:#aaa;margin:0 auto 2px;opacity:1;}
+  .rodape-nome{color:#000;font-size:.78rem;font-weight:700;letter-spacing:.5px;}
+  .rodape-cargo{color:#666;font-size:.62rem;}
+}
+</style>
+<link rel="icon" type="image/x-icon" href="cedc.ico">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Gestão Laboratorial</h1>
+      <p>PRODUÇÃO MENSAL — CEDC · JOÃO PESSOA</p>
+    </div>
+    <div class="mes-nav">
+      <button onclick="mudarMes(-1)">◀</button>
+      <div class="mes-label" id="mes-label"></div>
+      <button onclick="mudarMes(1)">▶</button>
+    </div>
+  </div>
+
+  <!-- ANATOMO -->
+  <div class="grade-wrap">
+    <div class="grade-titulo">
+      <div class="dot" style="background:var(--anatomo)"></div>
+      <span>Anatomo Patológico</span>
+    </div>
+    <div class="grade">
+      <div class="grade-row dias" id="dias-anatomo"></div>
+      <div class="grade-row" id="vals-anatomo"></div>
+    </div>
+  </div>
+
+  <!-- CITOLOGIA -->
+  <div class="grade-wrap">
+    <div class="grade-titulo">
+      <div class="dot" style="background:var(--cito)"></div>
+      <span>Citopatológico — SISCAN (Tireoide e Geral)</span>
+    </div>
+    <div class="grade">
+      <div class="grade-row dias" id="dias-cito"></div>
+      <div class="grade-row" id="vals-cito"></div>
+    </div>
+  </div>
+
+  <!-- HISTOPATOLÓGICO SISCAN -->
+  <div class="grade-wrap">
+    <div class="grade-titulo">
+      <div class="dot" style="background:var(--histo)"></div>
+      <span>Histopatológico — SISCAN (Histo Colo / Histo Mama)</span>
+    </div>
+    <div class="grade">
+      <div class="grade-row dias" id="dias-histo"></div>
+      <div class="grade-row" id="vals-histo"></div>
+    </div>
+  </div>
+
+  <!-- CITOPATOLÓGICO SISCAN PAAF DE MAMA -->
+  <div class="grade-wrap">
+    <div class="grade-titulo">
+      <div class="dot" style="background:var(--paaf)"></div>
+      <span>Citopatológico — SISCAN (PAAF de Mama)</span>
+    </div>
+    <div class="grade">
+      <div class="grade-row dias" id="dias-paaf"></div>
+      <div class="grade-row" id="vals-paaf"></div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <div class="bottom">
+    <div class="totais-card">
+      <div class="linha">
+        <span class="label">● Anatomo Patológico</span>
+        <span class="valor anatomo" id="tot-anatomo">0</span>
+      </div>
+      <div class="linha">
+        <span class="label">● Citopatológico SISCAN (Tireoide e Geral)</span>
+        <span class="valor cito" id="tot-cito">0</span>
+      </div>
+      <div class="linha">
+        <span class="label">● Histopatológico SISCAN</span>
+        <span class="valor" style="color:var(--histo)" id="tot-histo">0</span>
+      </div>
+      <div class="linha">
+        <span class="label">● Citopatológico SISCAN (PAAF de Mama)</span>
+        <span class="valor" style="color:var(--paaf)" id="tot-paaf">0</span>
+      </div>
+      <div class="linha">
+        <span class="label">Total de Laudos</span>
+        <span class="valor total" id="tot-geral">0</span>
+      </div>
+      <div class="linha">
+        <span class="label">Fixo mensal</span>
+        <span class="valor" style="color:var(--fixed)" id="tot-fixo">R$ 4.651,00</span>
+      </div>
+      <div class="valor-receber">
+        <div>
+          <div class="vr-label">Valor a Receber</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:2px" id="vr-detalhe"></div>
+        </div>
+        <div class="vr-valor" id="tot-valor">R$ 0,00</div>
+      </div>
+    </div>
+
+    <div class="grafico-card">
+      <div class="grafico-titulo">Distribuição por Modalidade</div>
+      <div class="barra-item">
+        <div class="barra-label"><span>Anatomo Patológico</span><span id="g-anatomo">0</span></div>
+        <div class="barra-bg"><div class="barra-fill anatomo" id="bar-anatomo" style="width:0%"></div></div>
+      </div>
+      <div class="barra-item">
+        <div class="barra-label"><span>Citologia</span><span id="g-cito">0</span></div>
+        <div class="barra-bg"><div class="barra-fill cito" id="bar-cito" style="width:0%"></div></div>
+      </div>
+      <div class="barra-item">
+        <div class="barra-label"><span>Histopatológico SISCAN</span><span id="g-histo">0</span></div>
+        <div class="barra-bg"><div class="barra-fill" id="bar-histo" style="width:0%;background:linear-gradient(90deg,#7e22ce,#c084fc)"></div></div>
+      </div>
+      <div class="barra-item">
+        <div class="barra-label"><span>Citopatológico SISCAN (PAAF de Mama)</span><span id="g-paaf">0</span></div>
+        <div class="barra-bg"><div class="barra-fill paaf" id="bar-paaf" style="width:0%"></div></div>
+      </div>
+      <div style="height:1px;background:var(--border);margin:14px 0;"></div>
+      <div class="barra-item">
+        <div class="barra-label" style="font-weight:700;">
+          <span style="color:var(--text);">Total de Laudos</span>
+          <span style="color:var(--text);font-size:1rem;" id="g-total">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RODAPÉ ASSINATURA -->
+  <div class="rodape-assinatura">
+    <div class="rodape-bloco">
+      <div class="rodape-data">João Pessoa, 14 de março de 2026</div>
+      <img class="rodape-img-assinatura" src="data:image/png;base64,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" alt="Assinatura Marcos Pontes">
+      <div class="rodape-linha"></div>
+      <div class="rodape-nome">Marcos Pontes</div>
+      <div class="rodape-cargo">TI &ndash; Tecnologia da Informação</div>
+    </div>
+  </div>
+
+  <div class="footer-btns">
+    <button class="btn btn-voltar" onclick="window.history.back()">← Voltar</button>
+    <button class="btn btn-limpar" onclick="limparMes()">🗑 Limpar Mês</button>
+    <button class="btn btn-imprimir" onclick="window.print()">🖨 Imprimir</button>
+  </div>
+
+</div>
+
+<!-- TOOLTIP EDITOR -->
+<div class="tooltip-editor" id="tooltip-editor">
+  <span class="te-label" id="te-label">Dia 01</span>
+  <input type="number" id="te-input" min="0" max="999">
+  <button class="te-ok" onclick="teConfirmar()">OK</button>
+  <button class="te-cancel" onclick="teFechar()">✕</button>
+</div>
+
+<script>
+const FIXO = 4651;
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const LS_KEY = 'syscedc_financeiro';
+
+var _anoAtual = new Date().getFullYear();
+var _mesAtual = new Date().getMonth(); // 0-based
+var _teAlvo = null; // {tipo, dia}
+
+// ── localStorage ──
+function dados(){ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }
+function salvar(d){ localStorage.setItem(LS_KEY, JSON.stringify(d)); }
+
+function chave(ano, mes){ return ano+'-'+(mes<9?'0':'')+(mes+1); }
+
+function getDia(tipo, dia){
+  var d = dados();
+  var k = chave(_anoAtual, _mesAtual);
+  return (d[k] && d[k][tipo] && d[k][tipo][dia]) || 0;
+}
+function setDia(tipo, dia, val){
+  var d = dados();
+  var k = chave(_anoAtual, _mesAtual);
+  if(!d[k]) d[k]={};
+  if(!d[k][tipo]) d[k][tipo]={};
+  if(val>0) d[k][tipo][dia]=val;
+  else delete d[k][tipo][dia];
+  salvar(d);
+}
+
+// ── registrar laudo impresso via localStorage ──
+// O SYSCEDC grava em 'syscedc_prod_log' um array de {tipo:'anatomo'|'cito', data:'YYYY-MM-DD'}
+// Este módulo lê esse log, contabiliza e sincroniza
+function sincronizarLog(){
+  var log = JSON.parse(localStorage.getItem('syscedc_prod_log')||'[]');
+  if(!log.length) return;
+  var d = dados();
+  log.forEach(function(entry){
+    if(!entry||!entry.tipo||!entry.data) return;
+    var partes = entry.data.split('-');
+    if(partes.length!==3) return;
+    var ano=parseInt(partes[0]), mes=parseInt(partes[1])-1, dia=parseInt(partes[2]);
+    var k = ano+'-'+(mes<9?'0':'')+(mes+1);
+    if(!d[k]) d[k]={};
+    var tipo = entry.tipo==='anatomo'?'anatomo':(entry.tipo==='histo'?'histo':'cito');
+    if(!d[k][tipo]) d[k][tipo]={};
+    d[k][tipo][dia] = (d[k][tipo][dia]||0)+1;
+  });
+  salvar(d);
+  // limpar log processado
+  localStorage.removeItem('syscedc_prod_log');
+}
+
+// ── dias no mês ──
+function diasNoMes(ano, mes){ return new Date(ano, mes+1, 0).getDate(); }
+
+// ── renderizar ──
+function render(){
+  sincronizarLog();
+  var hoje = new Date();
+  var dHoje = hoje.getDate(), mHoje = hoje.getMonth(), aHoje = hoje.getFullYear();
+  var total = diasNoMes(_anoAtual, _mesAtual);
+
+  document.getElementById('mes-label').textContent = MESES[_mesAtual] + ' de ' + _anoAtual;
+
+  ['anatomo','cito','histo','paaf'].forEach(function(tipo){
+    var rowDias = document.getElementById('dias-'+tipo);
+    var rowVals = document.getElementById('vals-'+tipo);
+    rowDias.innerHTML=''; rowVals.innerHTML='';
+    for(var i=1;i<=31;i++){
+      var dNum = document.createElement('div');
+      dNum.className='dia-num'+(i===dHoje&&_mesAtual===mHoje&&_anoAtual===aHoje?' hoje':'');
+      dNum.textContent = i<=9?'0'+i:i;
+      rowDias.appendChild(dNum);
+
+      var dVal = document.createElement('div');
+      var val = i<=total ? getDia(tipo,i) : 0;
+      dVal.className='dia-val'+(i>total?' inativo':'')+(val>0?' tem-valor '+tipo:'');
+      dVal.textContent = val>0?val:'0';
+      if(i<=total){
+        (function(t,d){ dVal.addEventListener('click',function(e){ teAbrir(e,t,d); }); })(tipo,i);
+      }
+      rowVals.appendChild(dVal);
+    }
+  });
+
+  // totais
+  var totA=0,totC=0,totH=0,totP=0;
+  for(var i=1;i<=total;i++){totA+=getDia('anatomo',i); totC+=getDia('cito',i); totH+=getDia('histo',i); totP+=getDia('paaf',i);}
+  var totG=totA+totC+totH+totP;
+  var valor=FIXO+totG;
+
+  document.getElementById('tot-anatomo').textContent=totA;
+  document.getElementById('tot-cito').textContent=totC;
+  document.getElementById('tot-histo').textContent=totH;
+  document.getElementById('tot-paaf').textContent=totP;
+  document.getElementById('tot-geral').textContent=totG;
+  document.getElementById('tot-valor').textContent='R$ '+valor.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('vr-detalhe').textContent='R$ 4.651,00 fixo + '+totG+' laudo(s) × R$ 1,00';
+
+  document.getElementById('g-anatomo').textContent=totA;
+  document.getElementById('g-cito').textContent=totC;
+  document.getElementById('g-histo').textContent=totH;
+  document.getElementById('g-paaf').textContent=totP;
+  document.getElementById('g-total').textContent=totG;
+  var max=Math.max(totA,totC,totH,totP,1);
+  document.getElementById('bar-anatomo').style.width=(totA/max*100)+'%';
+  document.getElementById('bar-cito').style.width=(totC/max*100)+'%';
+  document.getElementById('bar-histo').style.width=(totH/max*100)+'%';
+  document.getElementById('bar-paaf').style.width=(totP/max*100)+'%';
+}
+
+// ── navegação de mês ──
+function mudarMes(d){
+  _mesAtual+=d;
+  if(_mesAtual<0){_mesAtual=11;_anoAtual--;}
+  if(_mesAtual>11){_mesAtual=0;_anoAtual++;}
+  render();
+}
+
+// ── editor inline ──
+function teAbrir(e, tipo, dia){
+  e.stopPropagation();
+  _teAlvo={tipo:tipo,dia:dia};
+  var te=document.getElementById('tooltip-editor');
+  var inp=document.getElementById('te-input');
+  var lbl=document.getElementById('te-label');
+  lbl.textContent=(tipo==='anatomo'?'Anatomo':'Citologia')+' — Dia '+(dia<10?'0'+dia:dia);
+  inp.value=getDia(tipo,dia)||'';
+  te.style.display='flex';
+  var rect=e.target.getBoundingClientRect();
+  var top=rect.bottom+window.scrollY+4;
+  var left=rect.left+window.scrollX-60;
+  left=Math.max(8,Math.min(left,window.innerWidth-200));
+  te.style.top=top+'px';
+  te.style.left=left+'px';
+  setTimeout(function(){inp.focus();inp.select();},50);
+}
+function teConfirmar(){
+  if(!_teAlvo) return;
+  var val=parseInt(document.getElementById('te-input').value)||0;
+  setDia(_teAlvo.tipo,_teAlvo.dia,val);
+  teFechar();
+  render();
+}
+function teFechar(){
+  document.getElementById('tooltip-editor').style.display='none';
+  _teAlvo=null;
+}
+document.getElementById('te-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter') teConfirmar();
+  if(e.key==='Escape') teFechar();
+});
+document.addEventListener('click',function(e){
+  var te=document.getElementById('tooltip-editor');
+  if(te.style.display!=='none'&&!te.contains(e.target)) teFechar();
+});
+
+// ── limpar mês ──
+function limparMes(){
+  if(!confirm('Limpar todos os dados de '+MESES[_mesAtual]+' de '+_anoAtual+'?')) return;
+  var d=dados();
+  var k=chave(_anoAtual,_mesAtual);
+  delete d[k];
+  salvar(d);
+  render();
+}
+
+// init
+render();
+</script>
+</body>
+</html>
