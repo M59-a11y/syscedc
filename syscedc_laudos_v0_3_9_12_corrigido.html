@@ -1542,9 +1542,12 @@ function imprimirLaudo(){
 
 // ===== LIMPAR =====
 function limparSilencioso(){
-  ['nome','dataNasc','nomeMae','numExame','cartaoSus','cpf','prontuario','tel','unidade','medicoReq',
+  ['nome','dataNasc','nomeMae','numExame','cartaoSus','cpf','prontuario','tel',
    'dataSolic','dataEntrada','macro','micro','conclusao']
   .forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  // Preservar unidade e médico — salvar valores atuais antes de limpar outros campos
+  var _unidadeAtual=document.getElementById('unidade')?document.getElementById('unidade').value:'';
+  var _medicoAtual=document.getElementById('medicoReq')?document.getElementById('medicoReq').value:'';
   // Restaurar data de emissão para hoje (não limpar)
   document.getElementById('dataEmissao').value=(function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
   document.getElementById('numAno').value=String(new Date().getFullYear());
@@ -1559,6 +1562,9 @@ function limparSilencioso(){
   }
   _materiais=[];renderMateriais();
   _manualLaudos=[]; _manualIdx=-1;
+  // Restaurar unidade e médico preservados
+  if(_unidadeAtual){ var eu=document.getElementById('unidade'); if(eu) eu.value=_unidadeAtual; }
+  if(_medicoAtual){ var em=document.getElementById('medicoReq'); if(em) em.value=_medicoAtual; }
   // Preserva patologista e assinatura para o próximo laudo
   // Restaurar preview visual da assinatura
   if(_assinaturaDataURL){
@@ -1574,6 +1580,9 @@ function limparSilencioso(){
 function limpar(){
   if(!confirm('Limpar todos os campos?'))return;
   limparSilencioso();
+  // Limpar também unidade e médico (limpeza total manual)
+  var eu=document.getElementById('unidade'); if(eu) eu.value='';
+  var em=document.getElementById('medicoReq'); if(em) em.value='';
   toast('Formulário limpo.','t-info');
 }
 
