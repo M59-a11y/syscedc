@@ -404,7 +404,7 @@ if('serviceWorker' in navigator){
         <div class="fgrp"><label>Código / Unidade de Saúde</label>
           <div class="ac-wrap">
             <input type="text" id="unidade" placeholder="Ex: 2399318 - COMPLEXO DE PEDIATRIA..." autocomplete="off"
-              oninput="this.value=this.value.toUpperCase();autoBackup();acMostrar('unidade','unidades')"
+              oninput="this.value=this.value.toUpperCase();autoBackup();acMostrar('unidade','unidades');_ls.set('cedc_unidade_ativa',this.value);"
               onkeydown="acNavegar(event,'unidade-ac')"
               onblur="setTimeout(function(){acOcultar('unidade-ac')},200)">
             <div class="ac-lista oculta" id="unidade-ac"></div>
@@ -412,7 +412,7 @@ if('serviceWorker' in navigator){
         <div class="fgrp"><label>Médico(a) Requisitante</label>
           <div class="ac-wrap">
             <input type="text" id="medicoReq" placeholder="Dr(a) Nome Completo" autocomplete="off"
-              oninput="this.value=this.value.toUpperCase();autoBackup();acMostrar('medicoReq','medicos')"
+              oninput="this.value=this.value.toUpperCase();autoBackup();acMostrar('medicoReq','medicos');_ls.set('cedc_medico_ativo',this.value);"
               onkeydown="acNavegar(event,'medicoReq-ac')"
               onblur="setTimeout(function(){acOcultar('medicoReq-ac')},200)">
             <div class="ac-lista oculta" id="medicoReq-ac"></div>
@@ -1581,8 +1581,8 @@ function limpar(){
   if(!confirm('Limpar todos os campos?'))return;
   limparSilencioso();
   // Limpar também unidade e médico (limpeza total manual)
-  var eu=document.getElementById('unidade'); if(eu) eu.value='';
-  var em=document.getElementById('medicoReq'); if(em) em.value='';
+  var eu=document.getElementById('unidade'); if(eu) eu.value=''; _ls.remove('cedc_unidade_ativa');
+  var em=document.getElementById('medicoReq'); if(em) em.value=''; _ls.remove('cedc_medico_ativo');
   toast('Formulário limpo.','t-info');
 }
 
@@ -1641,6 +1641,14 @@ document.getElementById('dataEmissao').value=(function(){var n=new Date();return
 mudarTipo('anatomo');
 document.getElementById('numAno').value=String(new Date().getFullYear());
 renderMateriais();
+
+// Restaurar unidade e médico salvos
+(function(){
+  var u=_ls.get('cedc_unidade_ativa'); var m=_ls.get('cedc_medico_ativo');
+  var eu=document.getElementById('unidade'); var em=document.getElementById('medicoReq');
+  if(u&&eu) eu.value=u;
+  if(m&&em) em.value=m;
+})();
 
 // Restaurar assinatura salva — mostrar visualmente ao abrir
 (function(){
@@ -2107,6 +2115,9 @@ function acMostrar(campoId,tipo){
       e.preventDefault();
       inp.value=item;
       autoBackup();
+      // Salvar no localStorage se for unidade ou médico
+      if(inp.id==='unidade') _ls.set('cedc_unidade_ativa',item);
+      if(inp.id==='medicoReq') _ls.set('cedc_medico_ativo',item);
       ac.classList.add('oculta');
     });
     ac.appendChild(div);
@@ -2163,8 +2174,7 @@ function _limparCamposParaImportacao(){
   var dl=document.getElementById('dl-tipoMatCito');
   if(sel) sel.value=(dl&&dl.querySelector('option'))?dl.querySelector('option').value:'';
   _materiais=[];
-  _patSelecionado=null;
-  _assinaturaDataURL='';
+  // Preservar assinatura ativa — será sobrescrita se o laudo importado tiver a sua própria
   renderMateriais();
 }
 function _atualizarNavImportacao(){
@@ -2340,18 +2350,4 @@ document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('cad-inp-medico').addEventListener('keydown', function(e){if(e.key==='Enter')cadAdicionar('medicos');});
   // Navegação importação (botões usam onclick inline para evitar disparo duplicado)
   // Input importar json
-  document.getElementById('inp-importar-json').addEventListener('change', function(){_processarBackup(this.files[0]);this.value='';});
-  document.getElementById('inp-cadsus').addEventListener('change', function(){_processarCadsus(this.files[0]);this.value='';});
-  var inpData=document.getElementById('dataEntrada');
-  if(inpData) inpData.addEventListener('keydown', function(e){
-    if(e.key==='Tab' && !e.shiftKey){
-      e.preventDefault();
-      _focarCampoMaterial();
-    }
-  });
-  var inpAno=document.getElementById('numAno');
-  if(inpAno) inpAno.addEventListener('input', function(){ _atualizarNavImportacao(); _atualizarRotulosConteudo(); });
-});
-</script>
-</body>
-</html>
+  document.getElementBy
