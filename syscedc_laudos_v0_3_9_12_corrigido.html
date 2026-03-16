@@ -1091,7 +1091,9 @@ function carregarAssinaturaAvulsa(inp){
   var r=new FileReader();
   r.onload=function(e){
     _assinaturaDataURL=e.target.result;_ls.set('cedc_assin',_assinaturaDataURL);_ls.remove('cedc_pat');_patSelecionado=null;
+    _salvarManualAtual();
     if(_manualLaudos&&_manualLaudos.length){for(var _i=0;_i<_manualLaudos.length;_i++){if(_manualLaudos[_i])_manualLaudos[_i]._assinSrc=_assinaturaDataURL;}}
+    if(_laudosPendentes&&_laudosPendentes.length){for(var _j=0;_j<_laudosPendentes.length;_j++){if(_laudosPendentes[_j]&&_laudosPendentes[_j].dados)_laudosPendentes[_j].dados._assinSrc=_assinaturaDataURL;}}
     document.getElementById('assin-preview-img').src=_assinaturaDataURL;
     document.getElementById('assin-preview-wrap').style.display='block';
     document.getElementById('assin-nome-arq').textContent=f.name;
