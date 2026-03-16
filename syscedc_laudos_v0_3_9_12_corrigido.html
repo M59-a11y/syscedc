@@ -1750,6 +1750,14 @@ renderMateriais();
 // Selecionar todo o texto ao focar em input/textarea
 document.addEventListener('focusin', function(e){
   if(e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA'){
+    var elNum=document.getElementById('numExame');
+    if(elNum && e.target.id!=='numExame' && !elNum.value.trim()){
+      e.target.blur();
+      elNum.focus();
+      elNum.style.borderColor='#e74c3c';
+      setTimeout(function(){elNum.style.borderColor='';},2000);
+      return;
+    }
     e.target.select();
   }
 });
