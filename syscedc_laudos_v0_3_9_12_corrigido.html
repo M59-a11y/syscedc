@@ -376,7 +376,7 @@ if('serviceWorker' in navigator){
           <input type="text" id="nomeMae" placeholder="Nome da mãe" oninput="this.value=this.value.toUpperCase();autoBackup()"></div>
         <div class="fgrp"><label>Nº do Exame Base</label>
           <div class="nrow">
-            <input type="text" id="numExame" placeholder="0001" maxlength="6" style="width:80px;" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'');autoBackup()">
+            <input type="text" id="numExame" placeholder="0001" maxlength="6" style="width:80px;" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'');autoBackup()" onblur="if(this.value.trim()&&!document.getElementById('nome').value.trim()){document.getElementById('nome').focus();}" onkeydown="if(event.key==='Enter'&&this.value.trim()){document.getElementById('nome').focus();}">
             <span>-</span>
             <input type="text" id="numSerie" value="1" maxlength="2" style="width:40px;" autocomplete="off" oninput="autoBackup()">
             <span>/</span>
