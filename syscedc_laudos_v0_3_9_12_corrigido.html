@@ -506,7 +506,7 @@ if('serviceWorker' in navigator){
       <div class="cab-emissao">
         <div>Emissão &nbsp;<span id="p-emis"></span></div>
         <div>Hora: &nbsp;<span id="p-hora"></span></div>
-        <div>Página: &nbsp;<span>1</span></div>
+        <div>Página: &nbsp;<span id="p-pagina">1</span></div>
         <div>UF: &nbsp;<span>PB</span></div>
       </div>
       <div class="conteudo">
@@ -1427,6 +1427,9 @@ function _executarImpressaoFila(lista, aoFinalizar){
     _renderLaudo(dados);
     var pag=laudoOrig.cloneNode(true);
     pag.id='laudo-print-'+i;
+    // Atualizar número da página no clone
+    var spPag=pag.querySelector('#p-pagina');
+    if(spPag) spPag.textContent=String(i+1);
     if(i<lista.length-1){pag.style.pageBreakAfter='always';pag.style.breakAfter='page';}
     clones.push(pag);
   }
