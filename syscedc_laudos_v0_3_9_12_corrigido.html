@@ -480,7 +480,7 @@ if('serviceWorker' in navigator){
   <div class="card">
     <div class="ch ch-purple">✍️ Assinatura do Patologista</div>
     <div class="cb">
-      <div style="display:flex;align-items:center;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;">
         <button class="btn btn-blue btn-sm" id="btn-assin-avulso">📎 Carregar PNG</button>
         <span id="assin-nome-arq" style="font-size:.82rem;color:#666;">Nenhuma imagem carregada</span>
         <button class="btn btn-sm" style="background:#e74c3c;color:#fff;display:none;" id="btn-rem-assin">✖ Remover</button>
@@ -1084,6 +1084,8 @@ function _salvarTipoMat(val){
 // ===== ASSINATURA AVULSA =====
 function carregarAssinaturaAvulsa(inp){
   var f=inp.files[0];if(!f)return;
+  document.getElementById('assin-preview-img').src='';
+  document.getElementById('assin-preview-wrap').style.display='none';
   var r=new FileReader();
   r.onload=function(e){
     _assinaturaDataURL=e.target.result;_ls.set('cedc_assin',_assinaturaDataURL);_ls.remove('cedc_pat');_patSelecionado=null;    document.getElementById('assin-preview-img').src=_assinaturaDataURL;
