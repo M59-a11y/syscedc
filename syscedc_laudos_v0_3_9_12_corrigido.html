@@ -1524,6 +1524,8 @@ function imprimirLaudo(){
     var idxAtual=(parseInt(String(infoAtual.sufixo||'L1').replace(/[^0-9]/g,''),10)||1)-1;
     listaPendentes[idxAtual]=dadosAtual;
     listaPendentes=listaPendentes.filter(function(item){return !!item;}).filter(_laudoValidoParaSaida);
+    // Garantir que todos os laudos usem a assinatura atual
+    listaPendentes.forEach(function(ld){if(_assinaturaDataURL)ld._assinSrc=_assinaturaDataURL;});
     if(!listaPendentes.length){toast('Nenhum laudo válido para imprimir.','t-error');return;}
     listaPendentes.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd((ld.dados?ld.dados.tipoLaudo:ld.tipoLaudo)==="anatomo"?"anatomo":"cito");});
     toast('Gerando backup e imprimindo '+listaPendentes.length+' laudos...','t-info',2600);
