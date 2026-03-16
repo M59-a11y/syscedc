@@ -381,6 +381,8 @@ if('serviceWorker' in navigator){
             <input type="text" id="numSerie" value="1" maxlength="2" style="width:40px;" autocomplete="off" oninput="autoBackup()">
             <span>/</span>
             <input type="text" id="numAno" value="" maxlength="20" style="width:90px;" autocomplete="off" oninput="this.value=this.value.toUpperCase();autoBackup()" placeholder="2026 ou 2026 L1">
+            <span style="color:#888;font-size:.8rem;margin-left:4px;">Laudos:</span>
+            <input type="text" id="numLaudos" placeholder="1" maxlength="2" style="width:36px;text-align:center;" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'');autoBackup()" title="Informe a quantidade total de laudos deste exame">
           </div>
         </div>
       </div>
@@ -470,7 +472,7 @@ if('serviceWorker' in navigator){
         <div id="sec-micro" class="fgrp"><label>Microscopia / Diagnóstico Descritivo (opcional)</label>
           <div style="position:relative"><textarea id="micro" rows="3" placeholder="Se houver..." oninput="autoBackup();acMostrarTexto('micro',CAD_KEY_MICRO)" onkeydown="if(event.key===' '&&snippetExpandir(this)){event.preventDefault();acOcultar('micro-ac');}else{acNavegar(event,'micro-ac');}" onblur="setTimeout(function(){acOcultar('micro-ac')},200)"></textarea><div class="ac-lista oculta" id="micro-ac"></div></div></div>
         <div class="fgrp"><label id="label-conclusao">Conclusão</label>
-          <div style="position:relative"><textarea id="conclusao" rows="4" placeholder="Conclusão do laudo..." oninput="autoBackup();acMostrarTexto('conclusao',CAD_KEY_CONCLUSAO)" onkeydown="if(event.key===' '&&snippetExpandir(this)){event.preventDefault();acOcultar('conclusao-ac');}else{acNavegar(event,'conclusao-ac');}" onblur="setTimeout(function(){acOcultar('conclusao-ac')},200)"></textarea><div class="ac-lista oculta" id="conclusao-ac"></div></div></div>
+          <div style="position:relative"><textarea id="conclusao" rows="4" placeholder="Conclusão do laudo..." oninput="autoBackup();acMostrarTexto('conclusao',CAD_KEY_CONCLUSAO)" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&_deveAvancarLaudoDuplo(this)){event.preventDefault();_btnProximoUnificado();}else if(event.key===' '&&snippetExpandir(this)){event.preventDefault();acOcultar('conclusao-ac');}else{acNavegar(event,'conclusao-ac');}" onblur="setTimeout(function(){acOcultar('conclusao-ac')},200)"></textarea><div class="ac-lista oculta" id="conclusao-ac"></div></div></div>
       </div>
     </div>
   </div>
@@ -788,6 +790,30 @@ function _manualMultiploAtivo(){
 function _manualInfoAtual(){
   return _parseNumAnoInfo(v('numAno'));
 }
+function _totalLaudos(){
+  // Retorna a quantidade total de laudos informada no campo numLaudos (ou 1 se vazio)
+  var n = parseInt(document.getElementById('numLaudos')?document.getElementById('numLaudos').value:'',10);
+  return (n && n > 1) ? n : 0; // 0 = não definido (sem limite)
+}
+function _deveAvancarLaudoDuplo(textarea){
+  // Avança só se a linha imediatamente antes do cursor estiver vazia (Enter duplo)
+  var val = textarea.value;
+  var pos = textarea.selectionStart;
+  var antes = val.substring(0, pos);
+  // Verificar se a linha atual (onde o cursor está) é vazia
+  var ultimaQuebra = antes.lastIndexOf('\n');
+  var linhaAtual = antes.substring(ultimaQuebra + 1);
+  if(linhaAtual.trim() !== '') return false; // linha atual tem conteúdo — Enter normal
+  // Verificar se já atingiu o total de laudos
+  var total = _totalLaudos();
+  if(total > 0){
+    var info = _parseNumAnoInfo(v('numAno'));
+    var sufixoAtual = info.sufixo || 'L1';
+    var idxAtual = parseInt(sufixoAtual.replace(/[^0-9]/g,''),10) || 1;
+    if(idxAtual >= total) return false; // já é o último laudo
+  }
+  return true;
+}
 function _focarCampoMaterial(){
   if(_tipoLaudo==='anatomo'){
     if(!_materiais.length){ adicionarMaterial(); }
@@ -946,7 +972,7 @@ function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 
 function coletar(){
   return{nome:v('nome'),dataNasc:dataTextoParaISO(v('dataNasc')),nomeMae:v('nomeMae'),
-    numExame:String(v('numExame')),numSerie:_seriePadraoPorTipo(_tipoLaudo),numAno:v('numAno'),
+    numExame:String(v('numExame')),numSerie:_seriePadraoPorTipo(_tipoLaudo),numAno:v('numAno'),numLaudos:v('numLaudos'),
     cartaoSus:v('cartaoSus'),cpf:v('cpf'),prontuario:v('prontuario'),tel:v('tel'),
     unidade:v('unidade'),medicoReq:v('medicoReq'),
     dataSolic:dataTextoParaISO(v('dataSolic')),dataEntrada:dataTextoParaISO(v('dataEntrada')),dataEmissao:v('dataEmissao'),
@@ -962,7 +988,7 @@ function fill(dados){
   // Mudar tipo primeiro (muda visibilidade de campos, não apaga valores)
   if(dados.tipoLaudo) mudarTipo(dados.tipoLaudo);
   // Preencher todos os campos de texto
-  var campos=['nome','dataNasc','nomeMae','numExame','numSerie','numAno',
+  var campos=['nome','dataNasc','nomeMae','numExame','numSerie','numAno','numLaudos',
     'cartaoSus','cpf','prontuario','tel','unidade','medicoReq',
     'dataSolic','dataEntrada','dataEmissao','macro','micro','conclusao',
     'metodologia'];
@@ -1543,7 +1569,7 @@ function imprimirLaudo(){
 // ===== LIMPAR =====
 function limparSilencioso(){
   ['nome','dataNasc','nomeMae','numExame','cartaoSus','cpf','prontuario','tel',
-   'dataSolic','dataEntrada','macro','micro','conclusao']
+   'dataSolic','dataEntrada','macro','micro','conclusao','numLaudos']
   .forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   // Preservar unidade e médico — salvar valores atuais antes de limpar outros campos
   var _unidadeAtual=document.getElementById('unidade')?document.getElementById('unidade').value:'';
