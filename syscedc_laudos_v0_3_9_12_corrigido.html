@@ -1750,6 +1750,8 @@ renderMateriais();
 // Selecionar todo o texto ao focar em input/textarea
 document.addEventListener('focusin', function(e){
   if(e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA'){
+    // Não interferir dentro de modais
+    if(e.target.closest('#modal-cadastros') || e.target.closest('#modal-laudos-salvos')) return;
     var elNum=document.getElementById('numExame');
     if(elNum && e.target.id!=='numExame' && !elNum.value.trim()){
       e.target.blur();
