@@ -6,9 +6,9 @@
 <title>SYSCEDC – Sistema de Laudos v0.3.9.11</title>
 <style>
 
-:root{--red:#c0392b;--dark:#1a1a2e;--gray:#555;--border:#ddd;--green:#006633;}
+:root{--red:#f97316;--dark:#0c0c0c;--gray:#888;--border:#2a2a2a;--green:#22c55e;--surface:#161616;--surface2:#1e1e1e;--muted:#666;--accent:#f97316;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',Tahoma,sans-serif;background:#e8ecef;color:#333;}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0c0c0c;color:#f0f0f0;}
 
 /* Selecionar tudo ao focar */
 input:focus,textarea:focus{cursor:text;}
@@ -20,13 +20,13 @@ input:focus,textarea:focus{cursor:text;}
 
 
 /* INTERFACE */
-.sys-header{background:linear-gradient(135deg,var(--dark),#16213e);color:white;padding:14px 30px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 10px rgba(0,0,0,.3);}
+.sys-header{background:#111;border-bottom:1px solid #222;color:white;padding:14px 30px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 16px rgba(0,0,0,.6);}
 .sys-title{font-family:'abadi-mt-condensed-light',sans-serif;font-size:14.5pt;letter-spacing:1px;line-height:118%;font-weight:bold;}
 .sys-sub{font-size:.75rem;color:#aab;margin-top:2px;}
 .hright{display:flex;gap:10px;}
 .btn{padding:8px 18px;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
 .btn-red{background:var(--red);color:#fff;}.btn-red:hover{background:#a93226;}
-.btn-gray{background:#34495e;color:#fff;}.btn-gray:hover{background:#2c3e50;}
+.btn-gray{background:#27272a;color:#f0f0f0;border:1px solid #3f3f46;}.btn-gray:hover{background:#3f3f46;}
 .btn-green{background:#27ae60;color:#fff;}.btn-green:hover{background:#219a52;}
 .btn-blue{background:#2980b9;color:#fff;}.btn-blue:hover{background:#2471a3;}
 .btn-org{background:#e67e22;color:#fff;}.btn-org:hover{background:#ca6f1e;}
@@ -35,28 +35,28 @@ input:focus,textarea:focus{cursor:text;}
 /* MODAL CADASTRO */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center;}
 .modal-overlay.aberto{display:flex;}
-.modal-box{background:#fff;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.35);width:92%;max-width:620px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.modal-box{background:#161616;border:1px solid #2a2a2a;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.7);width:92%;max-width:620px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
 .modal-head{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:.95rem;letter-spacing:.5px;}
 .modal-head button{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;line-height:1;padding:0 4px;}
-.modal-tabs{display:flex;background:#f4f4f4;border-bottom:2px solid #e0e0e0;}
-.modal-tab{flex:1;padding:10px;border:none;background:none;cursor:pointer;font-size:.85rem;font-weight:600;color:#777;transition:all .2s;}
-.modal-tab.ativo{background:#fff;color:var(--red);border-bottom:2px solid var(--red);margin-bottom:-2px;}
+.modal-tabs{display:flex;background:#111;border-bottom:2px solid #2a2a2a;}
+.modal-tab{flex:1;padding:10px;border:none;background:none;cursor:pointer;font-size:.85rem;font-weight:600;color:#666;transition:all .2s;}
+.modal-tab.ativo{background:#1e1e1e;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;}
 .modal-body{padding:18px;overflow-y:auto;flex:1;}
 .cad-form{display:flex;gap:8px;margin-bottom:14px;}
 .cad-form input{flex:1;padding:8px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:.88rem;}
 .cad-form button{white-space:nowrap;}
 .cad-lista{list-style:none;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;}
-.cad-item{display:flex;align-items:center;gap:8px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:6px;padding:8px 12px;font-size:.86rem;}
+.cad-item{display:flex;align-items:center;gap:8px;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:6px;padding:8px 12px;font-size:.86rem;color:#f0f0f0;}
 .cad-item span{flex:1;}
 .cad-item button{background:none;border:none;cursor:pointer;color:#c0392b;font-size:1rem;padding:2px 6px;border-radius:4px;transition:background .15s;}
 .cad-item button:hover{background:#fdecea;}
 .cad-vazio{color:#aaa;font-size:.85rem;text-align:center;padding:20px 0;}
 /* AUTOCOMPLETE */
 .ac-wrap{position:relative;}
-.ac-lista{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #bbb;border-top:none;border-radius:0 0 6px 6px;z-index:9999;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.ac-lista{position:absolute;top:100%;left:0;right:0;background:#1e1e1e;border:1.5px solid #333;border-top:none;border-radius:0 0 6px 6px;z-index:9999;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.5);}
 .ac-item{padding:8px 12px;cursor:pointer;font-size:.88rem;border-bottom:1px solid #f0f0f0;}
 .ac-item:last-child{border-bottom:none;}
-.ac-item:hover,.ac-item.sel{background:#f0f4ff;color:var(--red);}
+.ac-item:hover,.ac-item.sel{background:#252525;color:var(--accent);}
 .ac-lista.oculta{display:none;}
 /* BADGE LAUDO ATUAL */
 #badge-laudo{
@@ -82,7 +82,7 @@ input:focus,textarea:focus{cursor:text;}
 }
 #badge-laudo.visivel{display:flex;}
 /* BARRA NAVEGAÇÃO IMPORTAÇÃO */
-#import-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:1001;background:#1a1a2e;color:#fff;padding:10px 60px 10px 20px;align-items:center;justify-content:center;gap:16px;box-shadow:0 -3px 10px rgba(0,0,0,.4);}body{padding-bottom:60px;}
+#import-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:1001;background:#111;border-top:1px solid #2a2a2a;color:#fff;padding:10px 60px 10px 20px;align-items:center;justify-content:center;gap:16px;box-shadow:0 -3px 16px rgba(0,0,0,.6);}body{padding-bottom:60px;}
 #import-nav.visivel{display:flex;}#import-nav{display:flex!important;}
 /* Ocultar da sidebar botões que já estão no rodapé */
 .sidebar #sb-imprimir,.sidebar #sb-anterior,.sidebar #sb-proximo,.sidebar #sb-proximo-nav{display:none!important;}
@@ -94,12 +94,12 @@ input:focus,textarea:focus{cursor:text;}
 
 
 .wrap{max-width:1100px;margin:24px auto;padding:0 16px 24px 16px;}
-.card{background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:20px;overflow:visible;}
+.card{background:#161616;border:1px solid #252525;border-radius:10px;box-shadow:0 2px 20px rgba(0,0,0,.4);margin-bottom:20px;overflow:visible;}
 .ch{padding:12px 20px;font-size:.8rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;color:#fff;border-radius:10px 10px 0 0;}
-.ch-red{background:linear-gradient(135deg,var(--red),#922b21);}
-.ch-gov{background:linear-gradient(135deg,var(--green),#004d26);}
-.ch-blue{background:linear-gradient(135deg,#1a5276,#154360);}
-.ch-purple{background:linear-gradient(135deg,#6c3483,#5b2c6f);}
+.ch-red{background:linear-gradient(135deg,#c2410c,#9a3412);}
+.ch-gov{background:linear-gradient(135deg,#15803d,#14532d);}
+.ch-blue{background:linear-gradient(135deg,#1d4ed8,#1e3a8a);}
+.ch-purple{background:linear-gradient(135deg,#7c3aed,#5b21b6);}
 .cb{padding:20px;}
 .fg{display:grid;gap:14px;}
 .fg2{grid-template-columns:1fr 1fr;}
@@ -107,9 +107,9 @@ input:focus,textarea:focus{cursor:text;}
 .fg4{grid-template-columns:1fr 1fr 1fr 1fr;}
 .fgrp{display:flex;flex-direction:column;gap:5px;}
 .fgrp.c2{grid-column:span 2;}.fgrp.c3{grid-column:span 3;}
-label{font-size:.72rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;}
-input[type=text],input[type=date],select,textarea{padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.9rem;color:#333;transition:border-color .2s;background:#fafafa;font-family:inherit;width:100%;}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);background:#fff;box-shadow:0 0 0 3px rgba(192,57,43,.1);}
+label{font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;}
+input[type=text],input[type=date],select,textarea{padding:9px 12px;border:1.5px solid #2a2a2a;border-radius:6px;font-size:.9rem;color:#f0f0f0;transition:border-color .2s;background:#1e1e1e;font-family:inherit;width:100%;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#252525;box-shadow:0 0 0 3px rgba(249,115,22,.12);}
 textarea{resize:vertical;min-height:90px;line-height:1.5;}
 #macro,#micro,#conclusao{line-height:1.6;font-size:.95rem;text-align:justify;padding:12px 14px;letter-spacing:.01em;}
 .nrow{display:flex;align-items:center;gap:4px;}
@@ -121,21 +121,21 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
 #preview-sec{display:none;}
 
 /* MATERIAIS */
-.mat-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8f9fa;border-radius:6px;border:1.5px solid #e0e0e0;margin-bottom:8px;}
+.mat-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1e1e1e;border-radius:6px;border:1.5px solid #2a2a2a;margin-bottom:8px;color:#f0f0f0;}
 .mat-num{font-size:.8rem;font-weight:700;color:var(--red);white-space:nowrap;}
 .mat-del{background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;padding:3px 8px;font-size:.8rem;}
 .mat-del:hover{background:#c0392b;}
 
 /* MENU TIPOS DE LAUDO */
 .tipo-menu{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
-.tipo-btn{padding:10px 20px;border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;background:#fff;color:#555;transition:all .2s;letter-spacing:.5px;}
+.tipo-btn{padding:10px 20px;border:2px solid #2a2a2a;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;background:#1e1e1e;color:#888;transition:all .2s;letter-spacing:.5px;}
 .tipo-btn:hover{border-color:var(--red);color:var(--red);}
 .tipo-btn.ativo{background:var(--red);color:#fff;border-color:var(--red);}
 
 /* PATOLOGISTA CARDS */
-.pat-card{display:flex;align-items:center;gap:12px;padding:10px 14px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;margin-bottom:8px;background:#fafafa;}
+.pat-card{display:flex;align-items:center;gap:12px;padding:10px 14px;border:2px solid #2a2a2a;border-radius:8px;cursor:pointer;transition:all .2s;margin-bottom:8px;background:#1e1e1e;color:#f0f0f0;}
 .pat-card:hover{border-color:var(--red);}
-.pat-card.sel{border-color:#27ae60;background:#f0fff4;}
+.pat-card.sel{border-color:#22c55e;background:#052e16;}
 .pat-card img{height:32px;width:80px;object-fit:contain;}
 .pat-name{font-size:.82rem;font-weight:700;color:#333;}
 .pat-crm{font-size:.75rem;color:#888;}
@@ -173,13 +173,13 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
 .l-assin{margin-top:5mm;text-align:center;}
 .assin-wrap{display:inline-block;text-align:center;max-width:50mm;}
 .assin-data{font-size:9pt;color:#333;margin-bottom:2mm;white-space:nowrap;}
-.assin-img{display:block;width:38mm;max-height:12mm;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;margin-left:8mm;}
+.assin-img{display:block;width:38mm;max-height:12mm;object-fit:contain;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;margin-left:8mm;background:#fff;border-radius:3px;padding:2px;}
 .assin-oculta{display:none!important;}
 .l-rodape{position:absolute;bottom:16mm;left:16mm;right:16mm;text-align:center;font-size:8pt;color:#444;border-top:1px solid #ccc;padding-top:2mm;line-height:1.6;font-family:Arial,Helvetica,sans-serif;z-index:2;}
 .l-rodape strong{color:#222;}
 
 /* MODAL LAUDOS SALVOS */
-.ls-item{display:flex;align-items:center;gap:10px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:7px;padding:10px 14px;margin-bottom:8px;transition:border-color .2s;}
+.ls-item{display:flex;align-items:center;gap:10px;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:7px;padding:10px 14px;margin-bottom:8px;transition:border-color .2s;color:#f0f0f0;}
 .ls-item:hover{border-color:#2980b9;}
 .ls-info{flex:1;min-width:0;}
 .ls-nome{font-size:.9rem;font-weight:700;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -488,7 +488,7 @@ if('serviceWorker' in navigator){
         </div>
         <input type="file" id="inp-assin" accept="image/png" style="display:none;">
         <div id="assin-preview-wrap" style="display:none;">
-          <img id="assin-preview-img" src="" alt="" style="max-height:60px;border:1px solid #ddd;border-radius:4px;padding:4px;">
+          <img id="assin-preview-img" src="" alt="" style="max-height:60px;border:1px solid #444;border-radius:4px;padding:4px;background:#fff;">
         </div>
       </div>
     </div>
