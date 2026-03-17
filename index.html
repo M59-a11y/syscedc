@@ -7,18 +7,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --ink:      #0c0c0c;
-  --ink2:     #1a1a1a;
-  --ink3:     #666;
-  --cream:    #f0f0f0;
-  --gold:     #f97316;
-  --gold2:    #fb923c;
-  --red:      #c2410c;
-  --red2:     #ea580c;
-  --green:    #15803d;
-  --green2:   #16a34a;
-  --line:     rgba(249,115,22,0.2);
-  --glass:    rgba(249,115,22,0.04);
+  --ink:      #0e1520;
+  --ink2:     #2a3650;
+  --ink3:     #4a5878;
+  --cream:    #f7f4ef;
+  --gold:     #b8975a;
+  --gold2:    #d4b07a;
+  --red:      #8b1a2a;
+  --red2:     #a82236;
+  --green:    #1a4a35;
+  --green2:   #256648;
+  --line:     rgba(184,151,90,0.25);
+  --glass:    rgba(247,244,239,0.06);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,16 +40,16 @@ body {
 .bg {
   position: fixed; inset: 0; z-index: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(249,115,22,0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 85% 75%, rgba(249,115,22,0.05) 0%, transparent 60%),
-    radial-gradient(ellipse 100% 100% at 50% 50%, #0c0c0c 0%, #080808 100%);
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(139,26,42,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 85% 75%, rgba(26,74,53,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 100% at 50% 50%, #0e1520 0%, #080d14 100%);
 }
 
 .bg-grid {
   position: fixed; inset: 0; z-index: 0;
   background-image:
-    linear-gradient(rgba(249,115,22,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(249,115,22,0.04) 1px, transparent 1px);
+    linear-gradient(rgba(184,151,90,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184,151,90,0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
@@ -65,8 +65,8 @@ body {
   border-radius: 50%;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%);
-  border: 1px solid rgba(249,115,22,0.08);
+  background: radial-gradient(circle, rgba(184,151,90,0.04) 0%, transparent 70%);
+  border: 1px solid rgba(184,151,90,0.06);
   z-index: 0;
   animation: breathe 8s ease-in-out infinite;
 }
@@ -76,7 +76,7 @@ body {
   border-radius: 50%;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(249,115,22,0.04);
+  border: 1px solid rgba(184,151,90,0.03);
   z-index: 0;
   animation: breathe 12s ease-in-out infinite reverse;
 }
@@ -216,24 +216,24 @@ body {
 .card:active { transform: translateY(-2px) scale(0.98); }
 
 /* Card vermelho — CADSUS */
-.card-cadsus { border-color: rgba(249,115,22,0.25); }
+.card-cadsus { border-color: rgba(139,26,42,0.35); }
 .card-cadsus::before {
-  background: radial-gradient(ellipse at 30% 0%, rgba(249,115,22,0.12), transparent 70%);
+  background: radial-gradient(ellipse at 30% 0%, rgba(139,26,42,0.18), transparent 70%);
 }
 .card-cadsus:hover {
-  border-color: rgba(249,115,22,0.6);
-  box-shadow: 0 20px 60px rgba(249,115,22,0.2), 0 0 0 1px rgba(249,115,22,0.15);
+  border-color: rgba(168,34,54,0.6);
+  box-shadow: 0 20px 60px rgba(139,26,42,0.3), 0 0 0 1px rgba(168,34,54,0.2);
 }
 .card-cadsus:hover::before { opacity: 1; }
 
 /* Card escuro — SYSCEDC direto */
-.card-syscedc { border-color: rgba(249,115,22,0.15); }
+.card-syscedc { border-color: rgba(26,74,53,0.35); }
 .card-syscedc::before {
-  background: radial-gradient(ellipse at 30% 0%, rgba(249,115,22,0.1), transparent 70%);
+  background: radial-gradient(ellipse at 30% 0%, rgba(26,74,53,0.2), transparent 70%);
 }
 .card-syscedc:hover {
-  border-color: rgba(249,115,22,0.5);
-  box-shadow: 0 20px 60px rgba(249,115,22,0.15), 0 0 0 1px rgba(249,115,22,0.1);
+  border-color: rgba(37,102,72,0.6);
+  box-shadow: 0 20px 60px rgba(26,74,53,0.3), 0 0 0 1px rgba(37,102,72,0.2);
 }
 .card-syscedc:hover::before { opacity: 1; }
 
@@ -244,8 +244,8 @@ body {
   font-size: 20px;
   flex-shrink: 0;
 }
-.card-cadsus .card-icon { background: rgba(249,115,22,0.12); }
-.card-syscedc .card-icon { background: rgba(249,115,22,0.1); }
+.card-cadsus .card-icon { background: rgba(139,26,42,0.2); }
+.card-syscedc .card-icon { background: rgba(26,74,53,0.25); }
 
 .card-text { flex: 1; }
 .card-tag {
@@ -296,14 +296,14 @@ body {
 /* Card dourado — Financeiro */
 .card-financeiro { border-color: rgba(184,151,90,0.35); }
 .card-financeiro::before {
-  background: radial-gradient(ellipse at 30% 0%, rgba(249,115,22,0.1), transparent 70%);
+  background: radial-gradient(ellipse at 30% 0%, rgba(184,151,90,0.15), transparent 70%);
 }
 .card-financeiro:hover {
-  border-color: rgba(251,146,60,0.6);
-  box-shadow: 0 20px 60px rgba(249,115,22,0.12), 0 0 0 1px rgba(251,146,60,0.15);
+  border-color: rgba(212,176,122,0.6);
+  box-shadow: 0 20px 60px rgba(184,151,90,0.2), 0 0 0 1px rgba(212,176,122,0.2);
 }
 .card-financeiro:hover::before { opacity: 1; }
-.card-financeiro .card-icon { background: rgba(249,115,22,0.1); }
+.card-financeiro .card-icon { background: rgba(184,151,90,0.15); }
 .card-financeiro .card-tag { color: var(--gold2); }
 
 /* ── SETA CONECTORA ── */
@@ -339,7 +339,7 @@ body {
 /* ── LINHA DOURADA TOPO ── */
 .top-bar {
   position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 100;
-  background: linear-gradient(90deg, transparent 0%, #f97316 30%, #fb923c 50%, #f97316 70%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--gold2) 50%, var(--gold) 70%, transparent 100%);
   opacity: 0;
   animation: fadeIn 1s ease 0.1s forwards;
 }
