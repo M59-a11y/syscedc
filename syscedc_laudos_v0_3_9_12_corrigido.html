@@ -82,7 +82,7 @@ input:focus,textarea:focus{cursor:text;}
 }
 #badge-laudo.visivel{display:flex;}
 /* BARRA NAVEGAÇÃO IMPORTAÇÃO */
-#import-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:1001;background:#111;border-top:1px solid #2a2a2a;color:#fff;padding:10px 60px 10px 20px;align-items:center;justify-content:center;gap:16px;box-shadow:0 -3px 16px rgba(0,0,0,.6);}body:not(.print-mode){padding-bottom:60px;}
+#import-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:1001;background:#111;border-top:1px solid #2a2a2a;color:#fff;padding:10px 60px 10px 20px;align-items:center;justify-content:center;gap:16px;box-shadow:0 -3px 16px rgba(0,0,0,.6);}body{padding-bottom:60px;}
 #import-nav.visivel{display:flex;}#import-nav{display:flex!important;}
 /* Ocultar da sidebar botões que já estão no rodapé */
 .sidebar #sb-imprimir,.sidebar #sb-anterior,.sidebar #sb-proximo,.sidebar #sb-proximo-nav{display:none!important;}
@@ -193,6 +193,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   html,body{margin:0!important;padding:0!important;padding-bottom:0!important;background:#fff!important;}
+  #import-nav{display:none!important;}
   .sys-header,.sidebar,.noprint,#import-nav,.toast{display:none!important;}
   .wrap{margin:0!important;padding:0!important;max-width:none!important;height:auto!important;min-height:0!important;}
   #preview-sec{display:block!important;margin:0!important;padding:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;overflow:visible!important;line-height:0!font-size:0!important;}
@@ -1325,6 +1326,11 @@ function proximoLaudo(){
   var anoPartes=anoRaw.trim().split(/\s+/);
   var anoNum=anoPartes[0];
   var sufixoAtual=anoPartes.length>1?anoPartes.slice(1).join('').toUpperCase():'L1';
+
+  // Bloqueio: máximo 4 laudos por paciente
+  var mAtual=sufixoAtual.match(/L(\d+)$/);
+  var numAtual=mAtual?parseInt(mAtual[1]):1;
+  if(numAtual>=4){toast('Limite de 4 laudos por paciente atingido.','t-error');return;}
 
   // Guardar apenas os dados deste laudo (HTML será gerado na hora de imprimir)
   var dadosEste=JSON.parse(JSON.stringify(d));
