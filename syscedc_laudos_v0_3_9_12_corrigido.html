@@ -6,7 +6,7 @@
 <title>SYSCEDC – Sistema de Laudos v0.3.9.11</title>
 <style>
 
-:root{--red:#f97316;--dark:#0c0c0c;--gray:#888;--border:#2a2a2a;--green:#22c55e;--surface:#161616;--surface2:#1e1e1e;--muted:#666;--accent:#f97316;}
+:root{--red:#f97316;--dark:#0c0c0c;--gray:#888;--border:#2a2a2a;--green:#22c55e;--accent:#f97316;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0c0c0c;color:#f0f0f0;}
 
@@ -40,7 +40,7 @@ input:focus,textarea:focus{cursor:text;}
 .modal-head button{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;line-height:1;padding:0 4px;}
 .modal-tabs{display:flex;background:#111;border-bottom:2px solid #2a2a2a;}
 .modal-tab{flex:1;padding:10px;border:none;background:none;cursor:pointer;font-size:.85rem;font-weight:600;color:#666;transition:all .2s;}
-.modal-tab.ativo{background:#1e1e1e;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;}
+.modal-tab.ativo{background:#1e1e1e;color:#f97316;border-bottom:2px solid #f97316;margin-bottom:-2px;}
 .modal-body{padding:18px;overflow-y:auto;flex:1;}
 .cad-form{display:flex;gap:8px;margin-bottom:14px;}
 .cad-form input{flex:1;padding:8px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:.88rem;}
@@ -56,7 +56,7 @@ input:focus,textarea:focus{cursor:text;}
 .ac-lista{position:absolute;top:100%;left:0;right:0;background:#1e1e1e;border:1.5px solid #333;border-top:none;border-radius:0 0 6px 6px;z-index:9999;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.5);}
 .ac-item{padding:8px 12px;cursor:pointer;font-size:.88rem;border-bottom:1px solid #f0f0f0;}
 .ac-item:last-child{border-bottom:none;}
-.ac-item:hover,.ac-item.sel{background:#252525;color:var(--accent);}
+.ac-item:hover,.ac-item.sel{background:#252525;color:#f97316;}
 .ac-lista.oculta{display:none;}
 /* BADGE LAUDO ATUAL */
 #badge-laudo{
@@ -109,7 +109,7 @@ input:focus,textarea:focus{cursor:text;}
 .fgrp.c2{grid-column:span 2;}.fgrp.c3{grid-column:span 3;}
 label{font-size:.72rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;}
 input[type=text],input[type=date],select,textarea{padding:9px 12px;border:1.5px solid #2a2a2a;border-radius:6px;font-size:.9rem;color:#f0f0f0;transition:border-color .2s;background:#1e1e1e;font-family:inherit;width:100%;}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#252525;box-shadow:0 0 0 3px rgba(249,115,22,.12);}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#f97316;background:#252525;box-shadow:0 0 0 3px rgba(249,115,22,.12);}
 textarea{resize:vertical;min-height:90px;line-height:1.5;}
 #macro,#micro,#conclusao{line-height:1.6;font-size:.95rem;text-align:justify;padding:12px 14px;letter-spacing:.01em;}
 .nrow{display:flex;align-items:center;gap:4px;}
@@ -243,14 +243,7 @@ input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 50px #1e1e1e inset !important;
   -webkit-text-fill-color: #f0f0f0 !important;
-  caret-color: #f0f0f0 !important;
 }
-input[type=text]:not(:placeholder-shown),
-input[type=date]:not(:placeholder-shown) {
-  background: #1e1e1e !important;
-  color: #f0f0f0 !important;
-}
-
 </style>
 <link rel="icon" type="image/x-icon" href="cedc.ico">
 <link rel="manifest" href="manifest.json">
@@ -503,14 +496,14 @@ if('serviceWorker' in navigator){
         </div>
         <input type="file" id="inp-assin" accept="image/png" style="display:none;">
         <div id="assin-preview-wrap" style="display:none;">
-          <img id="assin-preview-img" src="" alt="" style="max-height:60px;border:1px solid #444;border-radius:4px;padding:4px;background:#fff;">
+          <img id="assin-preview-img" src="" alt="" style="max-height:60px;border:1px solid #ddd;border-radius:4px;padding:4px;">
         </div>
       </div>
     </div>
   </div>
 
 
-  <div id="preview-sec" class="card" style="padding:20px;" data-padding="20px">
+  <div id="preview-sec" class="card" style="padding:20px;">
     <div class="noprint" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <h3 style="color:var(--red);">📄 Preview do Laudo</h3>
       <div style="display:flex;gap:10px;">
@@ -1597,11 +1590,11 @@ function imprimirLaudo(){
     window.onafterprint=function(){
       window.onafterprint=null;
       document.title=tituloAnterior;
-      document.getElementById('preview-sec').style.padding='20px';
       limparSilencioso();
       voltarTelaExtrator();
     };
     window.print();
+    document.getElementById('preview-sec').style.padding='20px';
   },250);
 }
 
