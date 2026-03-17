@@ -1597,11 +1597,11 @@ function imprimirLaudo(){
     window.onafterprint=function(){
       window.onafterprint=null;
       document.title=tituloAnterior;
+      document.getElementById('preview-sec').style.padding='20px';
       limparSilencioso();
       voltarTelaExtrator();
     };
     window.print();
-    document.getElementById('preview-sec').style.padding='20px';
   },250);
 }
 
