@@ -236,6 +236,21 @@ padding:4mm 0;
   .sys-header{flex-direction:column;gap:10px;text-align:center;}
   .sidebar{display:none;}
 }
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 50px #1e1e1e inset !important;
+  -webkit-text-fill-color: #f0f0f0 !important;
+  caret-color: #f0f0f0 !important;
+}
+input[type=text]:not(:placeholder-shown),
+input[type=date]:not(:placeholder-shown) {
+  background: #1e1e1e !important;
+  color: #f0f0f0 !important;
+}
+
 </style>
 <link rel="icon" type="image/x-icon" href="cedc.ico">
 <link rel="manifest" href="manifest.json">
