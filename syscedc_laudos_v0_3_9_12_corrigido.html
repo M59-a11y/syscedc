@@ -192,12 +192,11 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
 /* PRINT */
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  html,body{margin:0!important;padding:0!important;padding-bottom:0!important;background:#fff!important;}
-  #import-nav{display:none!important;}
+  html,body{margin:0!important;padding:0!important;background:#fff!important;}
   .sys-header,.sidebar,.noprint,#import-nav,.toast{display:none!important;}
-  .wrap{margin:0!important;padding:0!important;max-width:none!important;height:auto!important;min-height:0!important;}
-  #preview-sec{display:block!important;margin:0!important;padding:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;overflow:visible!important;line-height:0!font-size:0!important;}
-  #laudo-print,[id^="laudo-print-"]{margin:0!important;box-shadow:none!important;width:210mm!important;height:297mm!important;overflow:hidden!important;page-break-after:always;page-break-inside:avoid;display:block!important;}
+  .wrap{margin:0!important;padding:0!important;max-width:none!important;}
+  #preview-sec{display:block!important;margin:0!important;padding:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;overflow:visible!important;}
+  #laudo-print,[id^="laudo-print-"]{margin:0!important;box-shadow:none!important;width:210mm!important;height:297mm!important;overflow:hidden!important;}
   #laudo-print .conteudo,[id^="laudo-print-"] .conteudo{overflow:hidden!important;}
   .card:not(#preview-sec){display:none!important;}
   @page{size:A4 portrait;margin:0;}
@@ -228,9 +227,6 @@ padding:4mm 0;
   .assin-img:not(.assin-oculta){display:block!important;width:38mm!important;max-height:12mm!important;object-fit:contain!important;image-rendering:-webkit-optimize-contrast!important;image-rendering:crisp-edges!important;margin-left:8mm!important;}
   .l-rodape{font-family:'abadi-mt-condensed-light',sans-serif!important;font-size:8pt!important;line-height:118%!important;}
   .res-linha{font-family:'abadi-mt-condensed-light',sans-serif!important;font-size:9pt!important;font-weight:400!important;line-height:118%!important;}
-  #preview-sec[data-padding]{padding:0!important;margin:0!important;}
-  .wrap{padding:0!important;margin:0!important;}
-
   .r-val-tipo{font-family:'abadi-mt-condensed-light',sans-serif!important;font-size:10pt!important;font-weight:400!important;line-height:118%!important;color:#000!important;}
   .ident-r2,.ident-r3,.ident-r4{font-family:'abadi-mt-condensed-light',sans-serif!important;line-height:118%!important;}
 }
