@@ -2396,6 +2396,8 @@ function _importNavProximo(){
 
 // Eventos adicionais (cadastros, modal, navegação)
 document.addEventListener('DOMContentLoaded', function(){
+  var elFocoInicial = document.getElementById('numExame');
+  if(elFocoInicial) elFocoInicial.focus();
   // modal cadastros: onclick inline nos botões
   // fechar ao clicar fora
   document.getElementById('modal-cadastros').addEventListener('click', function(e){if(e.target===this)fecharCadastros();});
