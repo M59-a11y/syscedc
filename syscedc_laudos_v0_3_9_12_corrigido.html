@@ -1714,6 +1714,53 @@ renderMateriais();
   }
 })();
 
+// Verificar se há dados via URL (vindo do CITOLOGIC localhost)
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    if(!params.get('nome')) return;
+    var d = {
+      nome:      params.get('nome')||'',
+      dataNasc:  params.get('nasc')||'',
+      nomeMae:   params.get('mae')||'',
+      cartaoSus: params.get('cns')||'',
+      cpf:       params.get('cpf')||'',
+      tel:       params.get('tel')||'',
+      unidade:   params.get('unidade')||'',
+      medicoReq: params.get('medico')||'',
+      dataSolic: params.get('solic')||'',
+      tipoMatCito: params.get('material')||''
+    };
+    // Preencher campos do paciente
+    var mapa = {
+      nome:'nome', dataNasc:'dataNasc', nomeMae:'nomeMae',
+      cartaoSus:'cartaoSus', cpf:'cpf', tel:'tel',
+      unidade:'unidade', medicoReq:'medicoReq',
+      dataSolic:'dataSolic', tipoMatCito:'tipoMatCito'
+    };
+    Object.keys(mapa).forEach(function(campo){
+      var el = document.getElementById(mapa[campo]);
+      if(el && d[campo]) {
+        var val = d[campo];
+        if(campo==='dataNasc' && val.indexOf('-')!==-1) val=dataISOParaTexto(val);
+        if(campo==='dataSolic' && val.indexOf('-')!==-1) val=dataISOParaTexto(val);
+        el.value = val;
+      }
+    });
+    var eNome = document.getElementById('nome');
+    if(eNome && eNome.value) eNome.value = acentuarNome(eNome.value).toUpperCase();
+    var eMae = document.getElementById('nomeMae');
+    if(eMae && eMae.value) eMae.value = acentuarNome(eMae.value).toUpperCase();
+    // Limpar URL sem recarregar
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(function(){
+      toast('✅ Paciente importado do CITOLOGIC: '+(d.nome||''),'t-info',3000);
+      var eExame = document.getElementById('numExame');
+      if(eExame) eExame.focus();
+    }, 400);
+  } catch(e) { /* silencioso */ }
+})();
+
 // Verificar se há dados do CADSUS aguardando
 (function(){
   try {
