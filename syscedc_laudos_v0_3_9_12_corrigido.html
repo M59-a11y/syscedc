@@ -1232,7 +1232,9 @@ function gerarPreview(){
   // Seções de conteúdo
   document.getElementById('bloco-macro').style.display = isAnatomoOuRevisao ? '' : 'none';
   var elMacTit=document.getElementById('p-macro-tit');
-  if(elMacTit) elMacTit.textContent=isRevisao?'Descrição:':((isPaaf||isCito)?'Microscopia:':'Macroscopia:');
+  if(elMacTit) elMacTit.textContent =
+  isRevisao ? 'Descrição:' :
+  ((isPaaf || isCito) ? 'Microscopia:' : 'Macroscopia:');
   var bm=document.getElementById('bloco-micro');
   if(isAnatomo && d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}
   else{bm.style.display='none';}
