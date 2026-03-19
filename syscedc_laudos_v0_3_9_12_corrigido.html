@@ -542,8 +542,8 @@ if('serviceWorker' in navigator){
           </div>
         </div>
         <div class="l-res-titulo" id="p-res-titulo">Resultado do Exame</div>
-        <div class="res-linha" id="row-dsolic"><span class="r-lbl">Data da Solicitação: </span><span class="r-val" id="p-dsolic"></span></div>
-        <div class="res-linha" id="row-dent"><span class="r-lbl">Data de Entrada: </span><span class="r-val" id="p-dent"></span></div>
+        <div class="res-linha" id="row-dsolic"><span class="r-lbl" style="display:inline-block;min-width:38mm;">Data da Solicitação: </span><span class="r-val" id="p-dsolic"></span></div>
+        <div class="res-linha" id="row-dent"><span class="r-lbl" style="display:inline-block;min-width:38mm;">Data de Entrada: </span><span class="r-val" id="p-dent"></span></div>
         <div class="res-linha" id="bloco-materiais-res"></div>
 
         <!-- Bloco PAAF / Citologia Geral -->
@@ -2004,7 +2004,8 @@ function snippetExpandir(textarea, gatilho){
   if(!snip) return false;
   var texto=snip.texto;
   // gatilho pontuação: acrescenta ao final; espaço: adiciona espaço após
-  var sufixo=(gatilho&&gatilho!==' ')?gatilho:' ';
+  // se texto já termina com o mesmo caractere do gatilho, não duplicar
+  var sufixo=(gatilho&&gatilho!==' ')?(texto.trimEnd().endsWith(gatilho)?'':gatilho):' ';
   var novoVal=val.substring(0,inicio)+texto+sufixo+val.substring(pos);
   textarea.value=novoVal;
   var posCursor=novoVal.indexOf('__',inicio);
@@ -2396,8 +2397,6 @@ function _importNavProximo(){
 
 // Eventos adicionais (cadastros, modal, navegação)
 document.addEventListener('DOMContentLoaded', function(){
-  var elFocoInicial = document.getElementById('numExame');
-  if(elFocoInicial) elFocoInicial.focus();
   // modal cadastros: onclick inline nos botões
   // fechar ao clicar fora
   document.getElementById('modal-cadastros').addEventListener('click', function(e){if(e.target===this)fecharCadastros();});
