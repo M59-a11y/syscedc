@@ -1240,7 +1240,7 @@ function gerarPreview(){
   else{bm.style.display='none';}
 
   // Conclusão / Resultado
-  var titConcl = isAnatomo ? 'Conclusão:' : (isPaaf ? (_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:') : 'Resultado:');
+  var titConcl = isAnatomo ? 'Conclusão:' : (isPaaf ? (_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:') : (isCito && !_isCitologiaLiquidos(d) ? 'Resultado da Citologia Geral:' : 'Resultado:'));
   set('p-concl-tit', titConcl);
   var elCT=document.getElementById('p-concl-tit');
   if(elCT) elCT.style.display=titConcl?'':'none';
