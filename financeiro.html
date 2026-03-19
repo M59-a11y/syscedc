@@ -117,6 +117,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .rodape-nome{font-size:.88rem;font-weight:700;color:var(--text);letter-spacing:.5px;margin-bottom:1px;}
 .rodape-cargo{font-size:.7rem;color:var(--muted);letter-spacing:.5px;}
 
+
+/* IMPORTAR SISCAN */
+.btn-siscan{background:linear-gradient(135deg,#7e22ce,#c084fc);color:#fff;}
+.btn-siscan:hover{background:linear-gradient(135deg,#6b21a8,#a855f7);}
+.siscan-status{margin-top:10px;font-size:.8rem;padding:8px 14px;border-radius:6px;display:none;}
+.siscan-status.ok{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.2);}
+.siscan-status.erro{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);}
+.siscan-status.info{background:rgba(192,132,252,.1);color:#c084fc;border:1px solid rgba(192,132,252,.2);}
+
 /* SEPARADOR */
 .sep{height:1px;background:var(--border);margin:24px 0;}
 @media print{
@@ -297,8 +306,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
   </div>
 
+  
+  <input type="file" id="inp-siscan-pdf" accept=".pdf" style="display:none" onchange="importarSISCAN(this)">
+  <div class="siscan-status" id="siscan-status"></div>
+
   <div class="footer-btns">
     <button class="btn btn-voltar" onclick="window.history.back()">← Voltar</button>
+    <button class="btn btn-siscan" onclick="document.getElementById('inp-siscan-pdf').click()">📄 Importar PDF SISCAN</button>
     <button class="btn btn-limpar" onclick="limparMes()">🗑 Limpar Mês</button>
     <button class="btn btn-imprimir" onclick="window.print()">🖨 Imprimir</button>
   </div>
@@ -313,6 +327,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <button class="te-cancel" onclick="teFechar()">✕</button>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+</script>
 <script>
 const FIXO = 4651;
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -479,6 +497,88 @@ function limparMes(){
   delete d[k];
   salvar(d);
   render();
+}
+
+
+// ── Importar PDF SISCAN ──
+// Detecta tipo pelo título e data de liberação de cada laudo
+function importarSISCAN(inp){
+  var file = inp.files[0];
+  if(!file) return;
+  inp.value='';
+  var status = document.getElementById('siscan-status');
+  status.className='siscan-status info';
+  status.style.display='block';
+  status.textContent='Lendo PDF... aguarde.';
+
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var typedarray = new Uint8Array(e.target.result);
+    pdfjsLib.getDocument({data: typedarray}).promise.then(function(pdf){
+      var total = pdf.numPages;
+      var contadores = {}; // {tipo: {dia: count}}
+      var promises = [];
+      for(var p=1; p<=total; p++){
+        promises.push(pdf.getPage(p).then(function(page){
+          return page.getTextContent().then(function(tc){
+            var items = tc.items.map(function(i){return i.str||'';});
+            var texto = items.join(' ');
+
+            // Detectar tipo pelo título do laudo (texto completo da página)
+            var tipo = null;
+            if(/LAUDO DO EXAME HISTOPATOL[ÓO]GICO (DO COLO|DE MAMA|DA MAMA)/i.test(texto)) tipo='histo';
+            else if(/LAUDO DO EXAME CITOPATOL[ÓO]GICO (DE MAMA|DA MAMA)/i.test(texto)) tipo='paaf';
+            else if(/LAUDO DO EXAME CITOPATOL[ÓO]GICO/i.test(texto)) tipo='cito';
+            if(!tipo) return;
+
+            // Detectar data de liberação: DD/MM/AAAA após "Data da liberação" ou última data no texto
+            var dataMatch = texto.match(/Data\s+da\s+libera[cç][aã]o\s+do\s+resultado[:\s]+([0-9]{2}\/[0-9]{2}\/[0-9]{4})/i);
+            if(!dataMatch){
+              // fallback: pegar última data DD/MM/AAAA no texto
+              var datas = texto.match(/[0-9]{2}\/[0-9]{2}\/[0-9]{4}/g);
+              if(datas && datas.length) dataMatch = [null, datas[datas.length-1]];
+            }
+            if(!dataMatch) return;
+
+            var partes = dataMatch[1].split('/');
+            var dia = parseInt(partes[0]);
+            var mes = parseInt(partes[1])-1;
+            var ano = parseInt(partes[2]);
+
+            var k = ano+'-'+(mes<9?'0':'')+(mes+1);
+            if(!contadores[k]) contadores[k]={};
+            if(!contadores[k][tipo]) contadores[k][tipo]={};
+            contadores[k][tipo][dia] = (contadores[k][tipo][dia]||0)+1;
+          });
+        }));
+      }
+      Promise.all(promises).then(function(){
+        // Gravar no localStorage
+        var d = dados();
+        var totalImportado = 0;
+        Object.keys(contadores).forEach(function(k){
+          if(!d[k]) d[k]={};
+          Object.keys(contadores[k]).forEach(function(tipo){
+            if(!d[k][tipo]) d[k][tipo]={};
+            Object.keys(contadores[k][tipo]).forEach(function(dia){
+              var n = contadores[k][tipo][dia];
+              d[k][tipo][dia] = (d[k][tipo][parseInt(dia)]||0)+n;
+              totalImportado+=n;
+            });
+          });
+        });
+        salvar(d);
+        render();
+        status.className='siscan-status ok';
+        status.textContent='✓ '+totalImportado+' laudo(s) importado(s) do SISCAN com sucesso.';
+        setTimeout(function(){status.style.display='none';},5000);
+      });
+    }).catch(function(err){
+      status.className='siscan-status erro';
+      status.textContent='Erro ao ler PDF: '+err.message;
+    });
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 // init
