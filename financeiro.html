@@ -317,61 +317,139 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 const FIXO = 4651;
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const LS_KEY = 'syscedc_financeiro';
+const LAUDOS_KEY = 'cedc_laudos';
 
 var _anoAtual = new Date().getFullYear();
 var _mesAtual = new Date().getMonth(); // 0-based
 var _teAlvo = null; // {tipo, dia}
+var _baseMesAtual = null;
 
 // ── localStorage ──
-function dados(){ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }
+function dados(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }catch(e){ return {}; } }
 function salvar(d){ localStorage.setItem(LS_KEY, JSON.stringify(d)); }
+function laudosSalvos(){ try{ return JSON.parse(localStorage.getItem(LAUDOS_KEY)||'[]'); }catch(e){ return []; } }
 
 function chave(ano, mes){ return ano+'-'+(mes<9?'0':'')+(mes+1); }
 
-function getDia(tipo, dia){
+function getExtrasMes(){
   var d = dados();
   var k = chave(_anoAtual, _mesAtual);
-  return (d[k] && d[k][tipo] && d[k][tipo][dia]) || 0;
+  if(!d[k]) d[k] = {};
+  return d[k];
 }
+
+function getExtraDia(tipo, dia){
+  var m = getExtrasMes();
+  return (m[tipo] && typeof m[tipo][dia] === 'number') ? m[tipo][dia] : 0;
+}
+
+function getBaseDia(tipo, dia){
+  if(!_baseMesAtual) _baseMesAtual = montarBaseMes(_anoAtual, _mesAtual);
+  return (_baseMesAtual[tipo] && _baseMesAtual[tipo][dia]) || 0;
+}
+
+function getDia(tipo, dia){
+  return Math.max(0, getBaseDia(tipo, dia) + getExtraDia(tipo, dia));
+}
+
 function setDia(tipo, dia, val){
+  val = Math.max(0, parseInt(val,10) || 0);
   var d = dados();
   var k = chave(_anoAtual, _mesAtual);
-  if(!d[k]) d[k]={};
-  if(!d[k][tipo]) d[k][tipo]={};
-  if(val>0) d[k][tipo][dia]=val;
-  else delete d[k][tipo][dia];
+  if(!d[k]) d[k] = {};
+  if(!d[k][tipo]) d[k][tipo] = {};
+  var extra = val - getBaseDia(tipo, dia);
+  if(extra === 0) delete d[k][tipo][dia];
+  else d[k][tipo][dia] = extra;
+  if(d[k][tipo] && Object.keys(d[k][tipo]).length===0) delete d[k][tipo];
+  if(d[k] && Object.keys(d[k]).length===0) delete d[k];
   salvar(d);
 }
 
-// ── registrar laudo impresso via localStorage ──
-// O SYSCEDC grava em 'syscedc_prod_log' um array de {tipo:'anatomo'|'cito', data:'YYYY-MM-DD'}
-// Este módulo lê esse log, contabiliza e sincroniza
-function sincronizarLog(){
-  var log = JSON.parse(localStorage.getItem('syscedc_prod_log')||'[]');
-  if(!log.length) return;
+function parsePtBrDateTime(s){
+  s = String(s||'').trim();
+  var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:,\s*(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if(!m) return null;
+  return new Date(
+    parseInt(m[3],10),
+    parseInt(m[2],10)-1,
+    parseInt(m[1],10),
+    parseInt(m[4]||'0',10),
+    parseInt(m[5]||'0',10),
+    parseInt(m[6]||'0',10)
+  );
+}
+
+function temMarcadorC(numAno){
+  var raw = String(numAno||'').trim().toUpperCase();
+  return /(?:^|\s)C(?:\s|$)/.test(raw) || /L\d+C\b/.test(raw);
+}
+
+function tipoFinanceiroDoLaudo(dadosLaudo){
+  if(!dadosLaudo) return null;
+  var tipo = String(dadosLaudo.tipoLaudo||'').trim().toLowerCase();
+  if(tipo === 'anatomo') return 'anatomo';
+  if(tipo === 'citogeral') return 'cito';
+  if(tipo === 'paaf') return temMarcadorC(dadosLaudo.numAno) ? 'cito' : 'paaf';
+  return null;
+}
+
+function laudoContavel(reg){
+  if(!reg || !reg.dados) return false;
+  var d = reg.dados;
+  if(!(d.nome||'').trim()) return false;
+  if(!(d.numExame||'').trim()) return false;
+  var tipo = tipoFinanceiroDoLaudo(d);
+  if(!tipo) return false;
+  if(tipo === 'anatomo'){
+    var temSaida = (d.macro||'').trim() || (d.conclusao||'').trim() || (Array.isArray(d.materiais) && d.materiais.length) || (Array.isArray(d._materiais) && d._materiais.length);
+    if(!temSaida) return false;
+  }
+  return true;
+}
+
+function montarBaseMes(ano, mes){
+  var base = {anatomo:{}, cito:{}, histo:{}, paaf:{}};
+  var regs = laudosSalvos();
+  regs.forEach(function(reg){
+    if(!laudoContavel(reg)) return;
+    var dt = parsePtBrDateTime(reg.salvoEm);
+    if(!dt || dt.getFullYear() !== ano || dt.getMonth() !== mes) return;
+    var tipo = tipoFinanceiroDoLaudo(reg.dados);
+    if(!tipo) return;
+    var dia = dt.getDate();
+    base[tipo][dia] = (base[tipo][dia] || 0) + 1;
+  });
+  return base;
+}
+
+function atualizarBaseMes(){
+  _baseMesAtual = montarBaseMes(_anoAtual, _mesAtual);
+}
+
+// ── compatibilidade com log antigo ──
+// Se ainda existir syscedc_prod_log, integra uma única vez aos ajustes do mês e limpa o log.
+function sincronizarLogLegado(){
+  var log;
+  try{ log = JSON.parse(localStorage.getItem('syscedc_prod_log')||'[]'); }catch(e){ log=[]; }
+  if(!Array.isArray(log) || !log.length) return;
   var d = dados();
   log.forEach(function(entry){
     if(!entry||!entry.tipo||!entry.data) return;
-    var partes = entry.data.split('-');
+    var partes = String(entry.data).split('-');
     if(partes.length!==3) return;
-    var ano=parseInt(partes[0]), mes=parseInt(partes[1])-1, dia=parseInt(partes[2]);
-    var k = ano+'-'+(mes<9?'0':'')+(mes+1);
+    var ano=parseInt(partes[0],10), mes=parseInt(partes[1],10)-1, dia=parseInt(partes[2],10);
+    var k = chave(ano, mes);
     if(!d[k]) d[k]={};
-    var tipo = entry.tipo;
-    if(tipo === 'anatomo'){
-      tipo = 'anatomo';
-    } else if(tipo === 'histo'){
-      tipo = 'histo';
-    } else if(tipo === 'paaf'){
-      tipo = 'paaf';
-    } else {
-      tipo = 'cito'; // geral/tireoide
-    }
+    var tipo = 'cito';
+    if(entry.tipo==='anatomo') tipo='anatomo';
+    else if(entry.tipo==='histo') tipo='histo';
+    else if(entry.tipo==='paaf') tipo='paaf';
     if(!d[k][tipo]) d[k][tipo]={};
     d[k][tipo][dia] = (d[k][tipo][dia]||0)+1;
   });
   salvar(d);
-  // log preservado para evitar sumiço inesperado na conferência
+  localStorage.removeItem('syscedc_prod_log');
 }
 
 // ── dias no mês ──
@@ -379,7 +457,8 @@ function diasNoMes(ano, mes){ return new Date(ano, mes+1, 0).getDate(); }
 
 // ── renderizar ──
 function render(){
-  sincronizarLog();
+  sincronizarLogLegado();
+  atualizarBaseMes();
   var hoje = new Date();
   var dHoje = hoje.getDate(), mHoje = hoje.getMonth(), aHoje = hoje.getFullYear();
   var total = diasNoMes(_anoAtual, _mesAtual);
@@ -407,9 +486,13 @@ function render(){
     }
   });
 
-  // totais
   var totA=0,totC=0,totH=0,totP=0;
-  for(var i=1;i<=total;i++){totA+=getDia('anatomo',i); totC+=getDia('cito',i); totH+=getDia('histo',i); totP+=getDia('paaf',i);}
+  for(var i=1;i<=total;i++){
+    totA+=getDia('anatomo',i);
+    totC+=getDia('cito',i);
+    totH+=getDia('histo',i);
+    totP+=getDia('paaf',i);
+  }
   var totG=totA+totC+totH+totP;
   var valor=FIXO+totG;
 
@@ -448,7 +531,8 @@ function teAbrir(e, tipo, dia){
   var te=document.getElementById('tooltip-editor');
   var inp=document.getElementById('te-input');
   var lbl=document.getElementById('te-label');
-  lbl.textContent=(tipo==='anatomo'?'Anatomo':'Citologia')+' — Dia '+(dia<10?'0'+dia:dia);
+  var nomes={anatomo:'Anatomo', cito:'Citologia', histo:'Histo', paaf:'PAAF'};
+  lbl.textContent=(nomes[tipo]||tipo)+' — Dia '+(dia<10?'0'+dia:dia);
   inp.value=getDia(tipo,dia)||'';
   te.style.display='flex';
   var rect=e.target.getBoundingClientRect();
@@ -461,8 +545,8 @@ function teAbrir(e, tipo, dia){
 }
 function teConfirmar(){
   if(!_teAlvo) return;
-  var val=parseInt(document.getElementById('te-input').value)||0;
-  setDia(_teAlvo.tipo,_teAlvo.dia,val);
+  var val=parseInt(document.getElementById('te-input').value,10);
+  setDia(_teAlvo.tipo,_teAlvo.dia,isNaN(val)?0:val);
   teFechar();
   render();
 }
@@ -481,14 +565,13 @@ document.addEventListener('click',function(e){
 
 // ── limpar mês ──
 function limparMes(){
-  if(!confirm('Limpar todos os dados de '+MESES[_mesAtual]+' de '+_anoAtual+'?')) return;
+  if(!confirm('Limpar os ajustes manuais de '+MESES[_mesAtual]+' de '+_anoAtual+'?\n\nOs laudos salvos no SYSCEDC continuam sendo contados automaticamente.')) return;
   var d=dados();
   var k=chave(_anoAtual,_mesAtual);
   delete d[k];
   salvar(d);
   render();
 }
-
 // init
 render();
 </script>
