@@ -117,6 +117,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .rodape-nome{font-size:.88rem;font-weight:700;color:var(--text);letter-spacing:.5px;margin-bottom:1px;}
 .rodape-cargo{font-size:.7rem;color:var(--muted);letter-spacing:.5px;}
 
+
+.btn-siscan{background:linear-gradient(135deg,#7e22ce,#c084fc);color:#fff;}
+.btn-siscan:hover{background:linear-gradient(135deg,#6b21a8,#a855f7);}
+.siscan-status{margin-top:10px;font-size:.8rem;padding:8px 14px;border-radius:6px;display:none;}
+.siscan-status.ok{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.2);}
+.siscan-status.erro{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);}
+.siscan-status.info{background:rgba(192,132,252,.1);color:#c084fc;border:1px solid rgba(192,132,252,.2);}
+
 /* SEPARADOR */
 .sep{height:1px;background:var(--border);margin:24px 0;}
 @media print{
@@ -297,8 +305,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
   </div>
 
+  <input type="file" id="inp-siscan-pdf" accept=".pdf" style="display:none" onchange="importarSISCAN(this)">
+  <div class="siscan-status" id="siscan-status"></div>
+
   <div class="footer-btns">
     <button class="btn btn-voltar" onclick="window.history.back()">← Voltar</button>
+    <button class="btn btn-siscan" onclick="document.getElementById('inp-siscan-pdf').click()">📄 Importar PDF SISCAN</button>
     <button class="btn btn-limpar" onclick="limparMes()">🗑 Limpar Mês</button>
     <button class="btn btn-imprimir" onclick="window.print()">🖨 Imprimir</button>
   </div>
@@ -313,156 +325,185 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <button class="te-cancel" onclick="teFechar()">✕</button>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+</script>
 <script>
 const FIXO = 4651;
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const LS_KEY = 'syscedc_financeiro';
-const LAUDOS_KEY = 'cedc_laudos';
+const LS_PDF = 'syscedc_financeiro_siscan';
+const LS_LAUDOS = 'cedc_laudos';
 
 var _anoAtual = new Date().getFullYear();
-var _mesAtual = new Date().getMonth(); // 0-based
-var _teAlvo = null; // {tipo, dia}
-var _baseMesAtual = null;
+var _mesAtual = new Date().getMonth();
+var _teAlvo = null;
 
-// ── localStorage ──
-function dados(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }catch(e){ return {}; } }
+function dados(){ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }
 function salvar(d){ localStorage.setItem(LS_KEY, JSON.stringify(d)); }
-function laudosSalvos(){ try{ return JSON.parse(localStorage.getItem(LAUDOS_KEY)||'[]'); }catch(e){ return []; } }
-
+function pdfDados(){ return JSON.parse(localStorage.getItem(LS_PDF)||'{}'); }
+function salvarPdf(d){ localStorage.setItem(LS_PDF, JSON.stringify(d)); }
 function chave(ano, mes){ return ano+'-'+(mes<9?'0':'')+(mes+1); }
+function mesKeyAtual(){ return chave(_anoAtual, _mesAtual); }
 
-function getExtrasMes(){
+function getManual(tipo, dia){
   var d = dados();
-  var k = chave(_anoAtual, _mesAtual);
-  if(!d[k]) d[k] = {};
-  return d[k];
+  var k = mesKeyAtual();
+  return d[k] && d[k][tipo] && Object.prototype.hasOwnProperty.call(d[k][tipo], dia) ? d[k][tipo][dia] : null;
 }
-
-function getExtraDia(tipo, dia){
-  var m = getExtrasMes();
-  return (m[tipo] && typeof m[tipo][dia] === 'number') ? m[tipo][dia] : 0;
-}
-
-function getBaseDia(tipo, dia){
-  if(!_baseMesAtual) _baseMesAtual = montarBaseMes(_anoAtual, _mesAtual);
-  return (_baseMesAtual[tipo] && _baseMesAtual[tipo][dia]) || 0;
-}
-
-function getDia(tipo, dia){
-  return Math.max(0, getBaseDia(tipo, dia) + getExtraDia(tipo, dia));
-}
-
-function setDia(tipo, dia, val){
-  val = Math.max(0, parseInt(val,10) || 0);
+function setManual(tipo, dia, val){
   var d = dados();
-  var k = chave(_anoAtual, _mesAtual);
+  var k = mesKeyAtual();
   if(!d[k]) d[k] = {};
   if(!d[k][tipo]) d[k][tipo] = {};
-  var extra = val - getBaseDia(tipo, dia);
-  if(extra === 0) delete d[k][tipo][dia];
-  else d[k][tipo][dia] = extra;
-  if(d[k][tipo] && Object.keys(d[k][tipo]).length===0) delete d[k][tipo];
-  if(d[k] && Object.keys(d[k]).length===0) delete d[k];
+  if(val > 0) d[k][tipo][dia] = val;
+  else delete d[k][tipo][dia];
+  if(d[k][tipo] && !Object.keys(d[k][tipo]).length) delete d[k][tipo];
+  if(d[k] && !Object.keys(d[k]).length) delete d[k];
   salvar(d);
 }
 
-function parsePtBrDateTime(s){
-  s = String(s||'').trim();
-  var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:,\s*(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
-  if(!m) return null;
-  return new Date(
-    parseInt(m[3],10),
-    parseInt(m[2],10)-1,
-    parseInt(m[1],10),
-    parseInt(m[4]||'0',10),
-    parseInt(m[5]||'0',10),
-    parseInt(m[6]||'0',10)
-  );
+function normalizar(txt){
+  return String(txt||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
 }
-
-function temMarcadorC(numAno){
-  var raw = String(numAno||'').trim().toUpperCase();
-  return /(?:^|\s)C(?:\s|$)/.test(raw) || /L\d+C\b/.test(raw);
+function extrairDataBR(txt){
+  var m = String(txt||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return m ? {dia:parseInt(m[1],10), mes:parseInt(m[2],10)-1, ano:parseInt(m[3],10)} : null;
 }
-
-function tipoFinanceiroDoLaudo(dadosLaudo){
-  if(!dadosLaudo) return null;
-  var tipo = String(dadosLaudo.tipoLaudo||'').trim().toLowerCase();
+function extrairMesKeyBR(txt){
+  var d = extrairDataBR(txt);
+  return d ? chave(d.ano,d.mes) : null;
+}
+function tipoSyscedc(reg){
+  var tipo = reg && reg.dados ? reg.dados.tipoLaudo : '';
   if(tipo === 'anatomo') return 'anatomo';
-  if(tipo === 'citogeral') return 'cito';
-  if(tipo === 'paaf') return temMarcadorC(dadosLaudo.numAno) ? 'cito' : 'paaf';
+  if(tipo === 'citogeral' || tipo === 'paaf') return 'cito';
   return null;
 }
-
-function laudoContavel(reg){
-  if(!reg || !reg.dados) return false;
-  var d = reg.dados;
-  if(!(d.nome||'').trim()) return false;
-  if(!(d.numExame||'').trim()) return false;
-  var tipo = tipoFinanceiroDoLaudo(d);
-  if(!tipo) return false;
-  if(tipo === 'anatomo'){
-    var temSaida = (d.macro||'').trim() || (d.conclusao||'').trim() || (Array.isArray(d.materiais) && d.materiais.length) || (Array.isArray(d._materiais) && d._materiais.length);
-    if(!temSaida) return false;
-  }
-  return true;
-}
-
-function montarBaseMes(ano, mes){
-  var base = {anatomo:{}, cito:{}, histo:{}, paaf:{}};
-  var regs = laudosSalvos();
-  regs.forEach(function(reg){
-    if(!laudoContavel(reg)) return;
-    var dt = parsePtBrDateTime(reg.salvoEm);
-    if(!dt || dt.getFullYear() !== ano || dt.getMonth() !== mes) return;
-    var tipo = tipoFinanceiroDoLaudo(reg.dados);
+function contagensSyscedc(){
+  var mapa = {};
+  var laudos;
+  try{ laudos = JSON.parse(localStorage.getItem(LS_LAUDOS)||'[]'); }catch(e){ laudos = []; }
+  if(!Array.isArray(laudos)) return mapa;
+  laudos.forEach(function(reg){
+    if(!reg || !reg.chave || !reg.dados || !reg.dados.numExame) return;
+    var tipo = tipoSyscedc(reg);
     if(!tipo) return;
-    var dia = dt.getDate();
-    base[tipo][dia] = (base[tipo][dia] || 0) + 1;
+    var dt = extrairDataBR(reg.salvoEm || '');
+    if(!dt) return;
+    var k = chave(dt.ano, dt.mes);
+    if(!mapa[k]) mapa[k] = {anatomo:{}, cito:{}, histo:{}, paaf:{}};
+    mapa[k][tipo][dt.dia] = (mapa[k][tipo][dt.dia] || 0) + 1;
   });
-  return base;
+  return mapa;
 }
-
-function atualizarBaseMes(){
-  _baseMesAtual = montarBaseMes(_anoAtual, _mesAtual);
-}
-
-// ── compatibilidade com log antigo ──
-// Se ainda existir syscedc_prod_log, integra uma única vez aos ajustes do mês e limpa o log.
-function sincronizarLogLegado(){
-  var log;
-  try{ log = JSON.parse(localStorage.getItem('syscedc_prod_log')||'[]'); }catch(e){ log=[]; }
-  if(!Array.isArray(log) || !log.length) return;
-  var d = dados();
-  log.forEach(function(entry){
-    if(!entry||!entry.tipo||!entry.data) return;
-    var partes = String(entry.data).split('-');
-    if(partes.length!==3) return;
-    var ano=parseInt(partes[0],10), mes=parseInt(partes[1],10)-1, dia=parseInt(partes[2],10);
-    var k = chave(ano, mes);
-    if(!d[k]) d[k]={};
-    var tipo = 'cito';
-    if(entry.tipo==='anatomo') tipo='anatomo';
-    else if(entry.tipo==='histo') tipo='histo';
-    else if(entry.tipo==='paaf') tipo='paaf';
-    if(!d[k][tipo]) d[k][tipo]={};
-    d[k][tipo][dia] = (d[k][tipo][dia]||0)+1;
+function contagensPDF(){
+  var registros = pdfDados();
+  var mapa = {};
+  Object.keys(registros||{}).forEach(function(id){
+    var reg = registros[id];
+    if(!reg || !reg.data || !reg.tipo) return;
+    var dt = extrairDataBR(reg.data);
+    if(!dt) return;
+    var k = chave(dt.ano, dt.mes);
+    if(!mapa[k]) mapa[k] = {anatomo:{}, cito:{}, histo:{}, paaf:{}};
+    mapa[k][reg.tipo][dt.dia] = (mapa[k][reg.tipo][dt.dia] || 0) + 1;
   });
-  salvar(d);
-  localStorage.removeItem('syscedc_prod_log');
+  return mapa;
+}
+function getBaseCount(tipo, dia){
+  var k = mesKeyAtual();
+  var total = 0;
+  var a = contagensSyscedc();
+  var p = contagensPDF();
+  if(a[k] && a[k][tipo] && a[k][tipo][dia]) total += a[k][tipo][dia];
+  if(p[k] && p[k][tipo] && p[k][tipo][dia]) total += p[k][tipo][dia];
+  return total;
+}
+function getDia(tipo, dia){
+  var manual = getManual(tipo, dia);
+  return manual===null ? getBaseCount(tipo, dia) : manual;
+}
+function nomeTipo(tipo){
+  if(tipo==='anatomo') return 'Anatomo';
+  if(tipo==='cito') return 'Citologia';
+  if(tipo==='histo') return 'Histopatológico';
+  if(tipo==='paaf') return 'PAAF';
+  return tipo;
+}
+function setStatus(msg, cls){
+  var box = document.getElementById('siscan-status');
+  if(!box) return;
+  box.className = 'siscan-status ' + (cls||'info');
+  box.style.display = 'block';
+  box.textContent = msg;
+}
+function limparStatus(){
+  var box = document.getElementById('siscan-status');
+  if(box){ box.style.display='none'; box.textContent=''; box.className='siscan-status'; }
+}
+function parsePaginaSiscan(txt, pageNumber){
+  var up = normalizar(txt);
+  var titulo = '';
+  var tipo = null;
+  if(up.indexOf('LAUDO DO EXAME HISTOPATOLOGICO') >= 0){
+    titulo = 'HISTOPATOLÓGICO';
+    tipo = 'histo';
+  } else if(up.indexOf('LAUDO DO EXAME CITOPATOLOGICO') >= 0){
+    titulo = 'CITOPATOLÓGICO';
+    tipo = up.indexOf('MAMA') >= 0 ? 'paaf' : 'cito';
+  } else {
+    return null;
+  }
+  var exameMatch = txt.match(/\d{3,5}-[13]\/\d{4}(?:L\d+)?/);
+  var dataMatch = txt.match(/(\d{2}\/\d{2}\/\d{4})\s+PB/) || txt.match(/Data\s+da\s+coleta:\s*(\d{2}\/\d{2}\/\d{4})/i);
+  if(!exameMatch || !dataMatch) return null;
+  return {
+    id: [titulo, exameMatch[0], dataMatch[1]].join('|'),
+    exame: exameMatch[0],
+    data: dataMatch[1],
+    tipo: tipo,
+    titulo: titulo,
+    pagina: pageNumber
+  };
+}
+async function importarSISCAN(input){
+  var file = input && input.files && input.files[0];
+  if(!file) return;
+  setStatus('Lendo PDF SISCAN...', 'info');
+  try{
+    var bytes = new Uint8Array(await file.arrayBuffer());
+    var pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+    var registros = pdfDados();
+    var novos = 0, repetidos = 0, lidos = 0, ignorados = 0;
+    for(var p=1; p<=pdf.numPages; p++){
+      var page = await pdf.getPage(p);
+      var content = await page.getTextContent();
+      var txt = content.items.map(function(it){ return it.str; }).join('\n');
+      var reg = parsePaginaSiscan(txt, p);
+      if(!reg){ ignorados++; continue; }
+      lidos++;
+      if(registros[reg.id]) repetidos++;
+      else { registros[reg.id] = reg; novos++; }
+    }
+    salvarPdf(registros);
+    render();
+    setStatus('PDF importado: ' + lidos + ' laudo(s) válidos, ' + novos + ' novo(s), ' + repetidos + ' já existente(s), ' + ignorados + ' página(s) ignorada(s).', 'ok');
+  }catch(err){
+    console.error(err);
+    setStatus('Erro ao importar PDF SISCAN: ' + (err && err.message ? err.message : err), 'erro');
+  }finally{
+    input.value = '';
+  }
 }
 
-// ── dias no mês ──
 function diasNoMes(ano, mes){ return new Date(ano, mes+1, 0).getDate(); }
 
-// ── renderizar ──
 function render(){
-  sincronizarLogLegado();
-  atualizarBaseMes();
   var hoje = new Date();
   var dHoje = hoje.getDate(), mHoje = hoje.getMonth(), aHoje = hoje.getFullYear();
   var total = diasNoMes(_anoAtual, _mesAtual);
-
   document.getElementById('mes-label').textContent = MESES[_mesAtual] + ' de ' + _anoAtual;
 
   ['anatomo','cito','histo','paaf'].forEach(function(tipo){
@@ -487,15 +528,9 @@ function render(){
   });
 
   var totA=0,totC=0,totH=0,totP=0;
-  for(var i=1;i<=total;i++){
-    totA+=getDia('anatomo',i);
-    totC+=getDia('cito',i);
-    totH+=getDia('histo',i);
-    totP+=getDia('paaf',i);
-  }
+  for(var i=1;i<=total;i++){ totA+=getDia('anatomo',i); totC+=getDia('cito',i); totH+=getDia('histo',i); totP+=getDia('paaf',i); }
   var totG=totA+totC+totH+totP;
   var valor=FIXO+totG;
-
   document.getElementById('tot-anatomo').textContent=totA;
   document.getElementById('tot-cito').textContent=totC;
   document.getElementById('tot-histo').textContent=totH;
@@ -503,7 +538,6 @@ function render(){
   document.getElementById('tot-geral').textContent=totG;
   document.getElementById('tot-valor').textContent='R$ '+valor.toLocaleString('pt-BR',{minimumFractionDigits:2});
   document.getElementById('vr-detalhe').textContent='R$ 4.651,00 fixo + '+totG+' laudo(s) × R$ 1,00';
-
   document.getElementById('g-anatomo').textContent=totA;
   document.getElementById('g-cito').textContent=totC;
   document.getElementById('g-histo').textContent=totH;
@@ -516,7 +550,6 @@ function render(){
   document.getElementById('bar-paaf').style.width=(totP/max*100)+'%';
 }
 
-// ── navegação de mês ──
 function mudarMes(d){
   _mesAtual+=d;
   if(_mesAtual<0){_mesAtual=11;_anoAtual--;}
@@ -524,15 +557,13 @@ function mudarMes(d){
   render();
 }
 
-// ── editor inline ──
 function teAbrir(e, tipo, dia){
   e.stopPropagation();
   _teAlvo={tipo:tipo,dia:dia};
   var te=document.getElementById('tooltip-editor');
   var inp=document.getElementById('te-input');
   var lbl=document.getElementById('te-label');
-  var nomes={anatomo:'Anatomo', cito:'Citologia', histo:'Histo', paaf:'PAAF'};
-  lbl.textContent=(nomes[tipo]||tipo)+' — Dia '+(dia<10?'0'+dia:dia);
+  lbl.textContent=nomeTipo(tipo)+' — Dia '+(dia<10?'0'+dia:dia);
   inp.value=getDia(tipo,dia)||'';
   te.style.display='flex';
   var rect=e.target.getBoundingClientRect();
@@ -545,8 +576,8 @@ function teAbrir(e, tipo, dia){
 }
 function teConfirmar(){
   if(!_teAlvo) return;
-  var val=parseInt(document.getElementById('te-input').value,10);
-  setDia(_teAlvo.tipo,_teAlvo.dia,isNaN(val)?0:val);
+  var val=parseInt(document.getElementById('te-input').value)||0;
+  setManual(_teAlvo.tipo,_teAlvo.dia,val);
   teFechar();
   render();
 }
@@ -563,16 +594,22 @@ document.addEventListener('click',function(e){
   if(te.style.display!=='none'&&!te.contains(e.target)) teFechar();
 });
 
-// ── limpar mês ──
 function limparMes(){
-  if(!confirm('Limpar os ajustes manuais de '+MESES[_mesAtual]+' de '+_anoAtual+'?\n\nOs laudos salvos no SYSCEDC continuam sendo contados automaticamente.')) return;
+  if(!confirm('Limpar importações e ajustes manuais de '+MESES[_mesAtual]+' de '+_anoAtual+'? Os laudos salvos no SYSCEDC continuarão sendo contados.')) return;
   var d=dados();
-  var k=chave(_anoAtual,_mesAtual);
+  var k=mesKeyAtual();
   delete d[k];
   salvar(d);
+  var pdf=pdfDados();
+  Object.keys(pdf).forEach(function(id){
+    var reg = pdf[id];
+    if(extrairMesKeyBR(reg && reg.data) === k) delete pdf[id];
+  });
+  salvarPdf(pdf);
+  limparStatus();
   render();
 }
-// init
+
 render();
 </script>
 </body>
