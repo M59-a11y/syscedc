@@ -724,7 +724,25 @@ function fmtDataInput(i){
     i.title='';
   }
 }
-function dataTextoParaISO(s){if(!s)return '';var p=s.split('/');if(p.length===3&&p[2].length===4)return p[2]+'-'+p[1]+'-'+p[0];return s;}
+function _dataValidaPartes(dia,mes,ano){
+  dia=parseInt(dia,10); mes=parseInt(mes,10); ano=parseInt(ano,10);
+  if(!dia||!mes||!ano) return false;
+  var anoAtual=new Date().getFullYear();
+  if(mes<1||mes>12) return false;
+  if(ano<1900||ano>anoAtual+1) return false;
+  var bissexto=(ano%4===0&&(ano%100!==0||ano%400===0));
+  var maxDia=[0,31,(bissexto?29:28),31,30,31,30,31,31,30,31,30,31][mes];
+  return dia>=1 && dia<=maxDia;
+}
+function dataTextoParaISO(s){
+  if(!s) return '';
+  var p=String(s).trim().split('/');
+  if(p.length===3&&p[2].length===4){
+    if(!_dataValidaPartes(p[0],p[1],p[2])) return '';
+    return p[2]+'-'+p[1]+'-'+p[0];
+  }
+  return s;
+}
 function dataISOParaTexto(s){if(!s)return '';if(s.indexOf('/')!==-1)return s;var p=s.split('-');if(p.length===3)return p[2]+'/'+p[1]+'/'+p[0];return s;}
 function fmtData(d){if(!d)return'';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function dataExtenso(d){if(!d)return'';var ms=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];var p=d.split('-');return parseInt(p[2])+' de '+ms[parseInt(p[1])-1]+' de '+p[0];}
@@ -806,14 +824,17 @@ function _deveAvancarLaudoDuplo(textarea){
   var ultimaQuebra = antes.lastIndexOf('\n');
   var linhaAtual = antes.substring(ultimaQuebra + 1);
   if(linhaAtual.trim() !== '') return false; // linha atual tem conteúdo — Enter normal
-  // Verificar se já atingiu o total de laudos
+
+  // Só pode avançar quando a multiplicidade foi definida
   var total = _totalLaudos();
-  if(total > 0){
-    var info = _parseNumAnoInfo(v('numAno'));
-    var sufixoAtual = info.sufixo || 'L1';
-    var idxAtual = parseInt(sufixoAtual.replace(/[^0-9]/g,''),10) || 1;
-    if(idxAtual >= total) return false; // já é o último laudo
-  }
+  if(total <= 1) return false;
+
+  // Verificar se já atingiu o total de laudos
+  var info = _parseNumAnoInfo(v('numAno'));
+  var sufixoAtual = info.sufixo || 'L1';
+  var idxAtual = parseInt(sufixoAtual.replace(/[^0-9]/g,''),10) || 1;
+  if(idxAtual >= total) return false; // já é o último laudo
+
   return true;
 }
 function _focarCampoMaterial(){
@@ -1232,15 +1253,13 @@ function gerarPreview(){
   // Seções de conteúdo
   document.getElementById('bloco-macro').style.display = isAnatomoOuRevisao ? '' : 'none';
   var elMacTit=document.getElementById('p-macro-tit');
-  if(elMacTit) elMacTit.textContent =
-  isRevisao ? 'Descrição:' :
-  ((isPaaf || isCito) ? 'Microscopia:' : 'Macroscopia:');
+  if(elMacTit) elMacTit.textContent=isRevisao?'Descrição:':'Macroscopia:';
   var bm=document.getElementById('bloco-micro');
   if(isAnatomo && d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}
   else{bm.style.display='none';}
 
   // Conclusão / Resultado
-  var titConcl = isAnatomo ? 'Conclusão:' : (isPaaf ? (_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:') : (isCito && !_isCitologiaLiquidos(d) ? 'Resultado da Citologia Geral:' : 'Resultado:'));
+  var titConcl = isAnatomo ? 'Conclusão:' : (isPaaf ? (_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:') : 'Resultado:');
   set('p-concl-tit', titConcl);
   var elCT=document.getElementById('p-concl-tit');
   if(elCT) elCT.style.display=titConcl?'':'none';
