@@ -2096,10 +2096,33 @@ function snippetExpandir(textarea, gatilho){
 }
 function _registrarProd(tipo){
   var hoje=new Date();
-  var data=hoje.getFullYear()+'-'+(hoje.getMonth()<9?'0':'')+(hoje.getMonth()+1)+'-'+(hoje.getDate()<10?'0':'')+hoje.getDate();
-  var log=JSON.parse(localStorage.getItem('syscedc_prod_log')||'[]');
-  log.push({tipo:tipo,data:data});
-  localStorage.setItem('syscedc_prod_log',JSON.stringify(log));
+  var ano=hoje.getFullYear();
+  var mes=hoje.getMonth();
+  var dia=hoje.getDate();
+  var data=ano+'-'+(mes<9?'0':'')+(mes+1)+'-'+(dia<10?'0':'')+dia;
+  var tipoNorm=String(tipo||'').toLowerCase().trim();
+  if(tipoNorm==='histo') tipoNorm='histo';
+  else if(tipoNorm==='paaf') tipoNorm='paaf';
+  else if(tipoNorm==='anatomo') tipoNorm='anatomo';
+  else tipoNorm='cito';
+
+  try{
+    var log=JSON.parse(localStorage.getItem('syscedc_prod_log')||'[]');
+    if(!Array.isArray(log)) log=[];
+    log.push({tipo:tipoNorm,data:data});
+    localStorage.setItem('syscedc_prod_log',JSON.stringify(log));
+  }catch(e){}
+
+  try{
+    var LS_KEY='syscedc_financeiro';
+    var k=ano+'-'+(mes<9?'0':'')+(mes+1);
+    var fin=JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+    if(!fin||typeof fin!=='object') fin={};
+    if(!fin[k]) fin[k]={};
+    if(!fin[k][tipoNorm]) fin[k][tipoNorm]={};
+    fin[k][tipoNorm][dia]=(parseInt(fin[k][tipoNorm][dia],10)||0)+1;
+    localStorage.setItem(LS_KEY,JSON.stringify(fin));
+  }catch(e){}
 }
 function histSalvar(chave,val){
   val=(val||'').trim();
