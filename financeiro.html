@@ -335,14 +335,19 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs
 const FIXO = 4651;
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const LS_KEY = 'syscedc_financeiro';
+const LOG_KEYS = ['syscedc_prod_log','syscedc_log','producao_log','laudos_log'];
+const PROC_KEY = 'syscedc_financeiro_processados';
 
 var _anoAtual = new Date().getFullYear();
 var _mesAtual = new Date().getMonth(); // 0-based
 var _teAlvo = null; // {tipo, dia}
+var _syncTimer = null;
 
 // ── localStorage ──
 function dados(){ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }
 function salvar(d){ localStorage.setItem(LS_KEY, JSON.stringify(d)); }
+function processados(){ return JSON.parse(localStorage.getItem(PROC_KEY)||'{}'); }
+function salvarProcessados(d){ localStorage.setItem(PROC_KEY, JSON.stringify(d)); }
 
 function chave(ano, mes){ return ano+'-'+(mes<9?'0':'')+(mes+1); }
 
@@ -361,27 +366,83 @@ function setDia(tipo, dia, val){
   salvar(d);
 }
 
-// ── registrar laudo impresso via localStorage ──
-// O SYSCEDC grava em 'syscedc_prod_log' um array de {tipo:'anatomo'|'cito', data:'YYYY-MM-DD'}
-// Este módulo lê esse log, contabiliza e sincroniza
+function normalizarTipo(tipo){
+  tipo = String(tipo||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  if(tipo.indexOf('anat')===0 || tipo==='ap' || tipo==='anatomopatologico') return 'anatomo';
+  if(tipo.indexOf('histo')===0 || tipo==='histopatologico') return 'histo';
+  if(tipo.indexOf('paaf')===0 || tipo.indexOf('mama')!==-1) return 'paaf';
+  if(tipo.indexOf('cito')===0 || tipo==='citopatologico') return 'cito';
+  return null;
+}
+
+function extrairData(entry){
+  var valor = entry && (entry.data || entry.date || entry.dt || entry.dataLiberacao || entry.data_liberacao || entry.createdAt || entry.created_at);
+  if(!valor) return null;
+  valor = String(valor).trim();
+  var m = valor.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return {ano:parseInt(m[1],10), mes:parseInt(m[2],10)-1, dia:parseInt(m[3],10)};
+  m = valor.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if(m) return {ano:parseInt(m[3],10), mes:parseInt(m[2],10)-1, dia:parseInt(m[1],10)};
+  return null;
+}
+
+function idEntrada(entry, key, idx){
+  if(entry && entry.id!=null) return key+':'+entry.id;
+  if(entry && entry.uuid) return key+':'+entry.uuid;
+  if(entry && entry.protocolo) return key+':'+entry.protocolo+':'+(entry.tipo||'')+':'+(entry.data||entry.date||'');
+  return key+':'+idx+':'+JSON.stringify(entry);
+}
+
+function lerLogCru(key){
+  try{
+    var raw = localStorage.getItem(key);
+    if(!raw) return [];
+    var parsed = JSON.parse(raw);
+    if(Array.isArray(parsed)) return parsed;
+    if(parsed && Array.isArray(parsed.itens)) return parsed.itens;
+    if(parsed && Array.isArray(parsed.items)) return parsed.items;
+    if(parsed && Array.isArray(parsed.logs)) return parsed.logs;
+    if(parsed && Array.isArray(parsed.data)) return parsed.data;
+  }catch(err){}
+  return [];
+}
+
+// ── registrar laudos via localStorage sem depender de apagar o log ──
 function sincronizarLog(){
-  var log = JSON.parse(localStorage.getItem('syscedc_prod_log')||'[]');
-  if(!log.length) return;
-  var d = dados();
-  log.forEach(function(entry){
-    if(!entry||!entry.tipo||!entry.data) return;
-    var partes = entry.data.split('-');
-    if(partes.length!==3) return;
-    var ano=parseInt(partes[0]), mes=parseInt(partes[1])-1, dia=parseInt(partes[2]);
-    var k = ano+'-'+(mes<9?'0':'')+(mes+1);
-    if(!d[k]) d[k]={};
-    var tipo = entry.tipo==='anatomo'?'anatomo':(entry.tipo==='histo'?'histo':'cito');
-    if(!d[k][tipo]) d[k][tipo]={};
-    d[k][tipo][dia] = (d[k][tipo][dia]||0)+1;
+  var entradas = [];
+  LOG_KEYS.forEach(function(key){
+    lerLogCru(key).forEach(function(item, idx){
+      entradas.push({key:key, idx:idx, entry:item});
+    });
   });
-  salvar(d);
-  // limpar log processado
-  localStorage.removeItem('syscedc_prod_log');
+  if(!entradas.length) return false;
+
+  var ja = processados();
+  var d = dados();
+  var houveMudanca = false;
+
+  entradas.forEach(function(item){
+    var entry = item.entry || {};
+    var tipo = normalizarTipo(entry.tipo || entry.exame || entry.categoria || entry.modalidade);
+    var dt = extrairData(entry);
+    if(!tipo || !dt) return;
+
+    var id = idEntrada(entry, item.key, item.idx);
+    if(ja[id]) return;
+
+    var k = chave(dt.ano, dt.mes);
+    if(!d[k]) d[k] = {};
+    if(!d[k][tipo]) d[k][tipo] = {};
+    d[k][tipo][dt.dia] = (d[k][tipo][dt.dia] || 0) + 1;
+    ja[id] = 1;
+    houveMudanca = true;
+  });
+
+  if(houveMudanca){
+    salvar(d);
+    salvarProcessados(ja);
+  }
+  return houveMudanca;
 }
 
 // ── dias no mês ──
@@ -458,7 +519,7 @@ function teAbrir(e, tipo, dia){
   var te=document.getElementById('tooltip-editor');
   var inp=document.getElementById('te-input');
   var lbl=document.getElementById('te-label');
-  lbl.textContent=(tipo==='anatomo'?'Anatomo':'Citologia')+' — Dia '+(dia<10?'0'+dia:dia);
+  lbl.textContent=(tipo==='anatomo'?'Anátomo':tipo==='cito'?'Citologia':tipo==='histo'?'Histopatológico':'PAAF')+' — Dia '+(dia<10?'0'+dia:dia);
   inp.value=getDia(tipo,dia)||'';
   te.style.display='flex';
   var rect=e.target.getBoundingClientRect();
@@ -583,6 +644,15 @@ function importarSISCAN(inp){
 
 // init
 render();
+window.addEventListener('storage', function(e){
+  if(e && (e.key===LS_KEY || e.key===PROC_KEY || LOG_KEYS.indexOf(e.key)!==-1)){
+    render();
+  }
+});
+if(_syncTimer) clearInterval(_syncTimer);
+_syncTimer = setInterval(function(){
+  if(sincronizarLog()) render();
+}, 2000);
 </script>
 </body>
 </html>
