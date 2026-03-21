@@ -17,6 +17,7 @@
   --cito:     #60a5fa;
   --histo:    #c084fc;
   --paaf:     #fb923c;
+  --histomama:#f472b6;
   --text:     #e2e8f0;
   --muted:    #64748b;
   --danger:   #ef4444;
@@ -106,6 +107,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .tooltip-editor .te-cancel{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;}
 
 .dia-val.tem-valor.histo{color:var(--histo);font-weight:700;}
+.dia-val.tem-valor.histomama{color:var(--histomama);font-weight:700;}
 .dia-val.tem-valor.paaf{color:var(--paaf);font-weight:700;}
 
 /* RODAPÉ DE ASSINATURA */
@@ -128,8 +130,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 /* SEPARADOR */
 .sep{height:1px;background:var(--border);margin:24px 0;}
 @media print{
-  @page{size:A4 landscape;margin:8mm 10mm;}
-  body{background:#fff;color:#000;font-size:9px;}
+  @page{size:A4 landscape;margin:5mm 8mm;}
+  body{background:#fff;color:#000;font-size:7.5px;}
   body::before{display:none;}
   .footer-btns,.btn-voltar,.btn-limpar,.tooltip-editor{display:none!important;}
   .wrap{padding:0;max-width:100%;}
@@ -139,16 +141,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   .mes-nav{padding:4px 10px;}
   .mes-nav button{display:none;}
   .mes-label{font-size:.85rem;}
-  .grade-wrap{margin-bottom:8px;}
+  .grade-wrap{margin-bottom:5px;}
   .grade-titulo span{font-size:.65rem;letter-spacing:1px;}
   .grade,.totais-card,.grafico-card{border:1px solid #ccc;background:#fff;border-radius:4px;}
-  .dia-num{padding:3px 1px;font-size:.6rem;}
-  .dia-val{padding:3px 1px;font-size:.7rem;}
+  .dia-num{padding:2px 1px;font-size:.55rem;}
+  .dia-val{padding:2px 1px;font-size:.62rem;}
   .dia-val.tem-valor.anatomo{color:#16a34a;}
   .dia-val.tem-valor.cito{color:#1d4ed8;}
   .dia-val.tem-valor.histo{color:#7e22ce;}
+  .dia-val.tem-valor.histomama{color:#be185d;}
   .sep{margin:8px 0;}
-  .bottom{margin-top:8px;gap:10px;grid-template-columns:1fr;}
+  .bottom{margin-top:6px;gap:8px;grid-template-columns:1fr 1fr;}
   .totais-card{display:none!important;}
   .grafico-card{order:1;padding:10px;}
   .grafico-titulo{font-size:.65rem;margin-bottom:10px;}
@@ -197,7 +200,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="grade-wrap">
     <div class="grade-titulo">
       <div class="dot" style="background:var(--cito)"></div>
-      <span>Citopatológico — SISCAN (Tireoide e Geral)</span>
+      <span>Citopatológico (Tireoide/Geral)</span>
     </div>
     <div class="grade">
       <div class="grade-row dias" id="dias-cito"></div>
@@ -209,11 +212,23 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="grade-wrap">
     <div class="grade-titulo">
       <div class="dot" style="background:var(--histo)"></div>
-      <span>Histopatológico — SISCAN (Histo Colo / Histo Mama)</span>
+      <span>Histopatológico — SISCAN (Colo Uterino)</span>
     </div>
     <div class="grade">
       <div class="grade-row dias" id="dias-histo"></div>
       <div class="grade-row" id="vals-histo"></div>
+    </div>
+  </div>
+
+  <!-- HISTOPATOLÓGICO SISCAN MAMA -->
+  <div class="grade-wrap">
+    <div class="grade-titulo">
+      <div class="dot" style="background:var(--histomama)"></div>
+      <span>Histopatológico — SISCAN (Mama)</span>
+    </div>
+    <div class="grade">
+      <div class="grade-row dias" id="dias-histomama"></div>
+      <div class="grade-row" id="vals-histomama"></div>
     </div>
   </div>
 
@@ -242,8 +257,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <span class="valor cito" id="tot-cito">0</span>
       </div>
       <div class="linha">
-        <span class="label">● Histopatológico SISCAN</span>
+        <span class="label">● Histopatológico SISCAN (Colo Uterino)</span>
         <span class="valor" style="color:var(--histo)" id="tot-histo">0</span>
+      </div>
+      <div class="linha">
+        <span class="label">● Histopatológico SISCAN (Mama)</span>
+        <span class="valor" style="color:var(--histomama)" id="tot-histomama">0</span>
       </div>
       <div class="linha">
         <span class="label">● Citopatológico SISCAN (PAAF de Mama)</span>
@@ -277,8 +296,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="barra-bg"><div class="barra-fill cito" id="bar-cito" style="width:0%"></div></div>
       </div>
       <div class="barra-item">
-        <div class="barra-label"><span>Histopatológico SISCAN</span><span id="g-histo">0</span></div>
+        <div class="barra-label"><span>Histopatológico SISCAN (Colo)</span><span id="g-histo">0</span></div>
         <div class="barra-bg"><div class="barra-fill" id="bar-histo" style="width:0%;background:linear-gradient(90deg,#7e22ce,#c084fc)"></div></div>
+      </div>
+      <div class="barra-item">
+        <div class="barra-label"><span>Histopatológico SISCAN (Mama)</span><span id="g-histomama">0</span></div>
+        <div class="barra-bg"><div class="barra-fill" id="bar-histomama" style="width:0%;background:linear-gradient(90deg,#be185d,#f472b6)"></div></div>
       </div>
       <div class="barra-item">
         <div class="barra-label"><span>Citopatológico SISCAN (PAAF de Mama)</span><span id="g-paaf">0</span></div>
@@ -393,7 +416,7 @@ function contagensSyscedc(){
     var dt = extrairDataBR(reg.salvoEm || '');
     if(!dt) return;
     var k = chave(dt.ano, dt.mes);
-    if(!mapa[k]) mapa[k] = {anatomo:{}, cito:{}, histo:{}, paaf:{}};
+    if(!mapa[k]) mapa[k] = {anatomo:{}, cito:{}, histo:{}, histomama:{}, paaf:{}};
     mapa[k][tipo][dt.dia] = (mapa[k][tipo][dt.dia] || 0) + 1;
   });
   return mapa;
@@ -407,7 +430,7 @@ function contagensPDF(){
     var dt = extrairDataBR(reg.data);
     if(!dt) return;
     var k = chave(dt.ano, dt.mes);
-    if(!mapa[k]) mapa[k] = {anatomo:{}, cito:{}, histo:{}, paaf:{}};
+    if(!mapa[k]) mapa[k] = {anatomo:{}, cito:{}, histo:{}, histomama:{}, paaf:{}};
     mapa[k][reg.tipo][dt.dia] = (mapa[k][reg.tipo][dt.dia] || 0) + 1;
   });
   return mapa;
@@ -428,8 +451,9 @@ function getDia(tipo, dia){
 function nomeTipo(tipo){
   if(tipo==='anatomo') return 'Anatomo';
   if(tipo==='cito') return 'Citologia';
-  if(tipo==='histo') return 'Histopatológico';
-  if(tipo==='paaf') return 'PAAF';
+  if(tipo==='histo') return 'Histopatológico (Colo)';
+  if(tipo==='histomama') return 'Histopatológico (Mama)';
+  if(tipo==='paaf') return 'PAAF de Mama';
   return tipo;
 }
 function setStatus(msg, cls){
@@ -449,7 +473,8 @@ function parsePaginaSiscan(txt, pageNumber){
   var tipo = null;
   if(up.indexOf('LAUDO DO EXAME HISTOPATOLOGICO') >= 0){
     titulo = 'HISTOPATOLÓGICO';
-    tipo = 'histo';
+    // Distinguir colo uterino vs mama pelo conteúdo
+    tipo = (up.indexOf('MAMA') >= 0 || up.indexOf('MASTOLOGIA') >= 0) ? 'histomama' : 'histo';
   } else if(up.indexOf('LAUDO DO EXAME CITOPATOLOGICO') >= 0){
     titulo = 'CITOPATOLÓGICO';
     tipo = up.indexOf('MAMA') >= 0 ? 'paaf' : 'cito';
@@ -506,7 +531,7 @@ function render(){
   var total = diasNoMes(_anoAtual, _mesAtual);
   document.getElementById('mes-label').textContent = MESES[_mesAtual] + ' de ' + _anoAtual;
 
-  ['anatomo','cito','histo','paaf'].forEach(function(tipo){
+  ['anatomo','cito','histo','histomama','paaf'].forEach(function(tipo){
     var rowDias = document.getElementById('dias-'+tipo);
     var rowVals = document.getElementById('vals-'+tipo);
     rowDias.innerHTML=''; rowVals.innerHTML='';
@@ -527,13 +552,20 @@ function render(){
     }
   });
 
-  var totA=0,totC=0,totH=0,totP=0;
-  for(var i=1;i<=total;i++){ totA+=getDia('anatomo',i); totC+=getDia('cito',i); totH+=getDia('histo',i); totP+=getDia('paaf',i); }
-  var totG=totA+totC+totH+totP;
+  var totA=0,totC=0,totH=0,totHM=0,totP=0;
+  for(var i=1;i<=total;i++){
+    totA+=getDia('anatomo',i);
+    totC+=getDia('cito',i);
+    totH+=getDia('histo',i);
+    totHM+=getDia('histomama',i);
+    totP+=getDia('paaf',i);
+  }
+  var totG=totA+totC+totH+totHM+totP;
   var valor=FIXO+totG;
   document.getElementById('tot-anatomo').textContent=totA;
   document.getElementById('tot-cito').textContent=totC;
   document.getElementById('tot-histo').textContent=totH;
+  document.getElementById('tot-histomama').textContent=totHM;
   document.getElementById('tot-paaf').textContent=totP;
   document.getElementById('tot-geral').textContent=totG;
   document.getElementById('tot-valor').textContent='R$ '+valor.toLocaleString('pt-BR',{minimumFractionDigits:2});
@@ -541,12 +573,14 @@ function render(){
   document.getElementById('g-anatomo').textContent=totA;
   document.getElementById('g-cito').textContent=totC;
   document.getElementById('g-histo').textContent=totH;
+  document.getElementById('g-histomama').textContent=totHM;
   document.getElementById('g-paaf').textContent=totP;
   document.getElementById('g-total').textContent=totG;
-  var max=Math.max(totA,totC,totH,totP,1);
+  var max=Math.max(totA,totC,totH,totHM,totP,1);
   document.getElementById('bar-anatomo').style.width=(totA/max*100)+'%';
   document.getElementById('bar-cito').style.width=(totC/max*100)+'%';
   document.getElementById('bar-histo').style.width=(totH/max*100)+'%';
+  document.getElementById('bar-histomama').style.width=(totHM/max*100)+'%';
   document.getElementById('bar-paaf').style.width=(totP/max*100)+'%';
 }
 
