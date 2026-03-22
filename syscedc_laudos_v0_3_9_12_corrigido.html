@@ -467,6 +467,12 @@ if('serviceWorker' in navigator){
     <div class="cb">
       <div class="fg">
         <!-- Seções do Anatomo Patológico -->
+        <!-- PAINEL MACROSCOPIA ESTRUTURADA — noprint garante que não vai para o PDF -->
+        <div id="painel-macro-estruturada" class="noprint" style="display:none;background:#f0f4ff;border:1.5px solid #c0d0ee;border-radius:8px;padding:14px 16px;margin-bottom:12px;">
+          <div style="font-size:.75rem;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🔬 Inserir Macroscopia Estruturada</div>
+          <div id="macro-struct-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
+          <div style="margin-top:10px;font-size:.75rem;color:#888;">Os campos acima geram texto automático no campo Macroscopia abaixo.</div>
+        </div>
         <div id="sec-macro" class="fgrp"><label id="label-macro">Macroscopia</label>
           <div style="position:relative"><textarea id="macro" rows="5" placeholder="Descreva os achados macroscópicos..." oninput="autoBackup();acMostrarTexto('macro',CAD_KEY_MACRO);checarRepetir(this)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('macro-ac');}else{acNavegar(event,'macro-ac');}" onblur="setTimeout(function(){acOcultar('macro-ac')},200)"></textarea><div class="ac-lista oculta" id="macro-ac"></div></div></div>
         <div id="sec-micro" class="fgrp"><label>Microscopia / Diagnóstico Descritivo (opcional)</label>
@@ -2519,6 +2525,237 @@ document.addEventListener('DOMContentLoaded', function(){
   var inpAno=document.getElementById('numAno');
   if(inpAno) inpAno.addEventListener('input', function(){ _atualizarNavImportacao(); _atualizarRotulosConteudo(); });
 });
+</script>
+
+<script>
+/* ============================================================
+   MACROSCOPIA ESTRUTURADA — painel de inserção rápida
+   NUNCA aparece no PDF: todos os elementos têm class="noprint"
+   ou estão dentro de #painel-macro-estruturada.noprint
+   ============================================================ */
+(function(){
+
+  /* Definição das peças e seus templates */
+  var PECAS = [
+    {
+      titulo: 'Corpo uterino – sem nódulos miomatosos',
+      campos: [
+        { id:'medidaUtero', label:'MEDIDA ÚTERO' },
+        { id:'miometrio',   label:'MIOMÉTRIO (cm)' },
+        { id:'endometrio',  label:'ENDOMÉTRIO (cm)' }
+      ],
+      template: function(v){
+        var t = 'Material recebido para análise, conservado em formalina, corresponde ao corpo uterino';
+        if(v.medidaUtero) t += ', medindo '+v.medidaUtero;
+        t += '. Miométrio com espessura de '+(v.miometrio||'___')+' cm. Endométrio medindo '+(v.endometrio||'___')+' cm de espessura. Ausência de nódulos miomatosos. Amostras representativas foram submetidas a exame histopatológico.';
+        return t;
+      }
+    },
+    {
+      titulo: 'Corpo uterino – nódulos miomatosos',
+      campos: [
+        { id:'medidaUtero2', label:'MEDIDA ÚTERO' },
+        { id:'peso',         label:'PESO (g)' },
+        { id:'miometrio2',   label:'MIOMÉTRIO (cm)' },
+        { id:'maiorNodulo',  label:'MAIOR NÓDULO (cm)' },
+        { id:'endometrio2',  label:'ENDOMÉTRIO (cm)' }
+      ],
+      template: function(v){
+        var t = 'Material recebido para análise, conservado em formalina, corresponde ao corpo uterino';
+        if(v.medidaUtero2) t += ', medindo '+v.medidaUtero2;
+        if(v.peso) t += ', pesando '+v.peso+' g';
+        t += '. Miométrio com espessura de '+(v.miometrio2||'___')+' cm, apresentando nódulos miomatosos';
+        if(v.maiorNodulo) t += ', sendo o maior medindo '+v.maiorNodulo+' cm';
+        t += '. Endométrio medindo '+(v.endometrio2||'___')+' cm de espessura. Amostras representativas foram submetidas a exame histopatológico.';
+        return t;
+      }
+    },
+    {
+      titulo: 'Cérvix uterina',
+      campos: [
+        { id:'medidaCervix', label:'MEDIDA (cm)' }
+      ],
+      template: function(v){
+        var t = 'Material recebido para análise, conservado em formalina, corresponde à cérvix uterina';
+        if(v.medidaCervix) t += ', medindo '+v.medidaCervix+' cm';
+        t += '. Superfície externa de coloração rósea-acastanhada. Ao corte, canal endocervical pérvio e mucosa endocervical sem alterações evidentes. Amostras representativas foram submetidas a exame histopatológico.';
+        return t;
+      }
+    },
+    {
+      titulo: 'Ovário',
+      lado: true,
+      campos: [
+        { id:'medidaOvario',  label:'MEDIDA (cm)' },
+        { id:'corpoLuteo',    label:'CORPO LÚTEO (cm)' },
+        { id:'maiorCisto',    label:'MAIOR CISTO (cm)' }
+      ],
+      template: function(v){
+        var lado = v._lado || 'direito';
+        var t = 'Material recebido para análise, conservado em formalina, corresponde ao ovário '+lado;
+        if(v.medidaOvario) t += ', medindo '+v.medidaOvario+' cm';
+        t += '. A superfície externa apresenta coloração pardacenta, aspecto bosselado e consistência elástica. Ao corte, observa-se corpo lúteo recente';
+        if(v.corpoLuteo) t += ', medindo '+v.corpoLuteo+' cm';
+        t += '. Identificam-se poucas cavidades císticas';
+        if(v.maiorCisto) t += ', sendo a maior de '+v.maiorCisto+' cm, contendo líquido claro';
+        t += '. Amostras representativas foram submetidas a exame histopatológico.';
+        return t;
+      }
+    },
+    {
+      titulo: 'Tuba uterina',
+      lado: true,
+      campos: [
+        { id:'medidaTuba', label:'MEDIDA (cm)' }
+      ],
+      template: function(v){
+        var lado = v._lado || 'direita';
+        var t = 'Material recebido para análise, conservado em formalina, corresponde à tuba uterina '+lado;
+        if(v.medidaTuba) t += ', medindo '+v.medidaTuba+' cm';
+        t += '. A superfície externa apresenta coloração pardacenta, aspecto liso e consistência elástica. Observam-se fímbria fusionada e lúmen tubário virtual. Amostras representativas foram submetidas a exame histopatológico.';
+        return t;
+      }
+    },
+    {
+      titulo: 'Paramétrio direito',
+      campos: [],
+      template: function(){
+        return 'O material recebido para análise está preservado em formalina. Trata-se de paramétrio direito, apresentando tecido irregular, acinzentado e elástico, aderido e rente à parede lateral do útero.';
+      }
+    },
+    {
+      titulo: 'Paramétrio esquerdo',
+      campos: [],
+      template: function(){
+        return 'O material recebido para análise está preservado em formalina. Trata-se de paramétrio esquerdo, apresentando tecido irregular, acinzentado e elástico, aderido e rente à parede lateral do útero.';
+      }
+    }
+  ];
+
+  function buildPainel(){
+    var lista = document.getElementById('macro-struct-lista');
+    if(!lista) return;
+    lista.innerHTML='';
+
+    PECAS.forEach(function(peca, idx){
+      var bloco = document.createElement('div');
+      bloco.style.cssText='background:#fff;border:1px solid #d0daf0;border-radius:6px;padding:10px 12px;';
+
+      /* título */
+      var tit = document.createElement('div');
+      tit.style.cssText='font-size:.8rem;font-weight:700;color:#1a1a2e;margin-bottom:8px;';
+      tit.textContent=peca.titulo;
+      bloco.appendChild(tit);
+
+      /* lado (ovário / tuba) */
+      var ladoSel = null;
+      if(peca.lado){
+        var ladoWrap=document.createElement('div');
+        ladoWrap.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px;';
+        var ladoLbl=document.createElement('label');
+        ladoLbl.style.cssText='font-size:.72rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;';
+        ladoLbl.textContent='LADO';
+        ladoSel=document.createElement('select');
+        ladoSel.style.cssText='padding:6px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:.88rem;background:#fafafa;color:#333;';
+        var opts = peca.titulo.toLowerCase().indexOf('tuba')>=0
+          ? ['direita','esquerda']
+          : ['direito','esquerdo'];
+        opts.forEach(function(o){
+          var op=document.createElement('option');
+          op.value=o; op.textContent=o;
+          ladoSel.appendChild(op);
+        });
+        ladoWrap.appendChild(ladoLbl);
+        ladoWrap.appendChild(ladoSel);
+        bloco.appendChild(ladoWrap);
+      }
+
+      /* campos de medida */
+      var inputsMap={};
+      if(peca.campos.length>0){
+        var grid=document.createElement('div');
+        grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:8px;';
+        peca.campos.forEach(function(c){
+          var wrap=document.createElement('div');
+          wrap.style.cssText='display:flex;flex-direction:column;gap:3px;';
+          var lbl=document.createElement('label');
+          lbl.style.cssText='font-size:.68rem;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;';
+          lbl.textContent=c.label;
+          var inp=document.createElement('input');
+          inp.type='text';
+          inp.placeholder=c.label;
+          inp.style.cssText='padding:6px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:.88rem;background:#fafafa;color:#333;';
+          inputsMap[c.id]=inp;
+          wrap.appendChild(lbl);
+          wrap.appendChild(inp);
+          grid.appendChild(wrap);
+        });
+        bloco.appendChild(grid);
+      }
+
+      /* botão Inserir */
+      var btn=document.createElement('button');
+      btn.type='button';
+      btn.textContent='Inserir .';
+      btn.style.cssText='padding:6px 16px;background:#c0392b;color:#fff;border:none;border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;';
+      btn.onclick=function(){
+        var vals={};
+        if(ladoSel) vals._lado=ladoSel.value;
+        peca.campos.forEach(function(c){
+          vals[c.id]=(inputsMap[c.id]?inputsMap[c.id].value.trim():'');
+        });
+        var texto=peca.template(vals);
+        var ta=document.getElementById('macro');
+        if(!ta) return;
+        var atual=(ta.value||'').trim();
+        ta.value=atual ? atual+'\n'+texto : texto;
+        ta.dispatchEvent(new Event('input',{bubbles:true}));
+        ta.focus();
+        ta.scrollTop=ta.scrollHeight;
+        /* limpar campos após inserir */
+        peca.campos.forEach(function(c){
+          if(inputsMap[c.id]) inputsMap[c.id].value='';
+        });
+      };
+      bloco.appendChild(btn);
+      lista.appendChild(bloco);
+    });
+  }
+
+  /* Mostrar/ocultar painel apenas no módulo Anatomopatológico */
+  function atualizarVisibilidade(){
+    var painel=document.getElementById('painel-macro-estruturada');
+    if(!painel) return;
+    /* visível somente quando sec-macro estiver visível (anatomo) */
+    var secMacro=document.getElementById('sec-macro');
+    if(secMacro && secMacro.style.display!=='none'){
+      painel.style.display='';
+    } else {
+      painel.style.display='none';
+    }
+  }
+
+  /* Hook na função que troca o tipo de laudo */
+  document.addEventListener('DOMContentLoaded',function(){
+    buildPainel();
+    atualizarVisibilidade();
+
+    /* observar mudanças no sec-macro */
+    var secMacro=document.getElementById('sec-macro');
+    if(secMacro && window.MutationObserver){
+      var obs=new MutationObserver(atualizarVisibilidade);
+      obs.observe(secMacro,{attributes:true,attributeFilter:['style']});
+    }
+
+    /* também disparar ao clicar nos botões de tipo */
+    document.querySelectorAll('.tipo-btn').forEach(function(b){
+      b.addEventListener('click',function(){
+        setTimeout(atualizarVisibilidade,50);
+      });
+    });
+  });
+
+})();
 </script>
 </body>
 </html>
