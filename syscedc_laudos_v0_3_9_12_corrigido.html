@@ -1264,7 +1264,8 @@ function gerarPreview(){
   }
 
   // Seções de conteúdo
-  document.getElementById('bloco-macro').style.display = isAnatomoOuRevisao ? '' : 'none';
+  var temMacro=isAnatomoOuRevisao&&!!(d.macro||'').trim();
+  document.getElementById('bloco-macro').style.display=temMacro?'':'none';
   var elMacTit=document.getElementById('p-macro-tit');
   if(elMacTit) elMacTit.textContent=isRevisao?'Descrição:':'Macroscopia:';
   var bm=document.getElementById('bloco-micro');
@@ -1272,7 +1273,7 @@ function gerarPreview(){
   else{bm.style.display='none';}
 
   // Conclusão / Resultado
-  var titConcl = (isAnatomo||isGemol) ? 'Conclusão:' : (isPaaf ? (_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:') : 'Resultado:');
+  var titConcl=(isAnatomo||isGemol)?(temMacro?'Conclusão:':'Microscopia e Conclusão:'):(isPaaf?(_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:'):'Resultado:');
   set('p-concl-tit', titConcl);
   var elCT=document.getElementById('p-concl-tit');
   if(elCT) elCT.style.display=titConcl?'':'none';
@@ -1444,7 +1445,8 @@ function _renderLaudo(d){
   var bpa=document.getElementById('bloco-pre-analitico');
   if(isCito){bpa.style.display='';set('p-exame-realizado',isPaaf?(_isCitologiaLiquidos(d)?'CITOLOGIA ONCÓTICA DE LÍQUIDOS':'PUNÇÃO ASPIRATIVA POR AGULHA FINA (PAAF)'):'CITOLOGIA GERAL');set('p-tipo-mat-cito',d.tipoMatCito||'');set('p-metodologia',d.metodologia||'COLORAÇÃO PELA TÉCNICA DE PAPANICOLAOU');}
   else{bpa.style.display='none';}
-  document.getElementById('bloco-macro').style.display=isAnatomoOuRevisao?'':'none';
+  var temMacro=isAnatomoOuRevisao&&!!(d.macro||'').trim();
+  document.getElementById('bloco-macro').style.display=temMacro?'':'none';
   var bm=document.getElementById('bloco-micro');
   if((isAnatomo||isGemol)&&d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}else{bm.style.display='none';}
   // Revisao: sem conclusão no preview
@@ -1454,7 +1456,7 @@ function _renderLaudo(d){
   if(elMacTit) elMacTit.textContent=isRevisao?'Descrição:':'Macroscopia:';
   var elResTit=document.getElementById('p-res-titulo');
   if(elResTit) elResTit.textContent=isRevisao?'Resultado da Revisão de Lâmina':'Resultado do Exame';
-  var titConcl=(isAnatomo||isGemol)?'Conclusão:':(isPaaf?(_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:'):'Resultado:');
+  var titConcl=(isAnatomo||isGemol)?(temMacro?'Conclusão:':'Microscopia e Conclusão:'):(isPaaf?(_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:'):'Resultado:');
   set('p-concl-tit',titConcl);
   var elCT=document.getElementById('p-concl-tit');if(elCT)elCT.style.display=titConcl?'':'none';
   set('p-macro',d.macro||'');set('p-concl',d.conclusao||'');
