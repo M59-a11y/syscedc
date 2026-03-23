@@ -360,6 +360,7 @@ if('serviceWorker' in navigator){
     <button class="tipo-btn" id="tipo-paaf" onclick="mudarTipo('paaf')">💉 PAAF – Tireoide</button>
     <button class="tipo-btn" id="tipo-citogeral" onclick="mudarTipo('citogeral')">🧫 Citologia Geral</button>
     <button class="tipo-btn" id="tipo-revisao" onclick="mudarTipo('revisao')">🔍 Revisão de Lâmina</button>
+    <button class="tipo-btn" id="tipo-gemol" onclick="mudarTipo('gemol')">🏛️ GEMOL – IML/PB</button>
   </div>
 
   <div class="card">
@@ -526,6 +527,7 @@ if('serviceWorker' in navigator){
           <div class="ident-r3" id="row-mae-cpf">
             <span id="col-mae"><span class="i-lbl">Nome da Mãe: </span><span class="i-val" id="p-mae"></span></span>
             <span id="col-cpf"><span class="i-lbl">CPF: </span><span class="i-val i-mono" id="p-cpf"></span></span>
+            <span id="col-pront-mae" style="display:none;white-space:nowrap;text-align:right;"><span class="i-lbl">PRONTUÁRIO: </span><span class="i-val i-mono" id="p-pront-mae"></span></span>
           </div>
           <div class="ident-r4">
             <div style="display:flex;align-items:baseline;margin-bottom:0.5mm;">
@@ -597,7 +599,7 @@ const PATOLOGISTAS = [
 
 // ===== TIPO DE LAUDO =====
 var _tipoLaudo = 'anatomo'; // 'anatomo' | 'paaf' | 'citogeral'
-function _seriePadraoPorTipo(tipo){ return tipo==='anatomo' ? '3' : tipo==='revisao' ? '' : '1'; }
+function _seriePadraoPorTipo(tipo){ return (tipo==='anatomo'||tipo==='gemol') ? '3' : tipo==='revisao' ? '' : '1'; }
 function _aplicarRegraSerie(tipo){ 
   var e=document.getElementById('numSerie'); 
   if(e) e.value=_seriePadraoPorTipo(tipo||_tipoLaudo);
@@ -629,22 +631,23 @@ function mudarTipo(tipo) {
   _tipoLaudo = tipo;
 
   // Menu visual
-  ['anatomo','paaf','citogeral','revisao'].forEach(function(t){
+  ['anatomo','paaf','citogeral','revisao','gemol'].forEach(function(t){
     var btn = document.getElementById('tipo-'+t);
     if(btn) btn.classList.toggle('ativo', t===tipo);
   });
 
   var isAnatomo = tipo === 'anatomo';
   var isRevisao = tipo === 'revisao';
-  var isAnatomoOuRevisao = isAnatomo || isRevisao;
+  var isGemol   = tipo === 'gemol';
+  var isAnatomoOuRevisao = isAnatomo || isRevisao || isGemol;
   var isCito = !isAnatomoOuRevisao;
 
   // Cards
   document.getElementById('card-materiais-anatomo').style.display = isAnatomoOuRevisao ? '' : 'none';
   document.getElementById('card-tipo-cito').style.display = isCito ? '' : 'none';
   document.getElementById('sec-macro').style.display = isAnatomoOuRevisao ? '' : 'none';
-  // Micro: só anatomo, não revisao
-  document.getElementById('sec-micro').style.display = isAnatomo ? '' : 'none';
+  // Micro: anatomo e gemol, não revisao
+  document.getElementById('sec-micro').style.display = (isAnatomo || isGemol) ? '' : 'none';
 
   // Label macroscopia
   var lm = document.getElementById('label-macro');
@@ -657,7 +660,7 @@ function mudarTipo(tipo) {
     if(secConclusao) secConclusao.style.display='none';
   } else {
     if(secConclusao) secConclusao.style.display='';
-    if(lc) lc.textContent = isAnatomo ? 'Conclusão' : 'Resultado da Punção Aspirativa';
+    if(lc) lc.textContent = (isAnatomo || isGemol) ? 'Conclusão' : 'Resultado da Punção Aspirativa';
   }
 
   // Botão Próximo Laudo: visível somente no tipo Anatomo e Revisão
@@ -838,7 +841,7 @@ function _deveAvancarLaudoDuplo(textarea){
   return true;
 }
 function _focarCampoMaterial(){
-  if(_tipoLaudo==='anatomo'){
+  if(_tipoLaudo==='anatomo'||_tipoLaudo==='gemol'){
     if(!_materiais.length){ adicionarMaterial(); }
     setTimeout(function(){
       var el=document.querySelector('#materiais-lista input[type="text"]');
@@ -855,7 +858,7 @@ function _atualizarRotulosConteudo(){
   var ch=document.getElementById('ch-conteudo');
   var lc=document.getElementById('label-conclusao');
   if(!ch || !lc) return;
-  if(_tipoLaudo==='anatomo'){
+  if(_tipoLaudo==='anatomo'||_tipoLaudo==='gemol'){
     ch.textContent='📄 Conteúdo do Laudo';
     lc.textContent='Conclusão';
   }else if(_tipoLaudo==='paaf'){
@@ -1014,7 +1017,10 @@ function coletar(){
 function fill(dados){
   dados = dados || {};
   // Mudar tipo primeiro (muda visibilidade de campos, não apaga valores)
-  if(dados.tipoLaudo) mudarTipo(dados.tipoLaudo);
+  // Se o tipo atual for gemol e o dado importado for anatomo, preservar gemol
+  var tipoEfetivo = dados.tipoLaudo;
+  if(_tipoLaudo === 'gemol' && tipoEfetivo === 'anatomo') tipoEfetivo = 'gemol';
+  if(tipoEfetivo) mudarTipo(tipoEfetivo);
   // Preencher todos os campos de texto
   var campos=['nome','dataNasc','nomeMae','numExame','numSerie','numAno','numLaudos',
     'cartaoSus','cpf','prontuario','tel','unidade','medicoReq',
@@ -1140,7 +1146,7 @@ function removerAssinatura(){
   document.getElementById('btn-rem-assin').style.display='none';
   document.getElementById('inp-assin').value='';
   var img=document.getElementById('p-assin-img');img.src='';img.classList.add('assin-oculta');
-  /* toast suprimido */
+  toast('Assinatura removida.','t-info');
 }
 
 // ===== BACKUP AUTOMÁTICO =====
@@ -1215,8 +1221,9 @@ function gerarPreview(){
 
   var isAnatomo = d.tipoLaudo === 'anatomo';
   var isRevisao = d.tipoLaudo === 'revisao';
+  var isGemol   = d.tipoLaudo === 'gemol';
   var isPaaf    = d.tipoLaudo === 'paaf';
-  var isAnatomoOuRevisao = isAnatomo || isRevisao;
+  var isAnatomoOuRevisao = isAnatomo || isRevisao || isGemol;
   var isCito    = !isAnatomoOuRevisao;
 
   // Título principal
@@ -1224,7 +1231,8 @@ function gerarPreview(){
     'anatomo':   'Laudo do Exame Anatomo Patológico',
     'paaf':      'Punção Aspirativa por Agulha Fina (PAAF)',
     'citogeral': 'Citologia Geral',
-    'revisao':   'Laudo de Revisão de Lâmina'
+    'revisao':   'Laudo de Revisão de Lâmina',
+    'gemol':     'Laudo do Exame Anatomo Patológico – IML/PB'
   };
   set('p-titulo', titulos[d.tipoLaudo] || titulos['anatomo']);
 
@@ -1260,11 +1268,11 @@ function gerarPreview(){
   var elMacTit=document.getElementById('p-macro-tit');
   if(elMacTit) elMacTit.textContent=isRevisao?'Descrição:':'Macroscopia:';
   var bm=document.getElementById('bloco-micro');
-  if(isAnatomo && d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}
+  if((isAnatomo||isGemol) && d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}
   else{bm.style.display='none';}
 
   // Conclusão / Resultado
-  var titConcl = isAnatomo ? 'Conclusão:' : (isPaaf ? (_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:') : 'Resultado:');
+  var titConcl = (isAnatomo||isGemol) ? 'Conclusão:' : (isPaaf ? (_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:') : 'Resultado:');
   set('p-concl-tit', titConcl);
   var elCT=document.getElementById('p-concl-tit');
   if(elCT) elCT.style.display=titConcl?'':'none';
@@ -1301,8 +1309,19 @@ function gerarPreview(){
   showRow('row-nasc-sus', d.dataNasc||d.cartaoSus);
   showCol('col-mae', d.nomeMae);
   showCol('col-cpf', d.cpf);
-  showRow('row-mae-cpf',  d.nomeMae||d.cpf);
-  showCol('col-pront', d.prontuario);
+  showRow('row-mae-cpf',  d.nomeMae||d.cpf||d.prontuario);
+  var elProntMae2=document.getElementById('col-pront-mae');
+  var elProntMaeVal2=document.getElementById('p-pront-mae');
+  var elPront2=document.getElementById('col-pront');
+  if(isGemol){
+    if(elProntMae2){elProntMae2.style.display=d.prontuario?'':'none';}
+    if(elProntMaeVal2)elProntMaeVal2.textContent=d.prontuario||'';
+    if(elPront2)elPront2.style.display='none';
+  } else {
+    if(elProntMae2)elProntMae2.style.display='none';
+    if(elProntMaeVal2)elProntMaeVal2.textContent='';
+    showCol('col-pront', d.prontuario);
+  }
   showRow('row-unid',     d.unidade);
   showRow('row-med',      d.medicoReq);
   showRow('row-dsolic',   d.dataSolic);
@@ -1409,8 +1428,8 @@ function _renderLaudo(d){
   set('p-mae',d.nomeMae||'');set('p-cpf',d.cpf||'');set('p-pront',d.prontuario||'');set('p-unid',d.unidade||'');
   set('p-med',d.medicoReq?'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,''):'');
   set('p-dsolic',fmtData(d.dataSolic)||'');set('p-dent',fmtData(d.dataEntrada)||'');
-  var isAnatomo=d.tipoLaudo==='anatomo',isRevisao=d.tipoLaudo==='revisao',isPaaf=d.tipoLaudo==='paaf',isAnatomoOuRevisao=(isAnatomo||isRevisao),isCito=!isAnatomoOuRevisao;
-  var titulos={'anatomo':'Laudo do Exame Anatomo Patológico','paaf':_isCitologiaLiquidos(d)?'Citologia Oncótica de Líquidos':'Punção Aspirativa por Agulha Fina (PAAF)','citogeral':'Citologia Geral','revisao':'Laudo de Revisão de Lâmina'};
+  var isAnatomo=d.tipoLaudo==='anatomo',isRevisao=d.tipoLaudo==='revisao',isGemol=d.tipoLaudo==='gemol',isPaaf=d.tipoLaudo==='paaf',isAnatomoOuRevisao=(isAnatomo||isRevisao||isGemol),isCito=!isAnatomoOuRevisao;
+  var titulos={'anatomo':'Laudo do Exame Anatomo Patológico','paaf':_isCitologiaLiquidos(d)?'Citologia Oncótica de Líquidos':'Punção Aspirativa por Agulha Fina (PAAF)','citogeral':'Citologia Geral','revisao':'Laudo de Revisão de Lâmina','gemol':'Laudo do Exame Anatomo Patológico – IML/PB'};
   set('p-titulo',titulos[d.tipoLaudo]||titulos['anatomo']);
   var bmRes=document.getElementById('bloco-materiais-res');
   var mats=d._materiais||d.materiais||[];
@@ -1427,7 +1446,7 @@ function _renderLaudo(d){
   else{bpa.style.display='none';}
   document.getElementById('bloco-macro').style.display=isAnatomoOuRevisao?'':'none';
   var bm=document.getElementById('bloco-micro');
-  if(isAnatomo&&d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}else{bm.style.display='none';}
+  if((isAnatomo||isGemol)&&d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}else{bm.style.display='none';}
   // Revisao: sem conclusão no preview
   var bConcl=document.getElementById('bloco-concl');
   if(bConcl) bConcl.style.display=isRevisao?'none':'';
@@ -1435,7 +1454,7 @@ function _renderLaudo(d){
   if(elMacTit) elMacTit.textContent=isRevisao?'Descrição:':'Macroscopia:';
   var elResTit=document.getElementById('p-res-titulo');
   if(elResTit) elResTit.textContent=isRevisao?'Resultado da Revisão de Lâmina':'Resultado do Exame';
-  var titConcl=isAnatomo?'Conclusão:':(isPaaf?(_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:'):'Resultado:');
+  var titConcl=(isAnatomo||isGemol)?'Conclusão:':(isPaaf?(_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:'):'Resultado:');
   set('p-concl-tit',titConcl);
   var elCT=document.getElementById('p-concl-tit');if(elCT)elCT.style.display=titConcl?'':'none';
   set('p-macro',d.macro||'');set('p-concl',d.conclusao||'');
@@ -1451,8 +1470,21 @@ function _renderLaudo(d){
   function showRow(id,val){var el=document.getElementById(id);if(el)el.style.display=val?'':'none';}
   function showCol(id,val){var el=document.getElementById(id);if(el)el.style.display=val?'':'none';}
   showCol('col-nasc',d.dataNasc);showCol('col-sus',d.cartaoSus);showRow('row-nasc-sus',d.dataNasc||d.cartaoSus);
-  showCol('col-mae',d.nomeMae);showCol('col-cpf',d.cpf);showRow('row-mae-cpf',d.nomeMae||d.cpf);
-  showCol('col-pront',d.prontuario);showRow('row-unid',d.unidade);showRow('row-med',d.medicoReq);showRow('row-dsolic',d.dataSolic);showRow('row-dent',d.dataEntrada);
+  showCol('col-mae',d.nomeMae);showCol('col-cpf',d.cpf);showRow('row-mae-cpf',d.nomeMae||d.cpf||d.prontuario);
+  // GEMOL: prontuário vai para a linha da mãe; nos demais, fica na linha da unidade
+  var elProntMae=document.getElementById('col-pront-mae');
+  var elProntMaeVal=document.getElementById('p-pront-mae');
+  var elPront=document.getElementById('col-pront');
+  if(isGemol){
+    if(elProntMae){elProntMae.style.display=d.prontuario?'':'none';}
+    if(elProntMaeVal)elProntMaeVal.textContent=d.prontuario||'';
+    if(elPront)elPront.style.display='none';
+  } else {
+    if(elProntMae)elProntMae.style.display='none';
+    if(elProntMaeVal)elProntMaeVal.textContent='';
+    showCol('col-pront',d.prontuario);
+  }
+  showRow('row-unid',d.unidade);showRow('row-med',d.medicoReq);showRow('row-dsolic',d.dataSolic);showRow('row-dent',d.dataEntrada);
 }
 
 function _executarImpressaoFila(lista, aoFinalizar){
@@ -1527,7 +1559,7 @@ function imprimirLaudo(){
     listaImportacao.forEach(function(ld){ld._assinSrc=_assinaturaDataURL||'';});
 
     listaImportacao.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd(ld.tipoLaudo==="anatomo"?"anatomo":"cito");});
-    /* toast suprimido */
+    toast('Gerando backup e imprimindo '+listaImportacao.length+' laudos...','t-info',2600);
     var nomeBase=_nomeArquivoLaudo(listaImportacao[0]).replace(/\sL\d+\b/ig,'').trim();
     var reg={chave:nomeBase,laudos:listaImportacao,salvoEm:new Date().toLocaleString('pt-BR')};
     var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
@@ -1565,7 +1597,7 @@ function imprimirLaudo(){
     listaPendentes.forEach(function(ld){ld._assinSrc=_assinaturaDataURL||'';});
     if(!listaPendentes.length){toast('Nenhum laudo válido para imprimir.','t-error');return;}
     listaPendentes.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd((ld.dados?ld.dados.tipoLaudo:ld.tipoLaudo)==="anatomo"?"anatomo":"cito");});
-    /* toast suprimido */
+    toast('Gerando backup e imprimindo '+listaPendentes.length+' laudos...','t-info',2600);
     var nomeBase=_nomeArquivoLaudo(listaPendentes[0]).replace(/\sL\d+\b/ig,'').trim();
     var reg={chave:nomeBase,laudos:listaPendentes,salvoEm:new Date().toLocaleString('pt-BR')};
     var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
@@ -1584,7 +1616,7 @@ function imprimirLaudo(){
   histSalvar(CAD_KEY_MACRO, d.macro);
   histSalvar(CAD_KEY_MICRO, d.micro);
   histSalvar(CAD_KEY_CONCLUSAO, d.conclusao);
-  _registrarProd(_tipoLaudo==="anatomo"?"anatomo":"cito");
+  _registrarProd((_tipoLaudo==="anatomo"||_tipoLaudo==="gemol")?"anatomo":"cito");
   if(!_laudoValidoParaSaida(d)){toast('Preencha ao menos MACRO ou CONCLUSÃO para salvar/imprimir este laudo.','t-error');return;}
   var nomeConf2=_nomeArquivoLaudo(_normalizarDados(JSON.parse(JSON.stringify(d)))).replace(/\sL\d+\b/ig,'').trim();
 
@@ -1659,7 +1691,7 @@ function limpar(){
   // Limpar também unidade e médico (limpeza total manual)
   var eu=document.getElementById('unidade'); if(eu) eu.value=''; _ls.remove('cedc_unidade_ativa');
   var em=document.getElementById('medicoReq'); if(em) em.value=''; _ls.remove('cedc_medico_ativo');
-  /* toast suprimido */
+  toast('Formulário limpo.','t-info');
 }
 
 // ===== IMPORTAR BACKUP =====
@@ -1785,7 +1817,7 @@ renderMateriais();
     // Limpar URL sem recarregar
     window.history.replaceState({}, document.title, window.location.pathname);
     setTimeout(function(){
-      /* toast suprimido */
+      toast('✅ Paciente importado do CITOLOGIC: '+(d.nome||''),'t-info',3000);
       var eExame = document.getElementById('numExame');
       if(eExame) eExame.focus();
     }, 400);
@@ -1955,7 +1987,7 @@ function excluirLaudoSalvo(idxFiltrado){
   var realIdx=todos.findIndex(function(l){return l.chave===reg.chave&&l.salvoEm===reg.salvoEm;});
   if(realIdx>=0){todos.splice(realIdx,1);_ls.set('cedc_laudos',JSON.stringify(todos));}
   renderLaudosSalvos();
-  /* toast suprimido */
+  toast('Laudo excluído.','t-info');
 }
 
 // ===== CADASTROS =====
@@ -2032,7 +2064,7 @@ function checarRepetir(textarea){
   var val=textarea.value;
   if(!/repetir\./i.test(val)) return;
   var textoAnterior=_macroAnterior();
-  if(!textoAnterior){return;}
+  if(!textoAnterior){toast('Nenhuma macroscopia anterior encontrada.','t-info');return;}
   textarea.value=val.replace(/repetir\./i, textoAnterior);
   autoBackup();
 }
@@ -2069,7 +2101,7 @@ function snippetExpandir(textarea, gatilho){
   // Palavra especial: repetir
   if(atalho==='repetir'){
     var textoAnterior=_macroAnterior();
-    if(!textoAnterior){return false;}
+    if(!textoAnterior){toast('Nenhuma macroscopia anterior encontrada.','t-info');return false;}
     var novoVal=val.substring(0,inicio)+textoAnterior+val.substring(pos);
     textarea.value=novoVal;
     textarea.setSelectionRange(inicio+textoAnterior.length,inicio+textoAnterior.length);
@@ -2196,14 +2228,14 @@ function cadRemover(tipo,idx){
   lista.splice(idx,1);
   cadSalvar(chave,lista);
   cadRenderLista(tipo);
-  /* toast suprimido */
+  toast('Removido com sucesso.','t-info');
 }
 
 function cadExportar(){
   var unidades=cadCarregar(CAD_KEY_UNIDADES);
   var medicos=cadCarregar(CAD_KEY_MEDICOS);
   var snippets=snippetCarregar();
-  if(unidades.length===0&&medicos.length===0&&snippets.length===0){return;}
+  if(unidades.length===0&&medicos.length===0&&snippets.length===0){toast('Nenhum cadastro para exportar.','t-info');return;}
   var obj={syscedc_cadastros:true,salvoEm:new Date().toLocaleString('pt-BR'),unidades:unidades,medicos:medicos,snippets:snippets};
   var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
   var url=URL.createObjectURL(blob);
@@ -2354,7 +2386,7 @@ function _atualizarNavImportacao(){
 
   if(sbPrev) sbPrev.style.display=show?'':'none';
   if(sbNext) sbNext.style.display=show?'':'none';
-  if(sbNovo) sbNovo.style.display=(show || _tipoLaudo==='anatomo') ? '' : 'none';
+  if(sbNovo) sbNovo.style.display=(show || _tipoLaudo==='anatomo' || _tipoLaudo==='gemol') ? '' : 'none';
   if(!show) return;
 
   // Monta: NOME  1882-3/2026  L1
@@ -2405,7 +2437,7 @@ function voltarTelaExtrator(){
 
 function _normalizarDados(dados){
   if(!dados)return null;
-  if(dados.macro&&dados.macro.trim()&&dados.tipoLaudo!=='anatomo') dados.tipoLaudo='anatomo';
+  if(dados.macro&&dados.macro.trim()&&dados.tipoLaudo!=='anatomo'&&dados.tipoLaudo!=='gemol') dados.tipoLaudo='anatomo';
   // Usar _materiais como fallback se materiais estiver vazio
   if(!dados.materiais||!Array.isArray(dados.materiais)||dados.materiais.length===0){
     if(dados._materiais&&Array.isArray(dados._materiais)&&dados._materiais.length>0){
