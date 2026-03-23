@@ -1146,7 +1146,6 @@ function removerAssinatura(){
   document.getElementById('btn-rem-assin').style.display='none';
   document.getElementById('inp-assin').value='';
   var img=document.getElementById('p-assin-img');img.src='';img.classList.add('assin-oculta');
-  toast('Assinatura removida.','t-info');
 }
 
 // ===== BACKUP AUTOMÁTICO =====
@@ -1561,7 +1560,6 @@ function imprimirLaudo(){
     listaImportacao.forEach(function(ld){ld._assinSrc=_assinaturaDataURL||'';});
 
     listaImportacao.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd(ld.tipoLaudo==="anatomo"?"anatomo":"cito");});
-    toast('Gerando backup e imprimindo '+listaImportacao.length+' laudos...','t-info',2600);
     var nomeBase=_nomeArquivoLaudo(listaImportacao[0]).replace(/\sL\d+\b/ig,'').trim();
     var reg={chave:nomeBase,laudos:listaImportacao,salvoEm:new Date().toLocaleString('pt-BR')};
     var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
@@ -1599,7 +1597,6 @@ function imprimirLaudo(){
     listaPendentes.forEach(function(ld){ld._assinSrc=_assinaturaDataURL||'';});
     if(!listaPendentes.length){toast('Nenhum laudo válido para imprimir.','t-error');return;}
     listaPendentes.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd((ld.dados?ld.dados.tipoLaudo:ld.tipoLaudo)==="anatomo"?"anatomo":"cito");});
-    toast('Gerando backup e imprimindo '+listaPendentes.length+' laudos...','t-info',2600);
     var nomeBase=_nomeArquivoLaudo(listaPendentes[0]).replace(/\sL\d+\b/ig,'').trim();
     var reg={chave:nomeBase,laudos:listaPendentes,salvoEm:new Date().toLocaleString('pt-BR')};
     var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
@@ -1693,7 +1690,6 @@ function limpar(){
   // Limpar também unidade e médico (limpeza total manual)
   var eu=document.getElementById('unidade'); if(eu) eu.value=''; _ls.remove('cedc_unidade_ativa');
   var em=document.getElementById('medicoReq'); if(em) em.value=''; _ls.remove('cedc_medico_ativo');
-  toast('Formulário limpo.','t-info');
 }
 
 // ===== IMPORTAR BACKUP =====
@@ -1819,7 +1815,6 @@ renderMateriais();
     // Limpar URL sem recarregar
     window.history.replaceState({}, document.title, window.location.pathname);
     setTimeout(function(){
-      toast('✅ Paciente importado do CITOLOGIC: '+(d.nome||''),'t-info',3000);
       var eExame = document.getElementById('numExame');
       if(eExame) eExame.focus();
     }, 400);
@@ -1989,7 +1984,6 @@ function excluirLaudoSalvo(idxFiltrado){
   var realIdx=todos.findIndex(function(l){return l.chave===reg.chave&&l.salvoEm===reg.salvoEm;});
   if(realIdx>=0){todos.splice(realIdx,1);_ls.set('cedc_laudos',JSON.stringify(todos));}
   renderLaudosSalvos();
-  toast('Laudo excluído.','t-info');
 }
 
 // ===== CADASTROS =====
@@ -2066,7 +2060,7 @@ function checarRepetir(textarea){
   var val=textarea.value;
   if(!/repetir\./i.test(val)) return;
   var textoAnterior=_macroAnterior();
-  if(!textoAnterior){toast('Nenhuma macroscopia anterior encontrada.','t-info');return;}
+  if(!textoAnterior){return;}
   textarea.value=val.replace(/repetir\./i, textoAnterior);
   autoBackup();
 }
@@ -2103,7 +2097,7 @@ function snippetExpandir(textarea, gatilho){
   // Palavra especial: repetir
   if(atalho==='repetir'){
     var textoAnterior=_macroAnterior();
-    if(!textoAnterior){toast('Nenhuma macroscopia anterior encontrada.','t-info');return false;}
+    if(!textoAnterior){return false;}
     var novoVal=val.substring(0,inicio)+textoAnterior+val.substring(pos);
     textarea.value=novoVal;
     textarea.setSelectionRange(inicio+textoAnterior.length,inicio+textoAnterior.length);
@@ -2230,14 +2224,13 @@ function cadRemover(tipo,idx){
   lista.splice(idx,1);
   cadSalvar(chave,lista);
   cadRenderLista(tipo);
-  toast('Removido com sucesso.','t-info');
 }
 
 function cadExportar(){
   var unidades=cadCarregar(CAD_KEY_UNIDADES);
   var medicos=cadCarregar(CAD_KEY_MEDICOS);
   var snippets=snippetCarregar();
-  if(unidades.length===0&&medicos.length===0&&snippets.length===0){toast('Nenhum cadastro para exportar.','t-info');return;}
+  if(unidades.length===0&&medicos.length===0&&snippets.length===0){return;}
   var obj={syscedc_cadastros:true,salvoEm:new Date().toLocaleString('pt-BR'),unidades:unidades,medicos:medicos,snippets:snippets};
   var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
   var url=URL.createObjectURL(blob);
