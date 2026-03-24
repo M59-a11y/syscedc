@@ -263,6 +263,7 @@ if('serviceWorker' in navigator){
   <span id="import-nav-info"></span>
   <button class="nav-btn" id="import-nav-prev" style="background:#34495e;color:#fff;" onclick="_importNavAnterior()">◀ Anterior</button>
   <button class="nav-btn" id="import-nav-next" style="background:#27ae60;color:#fff;" onclick="_btnProximoUnificado()">➡️ Próximo</button>
+  <button class="nav-btn" id="import-nav-inserir" style="background:#8e44ad;color:#fff;" onclick="_inserirLaudoApos()" title="Inserir novo laudo após o atual">➕ Inserir Laudo</button>
   <button class="nav-btn" id="import-nav-imprimir" style="background:#c0392b;color:#fff;" onclick="imprimirLaudo()">🖨️ Imprimir</button>
 
 </div>
@@ -2467,7 +2468,22 @@ function _processarBackup(f){
       else if(d&&typeof d==='object'&&d.nome) lista=[d];
       lista=lista.map(_normalizarDados).filter(function(x){return x&&x.nome;});
       if(lista.length===0)throw 0;
+      // Salvar laudo atual em memoria antes de substituir o array
+      if(_importLaudos.length>0) _salvarLaudoImportAtual();
+      // Mesclar: preservar laudos ja digitados em memoria que nao estejam no novo JSON
+      var laudosAntigos=_importLaudos;
       _importLaudos=lista;
+      for(var _mi=0;_mi<laudosAntigos.length&&_mi<lista.length;_mi++){
+        var ant=laudosAntigos[_mi];
+        var nov=lista[_mi];
+        if(ant&&nov){
+          if((ant.macro||'').trim()&&!(nov.macro||'').trim()) nov.macro=ant.macro;
+          if((ant.conclusao||'').trim()&&!(nov.conclusao||'').trim()) nov.conclusao=ant.conclusao;
+          if((ant.micro||'').trim()&&!(nov.micro||'').trim()) nov.micro=ant.micro;
+          if(ant._materiais&&ant._materiais.length&&(!nov._materiais||!nov._materiais.length)) nov._materiais=ant._materiais;
+          if(ant._assinSrc) nov._assinSrc=ant._assinSrc;
+        }
+      }
       _importIdx=0;
       _carregarImportIdx(0);
     }catch(err){toast('Arquivo inválido!','t-error');}
@@ -2521,6 +2537,45 @@ function _importNavProximo(){
   _salvarManualAtual();
   if(_manualIdx < _manualLaudos.length-1) _carregarManualIdx(_manualIdx+1);
   else proximoLaudo();
+}
+
+function _inserirLaudoApos(){
+  if(!_importLaudos.length) return;
+  // Salvar laudo atual antes de inserir
+  _salvarLaudoImportAtual();
+  // Copiar dados do paciente do laudo atual (sem conteúdo)
+  var base=_importLaudos[_importIdx];
+  var novo={
+    nome:base.nome||'',
+    dataNasc:base.dataNasc||'',
+    nomeMae:base.nomeMae||'',
+    numExame:base.numExame||'',
+    numSerie:base.numSerie||'',
+    numAno:base.numAno||'',
+    cartaoSus:base.cartaoSus||'',
+    cpf:base.cpf||'',
+    prontuario:base.prontuario||'',
+    tel:base.tel||'',
+    unidade:base.unidade||'',
+    medicoReq:base.medicoReq||'',
+    dataSolic:base.dataSolic||'',
+    dataEntrada:base.dataEntrada||'',
+    dataEmissao:base.dataEmissao||'',
+    tipoLaudo:base.tipoLaudo||'anatomo',
+    patSelecionado:base.patSelecionado||'',
+    _materiais:[],
+    materiais:[],
+    macro:'',
+    micro:'',
+    conclusao:'',
+    metodologia:'',
+    _assinSrc:base._assinSrc||''
+  };
+  // Inserir após a posição atual
+  _importLaudos.splice(_importIdx+1, 0, novo);
+  // Navegar para o novo laudo
+  _carregarImportIdx(_importIdx+1);
+  toast('Laudo inserido na posição L'+(_importIdx+1)+'.','t-ok');
 }
 
 // Eventos adicionais (cadastros, modal, navegação)
