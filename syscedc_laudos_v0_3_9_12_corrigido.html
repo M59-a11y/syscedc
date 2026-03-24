@@ -474,7 +474,7 @@ if('serviceWorker' in navigator){
         <div id="sec-micro" class="fgrp"><label>Microscopia / Diagnóstico Descritivo (opcional)</label>
           <div style="position:relative"><textarea id="micro" rows="5" placeholder="Se houver..." oninput="autoBackup();acMostrarTexto('micro',CAD_KEY_MICRO)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('micro-ac');}else{acNavegar(event,'micro-ac');}" onblur="setTimeout(function(){acOcultar('micro-ac')},200)"></textarea><div class="ac-lista oculta" id="micro-ac"></div></div></div>
         <div class="fgrp"><label id="label-conclusao">Conclusão</label>
-          <div style="position:relative"><textarea id="conclusao" rows="4" placeholder="Conclusão do laudo..." oninput="autoBackup();acMostrarTexto('conclusao',CAD_KEY_CONCLUSAO)" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&_deveAvancarLaudoDuplo(this)){event.preventDefault();_btnProximoUnificado();}else if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('conclusao-ac');}else{acNavegar(event,'conclusao-ac');}" onblur="setTimeout(function(){acOcultar('conclusao-ac')},200)"></textarea><div class="ac-lista oculta" id="conclusao-ac"></div></div></div>
+          <div style="position:relative"><textarea id="conclusao" rows="4" placeholder="Conclusão do laudo..." oninput="autoBackup();_garantirLinhaAntesObsNota(this);acMostrarTexto('conclusao',CAD_KEY_CONCLUSAO)" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&_deveAvancarLaudoDuplo(this)){event.preventDefault();_btnProximoUnificado();}else if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('conclusao-ac');}else{acNavegar(event,'conclusao-ac');}" onblur="setTimeout(function(){acOcultar('conclusao-ac')},200)"></textarea><div class="ac-lista oculta" id="conclusao-ac"></div></div></div>
       </div>
     </div>
   </div>
@@ -1159,6 +1159,24 @@ var _ls = {
   remove: function(k){ try{ localStorage.removeItem(k); }catch(e){} }
 };
 function autoBackup(){clearTimeout(_backupTimer);_backupTimer=setTimeout(_salvarAuto,1500);}
+function _garantirLinhaAntesObsNota(ta){
+  var val=ta.value;
+  var pos=ta.selectionStart;
+  // Encontra o início da linha atual
+  var inicioLinha=val.lastIndexOf('\n',pos-1)+1;
+  var linhaAtual=val.substring(inicioLinha,pos);
+  // Só age se a linha atual começa com Observação ou Nota (com ou sem acento)
+  if(!/^(Observa[çc][aã]o|Nota)\b/i.test(linhaAtual)) return;
+  // Verifica se há linha anterior e se ela não está vazia
+  if(inicioLinha===0) return; // é a primeira linha
+  var antesNL=val.lastIndexOf('\n',inicioLinha-2);
+  var linhaAnterior=val.substring(antesNL+1,inicioLinha-1);
+  if(linhaAnterior.trim()==='') return; // já há linha em branco
+  // Insere \n antes da linha atual
+  var novo=val.substring(0,inicioLinha)+'\n'+val.substring(inicioLinha);
+  ta.value=novo;
+  ta.selectionStart=ta.selectionEnd=pos+1;
+}
 function _salvarAuto(){
   var d=coletar();
   if(!d.nome&&!d.numExame)return;
