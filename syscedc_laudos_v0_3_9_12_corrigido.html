@@ -1430,7 +1430,7 @@ function _nomeArquivoLaudo(dados){
     var mats=(dados.materiais&&dados.materiais.length)||0;
     sufixo=mats>1?'L1':'L1';
   }
-  return ((dados.numExame||'0000')+'-'+(dados.numSerie||_seriePadraoPorTipo(dados.tipoLaudo||_tipoLaudo))+'.'+ano+' '+(sufixo?sufixo+' ':'')+(dados.nome||'PACIENTE')).replace(/[\\:*?"<>|]/g,'').replace(/\s+/g,' ').trim();
+  return ((dados.numExame||'0000')+'-'+(dados.numSerie||_seriePadraoPorTipo(dados.tipoLaudo||_tipoLaudo))+'-'+ano+' '+(sufixo?sufixo+' ':'')+(dados.nome||'PACIENTE')).replace(/[\\:*?"<>|]/g,'').replace(/\s+/g,' ').trim();
 }
 
 function _renderLaudo(d){
