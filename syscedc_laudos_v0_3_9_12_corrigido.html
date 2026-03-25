@@ -2160,6 +2160,14 @@ function _registrarProd(tipo){
     localStorage.setItem('syscedc_prod_log',JSON.stringify(log));
   }catch(e){}
 
+  // Backup automático de cadastros a cada 10 laudos impressos
+  try{
+    var _bcKey='syscedc_backup_count';
+    var _bcN=(parseInt(localStorage.getItem(_bcKey),10)||0)+1;
+    localStorage.setItem(_bcKey,String(_bcN));
+    if(_bcN%10===0){ cadExportar(); }
+  }catch(e){}
+
   try{
     var LS_KEY='syscedc_financeiro';
     var k=ano+'-'+(mes<9?'0':'')+(mes+1);
