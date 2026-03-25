@@ -2168,7 +2168,7 @@ function _registrarProd(tipo){
     var _bcKey='syscedc_backup_count';
     var _bcN=(parseInt(localStorage.getItem(_bcKey),10)||0)+1;
     localStorage.setItem(_bcKey,String(_bcN));
-    if(_bcN%10===0){ setTimeout(cadExportar,2000); }
+    if(_bcN%10===0){ cadExportar(); }
   }catch(e){}
 
   try{
@@ -2337,6 +2337,9 @@ function acMostrar(campoId,tipo){
     ac.appendChild(div);
   });
   ac.classList.remove('oculta');
+  // Pré-selecionar primeiro item para Enter funcionar sem precisar de seta
+  var primeiro=ac.querySelector('.ac-item');
+  if(primeiro) primeiro.classList.add('sel');
 }
 function acOcultar(acId){var ac=document.getElementById(acId);if(ac)ac.classList.add('oculta');}
 function acNavegar(e,acId){
