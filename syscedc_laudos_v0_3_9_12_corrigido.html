@@ -470,11 +470,11 @@ if('serviceWorker' in navigator){
       <div class="fg">
         <!-- Seções do Anatomo Patológico -->
         <div id="sec-macro" class="fgrp"><label id="label-macro">Macroscopia</label>
-          <div style="position:relative"><textarea id="macro" rows="5" placeholder="Descreva os achados macroscópicos..." oninput="autoBackup();acMostrarTexto('macro',CAD_KEY_MACRO);checarRepetir(this)" onkeydown="if(event.key==='Tab'&&_snippetTabVar(event,this)){;}else if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('macro-ac');}else{acNavegar(event,'macro-ac');}" onblur="setTimeout(function(){acOcultar('macro-ac')},200)"></textarea><div class="ac-lista oculta" id="macro-ac"></div></div></div>
+          <div style="position:relative"><textarea id="macro" rows="5" placeholder="Descreva os achados macroscópicos..." oninput="autoBackup();acMostrarTexto('macro',CAD_KEY_MACRO);checarRepetir(this)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('macro-ac');}else{acNavegar(event,'macro-ac');}" onblur="setTimeout(function(){acOcultar('macro-ac')},200)"></textarea><div class="ac-lista oculta" id="macro-ac"></div></div></div>
         <div id="sec-micro" class="fgrp"><label>Microscopia / Diagnóstico Descritivo (opcional)</label>
-          <div style="position:relative"><textarea id="micro" rows="5" placeholder="Se houver..." oninput="autoBackup();acMostrarTexto('micro',CAD_KEY_MICRO)" onkeydown="if(event.key==='Tab'&&_snippetTabVar(event,this)){;}else if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('micro-ac');}else{acNavegar(event,'micro-ac');}" onblur="setTimeout(function(){acOcultar('micro-ac')},200)"></textarea><div class="ac-lista oculta" id="micro-ac"></div></div></div>
+          <div style="position:relative"><textarea id="micro" rows="5" placeholder="Se houver..." oninput="autoBackup();acMostrarTexto('micro',CAD_KEY_MICRO)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('micro-ac');}else{acNavegar(event,'micro-ac');}" onblur="setTimeout(function(){acOcultar('micro-ac')},200)"></textarea><div class="ac-lista oculta" id="micro-ac"></div></div></div>
         <div class="fgrp"><label id="label-conclusao">Conclusão</label>
-          <div style="position:relative"><textarea id="conclusao" rows="4" placeholder="Conclusão do laudo..." oninput="autoBackup();_garantirLinhaAntesObsNota(this);acMostrarTexto('conclusao',CAD_KEY_CONCLUSAO)" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&_deveAvancarLaudoDuplo(this)){event.preventDefault();_btnProximoUnificado();}else if(event.key==='Tab'&&_snippetTabVar(event,this)){;}else if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('conclusao-ac');}else{acNavegar(event,'conclusao-ac');}" onblur="setTimeout(function(){acOcultar('conclusao-ac')},200)"></textarea><div class="ac-lista oculta" id="conclusao-ac"></div></div></div>
+          <div style="position:relative"><textarea id="conclusao" rows="4" placeholder="Conclusão do laudo..." oninput="autoBackup();_garantirLinhaAntesObsNota(this);acMostrarTexto('conclusao',CAD_KEY_CONCLUSAO)" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&_deveAvancarLaudoDuplo(this)){event.preventDefault();_btnProximoUnificado();}else if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('conclusao-ac');}else{acNavegar(event,'conclusao-ac');}" onblur="setTimeout(function(){acOcultar('conclusao-ac')},200)"></textarea><div class="ac-lista oculta" id="conclusao-ac"></div></div></div>
       </div>
     </div>
   </div>
@@ -2087,42 +2087,6 @@ function checarRepetir(textarea){
   autoBackup();
 }
 
-// ===== VARIÁVEIS DE SNIPPET: {{nome}} =====
-// Converte {{nome}} → «nome» para marcar variáveis no texto expandido
-function _snippetPrepararVars(texto){
-  return texto.replace(/\{\{([^}]+)\}\}/g, function(_,nome){ return '\u00ab'+nome+'\u00bb'; });
-}
-// Encontra a primeira variável «...» no textarea e a seleciona; retorna true se achou
-function _snippetProximaVar(textarea, apartirDe){
-  var val=textarea.value;
-  var inicio=typeof apartirDe==='number'?apartirDe:0;
-  var idx=val.indexOf('\u00ab',inicio);
-  if(idx===-1) return false;
-  var fim=val.indexOf('\u00bb',idx);
-  if(fim===-1) return false;
-  textarea.focus();
-  textarea.setSelectionRange(idx,fim+1);
-  return true;
-}
-// Intercepta Tab dentro de textarea para pular variáveis
-function _snippetTabVar(e, textarea){
-  var val=textarea.value;
-  var sel=textarea.selectionStart;
-  // Se há variável «...» adiante do cursor, pula para ela
-  var idx=val.indexOf('\u00ab',sel);
-  // Se o cursor está dentro de uma variável, busca a próxima depois do fim dela
-  if(idx===-1||idx<sel){
-    var fimAtual=val.indexOf('\u00bb',sel);
-    idx=fimAtual!==-1?val.indexOf('\u00ab',fimAtual+1):-1;
-  }
-  if(idx===-1) return false; // sem mais variáveis — Tab normal
-  var fim=val.indexOf('\u00bb',idx);
-  if(fim===-1) return false;
-  e.preventDefault();
-  textarea.setSelectionRange(idx,fim+1);
-  return true;
-}
-
 function snippetExpandirInput(inp){
   var val=inp.value;
   var pos=inp.selectionStart;
@@ -2134,7 +2098,7 @@ function snippetExpandirInput(inp){
   var lista=snippetCarregar();
   var snip=lista.find(function(s){return s.atalho===atalho;});
   if(!snip) return false;
-  var texto=_snippetPrepararVars(snip.texto);
+  var texto=snip.texto;
   var novoVal=val.substring(0,inicio)+texto.toUpperCase()+val.substring(pos);
   inp.value=novoVal;
   var posCursor=novoVal.indexOf('__',inicio);
@@ -2166,23 +2130,17 @@ function snippetExpandir(textarea, gatilho){
   var lista=snippetCarregar();
   var snip=lista.find(function(s){return s.atalho===atalho;});
   if(!snip) return false;
-  var texto=_snippetPrepararVars(snip.texto);
+  var texto=snip.texto;
   // gatilho pontuação: acrescenta ao final; espaço: adiciona espaço após
   // se texto já termina com o mesmo caractere do gatilho, não duplicar
   var sufixo=(gatilho&&gatilho!==' ')?(texto.trimEnd().endsWith(gatilho)?'':gatilho):' ';
   var novoVal=val.substring(0,inicio)+texto+sufixo+val.substring(pos);
   textarea.value=novoVal;
+  var posCursor=novoVal.indexOf('__',inicio);
+  var posF=posCursor!==-1?posCursor:(inicio+texto.length+sufixo.length);
+  var posF2=posCursor!==-1?posCursor+2:(inicio+texto.length+sufixo.length);
   textarea.focus();
-  // Se há variável «...», posiciona na primeira; senão usa comportamento anterior
-  var temVar=novoVal.indexOf('\u00ab',inicio)!==-1;
-  if(temVar){
-    setTimeout(function(){ _snippetProximaVar(textarea,inicio); },0);
-  } else {
-    var posCursor=novoVal.indexOf('__',inicio);
-    var posF=posCursor!==-1?posCursor:(inicio+texto.length+sufixo.length);
-    var posF2=posCursor!==-1?posCursor+2:(inicio+texto.length+sufixo.length);
-    setTimeout(function(){ textarea.setSelectionRange(posF,posF2); },0);
-  }
+  setTimeout(function(){ textarea.setSelectionRange(posF,posF2); },0);
   autoBackup();
   return true;
 }
@@ -2203,14 +2161,6 @@ function _registrarProd(tipo){
     if(!Array.isArray(log)) log=[];
     log.push({tipo:tipoNorm,data:data});
     localStorage.setItem('syscedc_prod_log',JSON.stringify(log));
-  }catch(e){}
-
-  // Backup automático de cadastros a cada 10 laudos impressos
-  try{
-    var _bcKey='syscedc_backup_count';
-    var _bcN=(parseInt(localStorage.getItem(_bcKey),10)||0)+1;
-    localStorage.setItem(_bcKey,String(_bcN));
-    if(_bcN%10===0){ cadExportar(); }
   }catch(e){}
 
   try{
@@ -2654,6 +2604,16 @@ function _inserirLaudoApos(){
 
 // Eventos adicionais (cadastros, modal, navegação)
 document.addEventListener('DOMContentLoaded', function(){
+  // Backup diário às 12h
+  try{
+    var _agora=new Date();
+    var _dataHoje=_agora.toISOString().slice(0,10);
+    if(_agora.getHours()>=12 && localStorage.getItem('syscedc_backup_data')!==_dataHoje){
+      localStorage.setItem('syscedc_backup_data',_dataHoje);
+      setTimeout(cadExportar,3000);
+    }
+  }catch(e){}
+
   // modal cadastros: onclick inline nos botões
   // fechar ao clicar fora
   document.getElementById('modal-cadastros').addEventListener('click', function(e){if(e.target===this)fecharCadastros();});
