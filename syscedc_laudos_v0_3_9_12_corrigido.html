@@ -236,6 +236,17 @@ padding:4mm 0;
   .sys-header{flex-direction:column;gap:10px;text-align:center;}
   .sidebar{display:none;}
 }
+
+.snip-panel{display:none;position:fixed;right:18px;top:90px;width:320px;max-width:calc(100vw - 36px);background:#fff;border:1.5px solid #d8d8d8;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.22);z-index:9500;overflow:hidden;}
+.snip-panel.aberto{display:block;}
+.snip-panel-head{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:10px 14px;font-weight:700;font-size:.92rem;display:flex;align-items:center;justify-content:space-between;}
+.snip-panel-head button{background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;line-height:1;}
+.snip-panel-body{padding:12px;}
+.snip-panel-grid{display:grid;gap:10px;}
+.snip-panel-grid label{display:block;font-size:.78rem;font-weight:700;color:#555;margin-bottom:4px;}
+.snip-panel-grid input{width:100%;box-sizing:border-box;border:1.5px solid #cfcfcf;border-radius:8px;padding:8px 10px;font-size:.92rem;}
+.snip-panel-hint{margin-top:10px;font-size:.76rem;color:#666;}
+
 </style>
 <link rel="icon" type="image/x-icon" href="cedc.ico">
 <link rel="manifest" href="manifest.json">
@@ -2106,8 +2117,58 @@ function _snippetRotuloCampo(chave){
   };
   return mapa[k]||k.replace(/([a-z]+)(\d+)/i,'$1 $2');
 }
-function _snippetPreencherPlaceholders(texto){
-  var original=String(texto||'');
+var _snippetPending=null;
+function _snippetNormalizarValor(chave, valor){
+  var v=String(valor==null?'':valor).trim();
+  if(/^medida\d+$/i.test(String(chave||''))){
+    v=v.replace(/(\d)\s*\+\s*(\d)/g,'$1 + $2');
+    v=v.replace(/\(\s*/g,'(').replace(/\s*\)/g,')');
+    v=v.replace(/(\d)\((\d\s*\+\s*\d)\)/g,'$1 ($2)');
+    v=v.replace(/\s{2,}/g,' ');
+  }
+  return v;
+}
+function _snippetAplicarTexto(target, inicio, pos, texto, gatilho, upperCase){
+  var val=target.value;
+  if(val==null) val='';
+  var textoFinal=upperCase?texto.toUpperCase():texto;
+  var sufixo=(gatilho&&gatilho!==' ')?(textoFinal.trimEnd().endsWith(gatilho)?'':gatilho):' ';
+  var novoVal=String(val).substring(0,inicio)+textoFinal+sufixo+String(val).substring(pos);
+  target.value=novoVal;
+  var posCursor=novoVal.indexOf('__',inicio);
+  var posF=posCursor!==-1?posCursor:(inicio+textoFinal.length+sufixo.length);
+  var posF2=posCursor!==-1?posCursor+2:(inicio+textoFinal.length+sufixo.length);
+  target.focus();
+  setTimeout(function(){ target.setSelectionRange(posF,posF2); },0);
+  autoBackup();
+}
+function _fecharSnippetPanel(cancelar){
+  var panel=document.getElementById('snip-panel');
+  if(panel) panel.classList.remove('aberto');
+  var grid=document.getElementById('snip-panel-grid');
+  if(grid) grid.innerHTML='';
+  if(cancelar && _snippetPending && _snippetPending.target){
+    try{ _snippetPending.target.focus(); }catch(e){}
+  }
+  _snippetPending=null;
+}
+function _confirmarSnippetPanel(){
+  if(!_snippetPending) return;
+  var valores={};
+  (_snippetPending.tokens||[]).forEach(function(chave){
+    var el=document.getElementById('snip-var-'+chave);
+    valores[chave]=_snippetNormalizarValor(chave, el?el.value:'');
+  });
+  var texto=String(_snippetPending.original||'').replace(/\{\{([^}]+)\}\}/g,function(_,chave){
+    chave=(chave||'').trim();
+    return Object.prototype.hasOwnProperty.call(valores,chave)?valores[chave]:'';
+  });
+  var p=_snippetPending;
+  _fecharSnippetPanel(false);
+  _snippetAplicarTexto(p.target,p.inicio,p.pos,texto,p.gatilho,p.upperCase);
+}
+function _abrirSnippetPanel(target, inicio, pos, textoOriginal, gatilho, upperCase){
+  var original=String(textoOriginal||'');
   var re=/\{\{([^}]+)\}\}/g;
   var tokens=[];
   var m;
@@ -2115,22 +2176,33 @@ function _snippetPreencherPlaceholders(texto){
     var chave=(m[1]||'').trim();
     if(chave && tokens.indexOf(chave)===-1) tokens.push(chave);
   }
-  if(!tokens.length) return {texto:original,cancelado:false};
-  var valores={};
-  for(var i=0;i<tokens.length;i++){
-    var chave=tokens[i];
-    var rotulo=_snippetRotuloCampo(chave);
-    var resposta=window.prompt('Preencha '+rotulo+':','');
-    if(resposta===null){
-      return {texto:original,cancelado:true};
-    }
-    valores[chave]=resposta;
+  if(!tokens.length){
+    _snippetAplicarTexto(target,inicio,pos,original,gatilho,upperCase);
+    return;
   }
-  var preenchido=original.replace(re,function(_,chave){
-    chave=(chave||'').trim();
-    return Object.prototype.hasOwnProperty.call(valores,chave)?valores[chave]:'';
+  _snippetPending={target:target,inicio:inicio,pos:pos,original:original,gatilho:gatilho,upperCase:!!upperCase,tokens:tokens};
+  var grid=document.getElementById('snip-panel-grid');
+  grid.innerHTML=tokens.map(function(chave, idx){
+    var rotulo=_snippetRotuloCampo(chave);
+    return '<div><label for="snip-var-'+chave+'">'+escHtml(rotulo)+'</label><input id="snip-var-'+chave+'" type="text" autocomplete="off" data-idx="'+idx+'"></div>';
+  }).join('');
+  var panel=document.getElementById('snip-panel');
+  panel.classList.add('aberto');
+  Array.prototype.forEach.call(grid.querySelectorAll('input'), function(inp, idx, arr){
+    inp.addEventListener('keydown', function(ev){
+      if(ev.key==='Enter'){
+        ev.preventDefault();
+        _confirmarSnippetPanel();
+      }else if(ev.key==='Escape'){
+        ev.preventDefault();
+        _fecharSnippetPanel(true);
+      }
+    });
   });
-  return {texto:preenchido,cancelado:false};
+  setTimeout(function(){
+    var first=grid.querySelector('input');
+    if(first) first.focus();
+  },0);
 }
 
 function snippetExpandirInput(inp){
@@ -2144,15 +2216,7 @@ function snippetExpandirInput(inp){
   var lista=snippetCarregar();
   var snip=lista.find(function(s){return s.atalho===atalho;});
   if(!snip) return false;
-  var textoInfo=_snippetPreencherPlaceholders(snip.texto);
-  if(textoInfo.cancelado) return true;
-  var texto=textoInfo.texto;
-  var novoVal=val.substring(0,inicio)+texto.toUpperCase()+val.substring(pos);
-  inp.value=novoVal;
-  var posCursor=novoVal.indexOf('__',inicio);
-  if(posCursor!==-1){inp.setSelectionRange(posCursor,posCursor+2);}
-  else{inp.setSelectionRange(inicio+texto.length,inicio+texto.length);}
-  autoBackup();
+  _abrirSnippetPanel(inp,inicio,pos,snip.texto,'',true);
   return true;
 }
 
@@ -2179,20 +2243,7 @@ function snippetExpandir(textarea, gatilho){
   var lista=snippetCarregar();
   var snip=lista.find(function(s){return s.atalho===atalho;});
   if(!snip) return false;
-  var textoInfo=_snippetPreencherPlaceholders(snip.texto);
-  if(textoInfo.cancelado) return true;
-  var texto=textoInfo.texto;
-  // gatilho pontuação: acrescenta ao final; espaço: adiciona espaço após
-  // se texto já termina com o mesmo caractere do gatilho, não duplicar
-  var sufixo=(gatilho&&gatilho!==' ')?(texto.trimEnd().endsWith(gatilho)?'':gatilho):' ';
-  var novoVal=val.substring(0,inicio)+texto+sufixo+val.substring(pos);
-  textarea.value=novoVal;
-  var posCursor=novoVal.indexOf('__',inicio);
-  var posF=posCursor!==-1?posCursor:(inicio+texto.length+sufixo.length);
-  var posF2=posCursor!==-1?posCursor+2:(inicio+texto.length+sufixo.length);
-  textarea.focus();
-  setTimeout(function(){ textarea.setSelectionRange(posF,posF2); },0);
-  autoBackup();
+  _abrirSnippetPanel(textarea,inicio,pos,snip.texto,gatilho,false);
   return true;
 }
 function _registrarProd(tipo){
@@ -2669,6 +2720,13 @@ document.addEventListener('DOMContentLoaded', function(){
   // fechar ao clicar fora
   document.getElementById('modal-cadastros').addEventListener('click', function(e){if(e.target===this)fecharCadastros();});
   document.getElementById('modal-laudos-salvos').addEventListener('click', function(e){if(e.target===this)fecharLaudosSalvos();});
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && _snippetPending){
+      e.preventDefault();
+      _fecharSnippetPanel(true);
+    }
+  });
+
   // Enter nos inputs de cadastro
   document.getElementById('cad-inp-unidade').addEventListener('keydown', function(e){if(e.key==='Enter')cadAdicionar('unidades');});
   document.getElementById('cad-inp-medico').addEventListener('keydown', function(e){if(e.key==='Enter')cadAdicionar('medicos');});
@@ -2691,6 +2749,18 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 });
 </script>
+
+
+<div class="snip-panel" id="snip-panel">
+  <div class="snip-panel-head">
+    <span>Preencher snippet</span>
+    <button type="button" onclick="_fecharSnippetPanel(true)" title="Fechar">✕</button>
+  </div>
+  <div class="snip-panel-body">
+    <div class="snip-panel-grid" id="snip-panel-grid"></div>
+    <div class="snip-panel-hint">Pressione Enter para inserir. Esc fecha.</div>
+  </div>
+</div>
 
 </body>
 </html>
