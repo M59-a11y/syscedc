@@ -1444,7 +1444,7 @@ function _nomeArquivoLaudo(dados){
     var mats=(dados.materiais&&dados.materiais.length)||0;
     sufixo=mats>1?'L1':'L1';
   }
-  return ((dados.numExame||'0000')+'-'+(dados.numSerie||_seriePadraoPorTipo(dados.tipoLaudo||_tipoLaudo))+'-'+ano+' '+(sufixo?sufixo+' ':'')+(dados.nome||'PACIENTE')).replace(/[\\:*?"<>|]/g,'').replace(/\s+/g,' ').trim();
+  return ((dados.numExame||'0000')+'-'+(dados.numSerie||_seriePadraoPorTipo(dados.tipoLaudo||_tipoLaudo))+'.'+ano+' '+(sufixo?sufixo+' ':'')+(dados.nome||'PACIENTE')).replace(/[\\:*?"<>|]/g,'').replace(/\s+/g,' ').trim();
 }
 
 function _renderLaudo(d){
@@ -2138,22 +2138,13 @@ function _snippetAplicarTexto(target, inicio, pos, texto, gatilho, upperCase){
   var selIni=inicio;
   var selFim=inicio+textoFinal.length;
   var posCursor=novoVal.indexOf('__',inicio);
-  var selecionarTexto = String(target && target.id || '')==='conclusao';
   if(posCursor!==-1){
     selIni=posCursor;
     selFim=posCursor+2;
-    selecionarTexto = true;
   }
   target.focus();
   setTimeout(function(){
-    try{
-      if(selecionarTexto){
-        target.setSelectionRange(selIni,selFim);
-      }else{
-        var cursor = inicio + textoFinal.length + sufixo.length;
-        target.setSelectionRange(cursor,cursor);
-      }
-    }catch(e){}
+    try{ target.setSelectionRange(selIni,selFim); }catch(e){}
   },0);
   autoBackup();
 }
