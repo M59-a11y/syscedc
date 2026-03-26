@@ -2135,11 +2135,17 @@ function _snippetAplicarTexto(target, inicio, pos, texto, gatilho, upperCase){
   var sufixo=(gatilho&&gatilho!==' ')?(textoFinal.trimEnd().endsWith(gatilho)?'':gatilho):' ';
   var novoVal=String(val).substring(0,inicio)+textoFinal+sufixo+String(val).substring(pos);
   target.value=novoVal;
+  var selIni=inicio;
+  var selFim=inicio+textoFinal.length;
   var posCursor=novoVal.indexOf('__',inicio);
-  var posF=posCursor!==-1?posCursor:(inicio+textoFinal.length+sufixo.length);
-  var posF2=posCursor!==-1?posCursor+2:(inicio+textoFinal.length+sufixo.length);
+  if(posCursor!==-1){
+    selIni=posCursor;
+    selFim=posCursor+2;
+  }
   target.focus();
-  setTimeout(function(){ target.setSelectionRange(posF,posF2); },0);
+  setTimeout(function(){
+    try{ target.setSelectionRange(selIni,selFim); }catch(e){}
+  },0);
   autoBackup();
 }
 function _fecharSnippetPanel(cancelar){
