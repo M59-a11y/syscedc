@@ -2087,6 +2087,52 @@ function checarRepetir(textarea){
   autoBackup();
 }
 
+
+function _snippetRotuloCampo(chave){
+  var k=String(chave||'').toLowerCase();
+  var mapa={
+    'medida1':'medida 1',
+    'medida2':'medida 2',
+    'medida3':'medida 3',
+    'texto1':'texto 1',
+    'texto2':'texto 2',
+    'texto3':'texto 3',
+    'porc1':'percentual 1',
+    'porc2':'percentual 2',
+    'quantidade':'quantidade',
+    'cor':'cor',
+    'cons1':'consistência 1',
+    'cons2':'consistência 2'
+  };
+  return mapa[k]||k.replace(/([a-z]+)(\d+)/i,'$1 $2');
+}
+function _snippetPreencherPlaceholders(texto){
+  var original=String(texto||'');
+  var re=/\{\{([^}]+)\}\}/g;
+  var tokens=[];
+  var m;
+  while((m=re.exec(original))!==null){
+    var chave=(m[1]||'').trim();
+    if(chave && tokens.indexOf(chave)===-1) tokens.push(chave);
+  }
+  if(!tokens.length) return {texto:original,cancelado:false};
+  var valores={};
+  for(var i=0;i<tokens.length;i++){
+    var chave=tokens[i];
+    var rotulo=_snippetRotuloCampo(chave);
+    var resposta=window.prompt('Preencha '+rotulo+':','');
+    if(resposta===null){
+      return {texto:original,cancelado:true};
+    }
+    valores[chave]=resposta;
+  }
+  var preenchido=original.replace(re,function(_,chave){
+    chave=(chave||'').trim();
+    return Object.prototype.hasOwnProperty.call(valores,chave)?valores[chave]:'';
+  });
+  return {texto:preenchido,cancelado:false};
+}
+
 function snippetExpandirInput(inp){
   var val=inp.value;
   var pos=inp.selectionStart;
@@ -2098,12 +2144,15 @@ function snippetExpandirInput(inp){
   var lista=snippetCarregar();
   var snip=lista.find(function(s){return s.atalho===atalho;});
   if(!snip) return false;
-  var texto=snip.texto;
+  var textoInfo=_snippetPreencherPlaceholders(snip.texto);
+  if(textoInfo.cancelado) return true;
+  var texto=textoInfo.texto;
   var novoVal=val.substring(0,inicio)+texto.toUpperCase()+val.substring(pos);
   inp.value=novoVal;
   var posCursor=novoVal.indexOf('__',inicio);
   if(posCursor!==-1){inp.setSelectionRange(posCursor,posCursor+2);}
   else{inp.setSelectionRange(inicio+texto.length,inicio+texto.length);}
+  autoBackup();
   return true;
 }
 
@@ -2130,7 +2179,9 @@ function snippetExpandir(textarea, gatilho){
   var lista=snippetCarregar();
   var snip=lista.find(function(s){return s.atalho===atalho;});
   if(!snip) return false;
-  var texto=snip.texto;
+  var textoInfo=_snippetPreencherPlaceholders(snip.texto);
+  if(textoInfo.cancelado) return true;
+  var texto=textoInfo.texto;
   // gatilho pontuação: acrescenta ao final; espaço: adiciona espaço após
   // se texto já termina com o mesmo caractere do gatilho, não duplicar
   var sufixo=(gatilho&&gatilho!==' ')?(texto.trimEnd().endsWith(gatilho)?'':gatilho):' ';
