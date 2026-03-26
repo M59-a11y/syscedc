@@ -2138,13 +2138,22 @@ function _snippetAplicarTexto(target, inicio, pos, texto, gatilho, upperCase){
   var selIni=inicio;
   var selFim=inicio+textoFinal.length;
   var posCursor=novoVal.indexOf('__',inicio);
+  var selecionarTexto = String(target && target.id || '')==='conclusao';
   if(posCursor!==-1){
     selIni=posCursor;
     selFim=posCursor+2;
+    selecionarTexto = true;
   }
   target.focus();
   setTimeout(function(){
-    try{ target.setSelectionRange(selIni,selFim); }catch(e){}
+    try{
+      if(selecionarTexto){
+        target.setSelectionRange(selIni,selFim);
+      }else{
+        var cursor = inicio + textoFinal.length + sufixo.length;
+        target.setSelectionRange(cursor,cursor);
+      }
+    }catch(e){}
   },0);
   autoBackup();
 }
