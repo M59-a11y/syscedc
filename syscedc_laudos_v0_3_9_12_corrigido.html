@@ -1889,7 +1889,7 @@ renderMateriais();
 // Sidebar
 // Selecionar todo o texto ao focar em input/textarea
 document.addEventListener('focusin', function(e){
-  if(e.target.id === 'conclusao'){
+  if(e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA'){
     // Não interferir dentro de modais
     if(e.target.closest('#modal-cadastros') || e.target.closest('#modal-laudos-salvos')) return;
     var elNum=document.getElementById('numExame');
@@ -2135,16 +2135,27 @@ function _snippetAplicarTexto(target, inicio, pos, texto, gatilho, upperCase){
   var sufixo=(gatilho&&gatilho!==' ')?(textoFinal.trimEnd().endsWith(gatilho)?'':gatilho):' ';
   var novoVal=String(val).substring(0,inicio)+textoFinal+sufixo+String(val).substring(pos);
   target.value=novoVal;
-  var selIni=inicio;
-  var selFim=inicio+textoFinal.length;
+
   var posCursor=novoVal.indexOf('__',inicio);
+  var cursorIni, cursorFim;
+
   if(posCursor!==-1){
-    selIni=posCursor;
-    selFim=posCursor+2;
+    if(target && target.id==='conclusao'){
+      cursorIni=posCursor;
+      cursorFim=posCursor+2;
+    }else{
+      target.value=novoVal.substring(0,posCursor)+novoVal.substring(posCursor+2);
+      cursorIni=posCursor;
+      cursorFim=posCursor;
+    }
+  }else{
+    cursorIni=inicio+textoFinal.length+sufixo.length;
+    cursorFim=cursorIni;
   }
+
   target.focus();
   setTimeout(function(){
-    try{ target.setSelectionRange(selIni,selFim); }catch(e){}
+    try{ target.setSelectionRange(cursorIni,cursorFim); }catch(e){}
   },0);
   autoBackup();
 }
