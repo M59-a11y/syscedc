@@ -2545,7 +2545,7 @@ function _atualizarNavImportacao(){
     var suf='L'+(_importIdx+1);
     document.getElementById('import-nav-info').textContent=_labelBarra(dados, suf);
     btnPrev.disabled=_importIdx===0;
-    btnNext.disabled=false;
+    btnNext.disabled=_importIdx>=total-1;
   }else{
     var total=Math.max(_manualLaudos.length, (_manualInfoAtual().sufixo ? parseInt(_manualInfoAtual().sufixo.replace('L',''),10)||1 : 1));
     var idxAtual=Math.max(_manualIdx, (_manualInfoAtual().sufixo ? (parseInt(_manualInfoAtual().sufixo.replace('L',''),10)||1)-1 : 0));
@@ -2654,11 +2654,7 @@ function _carregarImportIdx(idx){
 
 function _importNavAnterior(){
   if(_importLaudos.length>0){
-    if(_importIdx<=0){
-      // Pode estar em modo manual dentro de importação (L2, L3...)
-      if(_manualMultiploAtivo() && _manualIdx>0){_salvarManualAtual();_carregarManualIdx(_manualIdx-1);}
-      return;
-    }
+    if(_importIdx<=0) return;
     _salvarLaudoImportAtual();
     _carregarImportIdx(_importIdx-1);
     return;
@@ -2670,7 +2666,11 @@ function _importNavAnterior(){
 }
 function _importNavProximo(){
   if(_importLaudos.length>0){
-    if(_importIdx>=_importLaudos.length-1){ proximoLaudo(); return; }
+    if(_importIdx>=_importLaudos.length-1){
+      _salvarLaudoImportAtual();
+      _atualizarNavImportacao();
+      return;
+    }
     _salvarLaudoImportAtual();
     _carregarImportIdx(_importIdx+1);
     return;
