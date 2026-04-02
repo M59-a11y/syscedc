@@ -248,12 +248,17 @@ padding:4mm 0;
 .snip-panel-hint{margin-top:10px;font-size:.76rem;color:#666;}
 
 
-/* Ajuste de recuo para conclusão (hanging indent seguro) */
-#conclusao{
-  white-space: pre-wrap;
-  text-indent: -1.2em;
-  padding-left: 1.2em;
+/* Conclusão com hífen: recuo só nas quebras do mesmo item no preview/impressão */
+.l-sec-txt.concl .bullet-line{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  column-gap:.35em;
+  align-items:start;
 }
+.l-sec-txt.concl .bullet-mark{white-space:pre;}
+.l-sec-txt.concl .bullet-text{min-width:0;}
+.l-sec-txt.concl .bullet-plain{display:block;}
+.l-sec-txt.concl .bullet-empty{display:block;min-height:1em;}
 
 </style>
 <link rel="icon" type="image/x-icon" href="cedc.ico">
@@ -986,6 +991,24 @@ function _carregarManualIdx(idx){
   _focarCampoMaterial();
 }
 function v(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+
+function _fmtLinhaConclusaoHtml(linha){
+  if(linha==null) linha='';
+  if(linha==='') return '<div class="bullet-empty">&nbsp;</div>';
+  var m=linha.match(/^(\s*)-\s+(.*)$/);
+  if(m){
+    return '<div class="bullet-line"><span class="bullet-mark">'+escHtml(m[1]+'-')+'</span><span class="bullet-text">'+escHtml(m[2])+'</span></div>';
+  }
+  return '<div class="bullet-plain">'+escHtml(linha)+'</div>';
+}
+function _renderConclusaoFormatada(texto){
+  var el=document.getElementById('p-concl');
+  if(!el) return;
+  var txt=(texto||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(!txt){el.textContent='';return;}
+  el.innerHTML=txt.split('\n').map(_fmtLinhaConclusaoHtml).join('');
+}
+
 function set(id,val){var e=document.getElementById(id);if(e)e.textContent=val||'';}
 // ─── ACENTUAÇÃO AUTOMÁTICA DE NOMES BRASILEIROS ───────────────────────────
 function acentuarNome(nome){
@@ -1318,7 +1341,7 @@ function gerarPreview(){
   var elCT=document.getElementById('p-concl-tit');
   if(elCT) elCT.style.display=titConcl?'':'none';
   set('p-macro',d.macro||'');
-  set('p-concl',d.conclusao||'');
+  _renderConclusaoFormatada(d.conclusao||'');
 
   // Distribuição vertical para citologia: espaçamentos fixos, sem empurrar para o fundo
   var conteudo = document.querySelector('#laudo-print .conteudo');
@@ -1499,7 +1522,7 @@ function _renderLaudo(d){
   var titConcl=(isAnatomo||isGemol)?(temMacro?'Conclusão:':'Microscopia e Conclusão:'):(isPaaf?(_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:'):'Resultado:');
   set('p-concl-tit',titConcl);
   var elCT=document.getElementById('p-concl-tit');if(elCT)elCT.style.display=titConcl?'':'none';
-  set('p-macro',d.macro||'');set('p-concl',d.conclusao||'');
+  set('p-macro',d.macro||'');_renderConclusaoFormatada(d.conclusao||'');
   var conteudo=document.querySelector('#laudo-print .conteudo');if(conteudo)conteudo.style.justifyContent='';
   var bpa2=document.getElementById('bloco-pre-analitico');if(bpa2)bpa2.style.marginTop=isCito?'6mm':'';
   var blConcl=document.getElementById('bloco-concl');
