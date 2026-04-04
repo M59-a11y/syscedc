@@ -1242,6 +1242,29 @@ function _salvarAutoComNome(nome){
   if(idx>=0)laudos[idx]=reg;else laudos.unshift(reg);
   _ls.set('cedc_laudos',JSON.stringify(laudos));
 }
+function _registrarSaidaSegura(tipo,nomeArquivo,conteudo){
+  try{
+    _ls.set('cedc_ultima_saida_pendente', JSON.stringify({
+      tipo: tipo||'unico',
+      nomeArquivo: nomeArquivo||'',
+      salvoEm: new Date().toLocaleString('pt-BR'),
+      conteudo: conteudo||null
+    }));
+  }catch(e){}
+}
+function _limparSaidaSegura(){
+  _ls.remove('cedc_ultima_saida_pendente');
+}
+function _finalizarPosImpressaoSeguro(aoConfirmado){
+  var ok=confirm('Confirma que o BACKUP JSON foi baixado e que o PDF foi salvo?\n\nClique em OK somente após verificar.\nClique em Cancelar para manter os dados na tela e evitar perda.');
+  if(!ok){
+    toast('Dados mantidos na tela. Nada foi limpo para evitar perda. Verifique Downloads/PDF e tente novamente.','t-info');
+    return false;
+  }
+  _limparSaidaSegura();
+  if(typeof aoConfirmado==='function') aoConfirmado();
+  return true;
+}
 
 // ===== PREVIEW =====
 function gerarPreview(){
@@ -1586,7 +1609,7 @@ function _executarImpressaoFila(lista, aoFinalizar){
     for(var k=0;k<clones.length;k++){if(clones[k].parentNode)clones[k].parentNode.removeChild(clones[k]);}
     laudoOrig.style.display='';
     previewSec.style.padding='20px';
-    if(typeof aoFinalizar==='function') aoFinalizar();
+    _finalizarPosImpressaoSeguro(aoFinalizar);
   };
   setTimeout(function(){
     try{navigator.clipboard.writeText(nomeBase);}catch(e){}
@@ -1625,6 +1648,8 @@ function imprimirLaudo(){
 
     listaImportacao.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd(ld.tipoLaudo==="anatomo"?"anatomo":"cito");});
     var nomeBase=_nomeArquivoLaudo(listaImportacao[0]).replace(/\sL\d+\b/ig,'').trim();
+    _salvarAuto();
+    _registrarSaidaSegura('importacao',nomeBase,{chave:nomeBase,laudos:listaImportacao,salvoEm:new Date().toLocaleString('pt-BR')});
     var reg={chave:nomeBase,laudos:listaImportacao,salvoEm:new Date().toLocaleString('pt-BR')};
     var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
     var url=URL.createObjectURL(blob);
@@ -1662,6 +1687,8 @@ function imprimirLaudo(){
     if(!listaPendentes.length){toast('Nenhum laudo válido para imprimir.','t-error');return;}
     listaPendentes.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd((ld.dados?ld.dados.tipoLaudo:ld.tipoLaudo)==="anatomo"?"anatomo":"cito");});
     var nomeBase=_nomeArquivoLaudo(listaPendentes[0]).replace(/\sL\d+\b/ig,'').trim();
+    _salvarAuto();
+    _registrarSaidaSegura('multiplo',nomeBase,{chave:nomeBase,laudos:listaPendentes,salvoEm:new Date().toLocaleString('pt-BR')});
     var reg={chave:nomeBase,laudos:listaPendentes,salvoEm:new Date().toLocaleString('pt-BR')};
     var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
     var url=URL.createObjectURL(blob);
@@ -1689,6 +1716,10 @@ function imprimirLaudo(){
   else{imgAssin2.src='';imgAssin2.classList.add('assin-oculta');}
   document.getElementById('preview-sec').style.padding='0';
 
+  _salvarAuto();
+  _salvarAutoComNome(nomeConf2);
+  _registrarSaidaSegura('unico',nomeConf2,{chave:nomeConf2,dados:d,salvoEm:new Date().toLocaleString('pt-BR')});
+
   (function(){
     var reg={chave:nomeConf2,dados:d,salvoEm:new Date().toLocaleString('pt-BR')};
     var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
@@ -1703,11 +1734,13 @@ function imprimirLaudo(){
     window.onafterprint=function(){
       window.onafterprint=null;
       document.title=tituloAnterior;
-      limparSilencioso();
-      voltarTelaExtrator();
+      document.getElementById('preview-sec').style.padding='20px';
+      _finalizarPosImpressaoSeguro(function(){
+        limparSilencioso();
+        voltarTelaExtrator();
+      });
     };
     window.print();
-    document.getElementById('preview-sec').style.padding='20px';
   },250);
 }
 
