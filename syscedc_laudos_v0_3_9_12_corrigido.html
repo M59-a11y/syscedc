@@ -1256,15 +1256,32 @@ function _limparSaidaSegura(){
   _ls.remove('cedc_ultima_saida_pendente');
 }
 function _finalizarPosImpressaoSeguro(aoConfirmado){
-  var ok=confirm('Confirma que o BACKUP JSON foi baixado e que o PDF foi salvo?\n\nClique em OK somente após verificar.\nClique em Cancelar para manter os dados na tela e evitar perda.');
-  if(!ok){
-    toast('Dados mantidos na tela. Nada foi limpo para evitar perda. Verifique Downloads/PDF e tente novamente.','t-info');
-    return false;
-  }
   _limparSaidaSegura();
   if(typeof aoConfirmado==='function') aoConfirmado();
   return true;
 }
+function _baixarBackupJSON(nomeArquivo, conteudo){
+  var blob=new Blob([JSON.stringify(conteudo,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download=nomeArquivo+'.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){
+    URL.revokeObjectURL(url);
+    if(a&&a.parentNode)a.parentNode.removeChild(a);
+  },1000);
+}
+function _imprimirComAtrasoSeguro(nomeArquivo, acaoImpressao, atrasoMs){
+  var espera=Math.max(1200, parseInt(atrasoMs,10)||2200);
+  toast('Backup JSON acionado. Abrindo PDF em '+(espera/1000).toFixed(1).replace('.0','')+'s...','t-info');
+  setTimeout(function(){
+    try{navigator.clipboard.writeText(nomeArquivo||'');}catch(e){}
+    if(typeof acaoImpressao==='function') acaoImpressao();
+  },espera);
+}
+
 
 // ===== PREVIEW =====
 function gerarPreview(){
@@ -1651,15 +1668,14 @@ function imprimirLaudo(){
     _salvarAuto();
     _registrarSaidaSegura('importacao',nomeBase,{chave:nomeBase,laudos:listaImportacao,salvoEm:new Date().toLocaleString('pt-BR')});
     var reg={chave:nomeBase,laudos:listaImportacao,salvoEm:new Date().toLocaleString('pt-BR')};
-    var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=url;a.download=nomeBase+'.json';a.click();
-    URL.revokeObjectURL(url);
-    _executarImpressaoFila(listaImportacao,function(){
-      _fecharImportacao();
-      limparSilencioso();
-      voltarTelaExtrator();
-    });
+    _baixarBackupJSON(nomeBase, reg);
+    _imprimirComAtrasoSeguro(nomeBase, function(){
+      _executarImpressaoFila(listaImportacao,function(){
+        _fecharImportacao();
+        limparSilencioso();
+        voltarTelaExtrator();
+      });
+    }, 2200);
     return;
   }
 
@@ -1690,15 +1706,14 @@ function imprimirLaudo(){
     _salvarAuto();
     _registrarSaidaSegura('multiplo',nomeBase,{chave:nomeBase,laudos:listaPendentes,salvoEm:new Date().toLocaleString('pt-BR')});
     var reg={chave:nomeBase,laudos:listaPendentes,salvoEm:new Date().toLocaleString('pt-BR')};
-    var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=url;a.download=nomeBase+'.json';a.click();
-    URL.revokeObjectURL(url);
-    _executarImpressaoFila(listaPendentes,function(){
-      _manualLaudos=[]; _manualIdx=-1; _laudosPendentes=[];
-      limparSilencioso();
-      voltarTelaExtrator();
-    });
+    _baixarBackupJSON(nomeBase, reg);
+    _imprimirComAtrasoSeguro(nomeBase, function(){
+      _executarImpressaoFila(listaPendentes,function(){
+        _manualLaudos=[]; _manualIdx=-1; _laudosPendentes=[];
+        limparSilencioso();
+        voltarTelaExtrator();
+      });
+    }, 2200);
     return;
   }
 
@@ -1720,17 +1735,12 @@ function imprimirLaudo(){
   _salvarAutoComNome(nomeConf2);
   _registrarSaidaSegura('unico',nomeConf2,{chave:nomeConf2,dados:d,salvoEm:new Date().toLocaleString('pt-BR')});
 
-  (function(){
-    var reg={chave:nomeConf2,dados:d,salvoEm:new Date().toLocaleString('pt-BR')};
-    var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=url;a.download=nomeConf2+'.json';a.click();
-    URL.revokeObjectURL(url);
-  })();
+  var reg={chave:nomeConf2,dados:d,salvoEm:new Date().toLocaleString('pt-BR')};
+  _baixarBackupJSON(nomeConf2, reg);
 
   var tituloAnterior=document.title;
   document.title=nomeConf2;
-  setTimeout(function(){
+  _imprimirComAtrasoSeguro(nomeConf2, function(){
     window.onafterprint=function(){
       window.onafterprint=null;
       document.title=tituloAnterior;
@@ -1741,7 +1751,7 @@ function imprimirLaudo(){
       });
     };
     window.print();
-  },250);
+  }, 2200);
 }
 
 // ===== LIMPAR =====
