@@ -408,7 +408,7 @@ if('serviceWorker' in navigator){
             <span>/</span>
             <input type="text" id="numAno" value="" maxlength="20" style="width:90px;" autocomplete="off" oninput="this.value=this.value.toUpperCase();autoBackup()" placeholder="2026 ou 2026 L1">
             <span style="color:#888;font-size:.8rem;margin-left:4px;">Laudos:</span>
-            <input type="text" id="numLaudos" placeholder="1" maxlength="2" style="width:36px;text-align:center;" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'');autoBackup();(function(){var n=parseInt(this.value,10)||1;var elAno=document.getElementById('numAno');var ano=elAno.value.trim();var info=_parseNumAnoInfo(ano);if(n>1&&!info.sufixo){elAno.value=(info.ano||new Date().getFullYear())+' L1';autoBackup();}else if(n<=1&&info.sufixo){elAno.value=info.ano||new Date().getFullYear();autoBackup();}}).call(this);" title="Informe a quantidade total de laudos deste exame">
+            <input type="text" id="numLaudos" placeholder="1" maxlength="3" style="width:48px;text-align:center;" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'');autoBackup();(function(){var n=parseInt(this.value,10)||1;var elAno=document.getElementById('numAno');var ano=elAno.value.trim();var info=_parseNumAnoInfo(ano);if(n>1&&!info.sufixo){elAno.value=(info.ano||new Date().getFullYear())+' L1';autoBackup();}else if(n<=1&&info.sufixo){elAno.value=info.ano||new Date().getFullYear();autoBackup();}}).call(this);" title="Informe a quantidade total de laudos deste exame (aceita até 999)">
           </div>
         </div>
       </div>
