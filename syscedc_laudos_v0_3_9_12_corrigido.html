@@ -992,14 +992,22 @@ function _carregarManualIdx(idx){
 }
 function v(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 
+function _fmtConclusaoInlineHtml(txt){
+  txt=escHtml(txt==null?'':String(txt));
+  txt=txt
+    .replace(/\*\*\*([^*]+)\*\*\*/g,'<b><i>$1</i></b>')
+    .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+    .replace(/\*([^*]+)\*/g,'<i>$1</i>');
+  return txt;
+}
 function _fmtLinhaConclusaoHtml(linha){
   if(linha==null) linha='';
   if(linha==='') return '<div class="bullet-empty">&nbsp;</div>';
   var m=linha.match(/^(\s*)-\s+(.*)$/);
   if(m){
-    return '<div class="bullet-line"><span class="bullet-mark">'+escHtml(m[1]+'-')+'</span><span class="bullet-text">'+escHtml(m[2])+'</span></div>';
+    return '<div class="bullet-line"><span class="bullet-mark">'+escHtml(m[1]+'-')+'</span><span class="bullet-text">'+_fmtConclusaoInlineHtml(m[2])+'</span></div>';
   }
-  return '<div class="bullet-plain">'+escHtml(linha)+'</div>';
+  return '<div class="bullet-plain">'+_fmtConclusaoInlineHtml(linha)+'</div>';
 }
 function _renderConclusaoFormatada(texto){
   var el=document.getElementById('p-concl');
