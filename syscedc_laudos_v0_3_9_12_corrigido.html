@@ -512,6 +512,7 @@ if('serviceWorker' in navigator){
           <span id="assin-nome-arq" style="font-size:.82rem;color:#666;">Nenhuma imagem carregada</span>
           <button class="btn btn-sm" style="background:#e74c3c;color:#fff;display:none;" id="btn-rem-assin">✖ Remover</button>
         </div>
+        <div id="assin-contexto" style="font-size:.78rem;color:#555;align-self:flex-end;">Assinatura do laudo atual</div>
         <input type="file" id="inp-assin" accept="image/png" style="display:none;">
         <div id="assin-preview-wrap" style="display:none;">
           <img id="assin-preview-img" src="" alt="" style="max-height:60px;border:1px solid #ddd;border-radius:4px;padding:4px;">
@@ -975,11 +976,7 @@ function _carregarManualIdx(idx){
   _materiais=dados._materiais?JSON.parse(JSON.stringify(dados._materiais)):
              dados.materiais ?JSON.parse(JSON.stringify(dados.materiais)) :[];
   _assinaturaDataURL=dados._assinSrc||'';
-  var imgAssin=document.getElementById('p-assin-img');
-  if(imgAssin){
-    if(_assinaturaDataURL){imgAssin.src=_assinaturaDataURL;imgAssin.classList.remove('assin-oculta');}
-    else{imgAssin.src='';imgAssin.classList.add('assin-oculta');}
-  }
+  _atualizarUIAssinatura();
 
   fill(dados);
   renderMateriais();
@@ -1113,6 +1110,7 @@ function fill(dados){
   } else if(dados._assinSrc!=null){
     _assinaturaDataURL = dados._assinSrc || '';
   }
+  _atualizarUIAssinatura();
 }
 
 // ===== MATERIAIS =====
@@ -1169,22 +1167,60 @@ function _salvarTipoMat(val){
 // ===== PATOLOGISTAS =====
 
 
+
+function _textoContextoAssinatura(){
+  if(_importLaudos&&_importLaudos.length>1) return 'Assinatura do laudo importado atual: L'+(_importIdx+1);
+  if(_manualMultiploAtivo&&_manualMultiploAtivo()){
+    var info=_manualInfoAtual();
+    return 'Assinatura do laudo atual: '+(info.sufixo||'L1');
+  }
+  var infoNum=_parseNumAnoInfo((document.getElementById('numAno')||{}).value||'');
+  return infoNum && infoNum.sufixo ? 'Assinatura do laudo atual: '+infoNum.sufixo : 'Assinatura do laudo atual';
+}
+function _atualizarUIAssinatura(nomeExibicao){
+  var ctx=document.getElementById('assin-contexto');
+  if(ctx) ctx.textContent=_textoContextoAssinatura();
+  var img=document.getElementById('assin-preview-img');
+  var wrap=document.getElementById('assin-preview-wrap');
+  var nome=document.getElementById('assin-nome-arq');
+  var btn=document.getElementById('btn-rem-assin');
+  if(_assinaturaDataURL){
+    if(img) img.src=_assinaturaDataURL;
+    if(wrap) wrap.style.display='block';
+    if(btn) btn.style.display='inline-flex';
+    if(nome) nome.textContent=nomeExibicao||'Assinatura carregada';
+  }else{
+    if(img) img.src='';
+    if(wrap) wrap.style.display='none';
+    if(btn) btn.style.display='none';
+    if(nome) nome.textContent='Nenhuma imagem carregada';
+  }
+  var imgPrint=document.getElementById('p-assin-img');
+  if(imgPrint){
+    if(_assinaturaDataURL){imgPrint.src=_assinaturaDataURL;imgPrint.classList.remove('assin-oculta');}
+    else{imgPrint.src='';imgPrint.classList.add('assin-oculta');}
+  }
+}
+function _gravarAssinaturaNoLaudoAtual(){
+  if(_importLaudos&&_importLaudos.length&&_importLaudos[_importIdx]){
+    _importLaudos[_importIdx]._assinSrc=_assinaturaDataURL||'';
+  }
+  if(_manualMultiploAtivo&&_manualMultiploAtivo()){
+    var info=_manualInfoAtual();
+    var idx=Math.max((parseInt(String(info.sufixo||'L1').replace(/[^0-9]/g,''),10)||1)-1,0);
+    if(_manualLaudos&&_manualLaudos[idx]) _manualLaudos[idx]._assinSrc=_assinaturaDataURL||'';
+  }
+}
+
 // ===== ASSINATURA AVULSA =====
 function carregarAssinaturaAvulsa(inp){
   var f=inp.files[0];if(!f)return;
-  document.getElementById('assin-preview-img').src='';
-  document.getElementById('assin-preview-wrap').style.display='none';
   var r=new FileReader();
   r.onload=function(e){
     _assinaturaDataURL=e.target.result;_ls.set('cedc_assin',_assinaturaDataURL);_ls.remove('cedc_pat');_patSelecionado=null;
     _salvarManualAtual();
-    if(_manualLaudos&&_manualLaudos.length){for(var _i=0;_i<_manualLaudos.length;_i++){if(_manualLaudos[_i])_manualLaudos[_i]._assinSrc=_assinaturaDataURL;}}
-    if(_laudosPendentes&&_laudosPendentes.length){for(var _j=0;_j<_laudosPendentes.length;_j++){if(_laudosPendentes[_j]&&_laudosPendentes[_j].dados)_laudosPendentes[_j].dados._assinSrc=_assinaturaDataURL;}}
-    if(_importLaudos&&_importLaudos.length){for(var _k=0;_k<_importLaudos.length;_k++){if(_importLaudos[_k])_importLaudos[_k]._assinSrc=_assinaturaDataURL;}}
-    document.getElementById('assin-preview-img').src=_assinaturaDataURL;
-    document.getElementById('assin-preview-wrap').style.display='block';
-    document.getElementById('assin-nome-arq').textContent=f.name;
-    document.getElementById('btn-rem-assin').style.display='inline-flex';
+    _gravarAssinaturaNoLaudoAtual();
+    _atualizarUIAssinatura(f.name);
     /* toast suprimido */
   };
   r.readAsDataURL(f);
@@ -1192,14 +1228,10 @@ function carregarAssinaturaAvulsa(inp){
 
 function removerAssinatura(){
   _assinaturaDataURL='';_patSelecionado=null;
-  if(_manualLaudos&&_manualLaudos.length){for(var _ri=0;_ri<_manualLaudos.length;_ri++){if(_manualLaudos[_ri])_manualLaudos[_ri]._assinSrc='';}}
-  if(_laudosPendentes&&_laudosPendentes.length){for(var _rj=0;_rj<_laudosPendentes.length;_rj++){if(_laudosPendentes[_rj]&&_laudosPendentes[_rj].dados)_laudosPendentes[_rj].dados._assinSrc='';}}
-  if(_importLaudos&&_importLaudos.length){for(var _rk=0;_rk<_importLaudos.length;_rk++){if(_importLaudos[_rk])_importLaudos[_rk]._assinSrc='';}}  document.getElementById('assin-preview-img').src='';
-  document.getElementById('assin-preview-wrap').style.display='none';
-  document.getElementById('assin-nome-arq').textContent='Nenhuma imagem carregada';
-  document.getElementById('btn-rem-assin').style.display='none';
+  _gravarAssinaturaNoLaudoAtual();
+  _salvarManualAtual();
   document.getElementById('inp-assin').value='';
-  var img=document.getElementById('p-assin-img');img.src='';img.classList.add('assin-oculta');
+  _atualizarUIAssinatura();
 }
 
 // ===== BACKUP AUTOMÁTICO =====
@@ -1369,9 +1401,7 @@ function gerarPreview(){
   set('p-localdata','João Pessoa, '+dataExtenso(dataEmis));
 
   // Assinatura
-  var imgAssin=document.getElementById('p-assin-img');
-  if(_assinaturaDataURL){imgAssin.src=_assinaturaDataURL;imgAssin.classList.remove('assin-oculta');}
-  else{imgAssin.src='';imgAssin.classList.add('assin-oculta');}
+  _atualizarUIAssinatura();
 
   // Ocultar campos vazios
   function showRow(id,val){var el=document.getElementById(id);if(el)el.style.display=val?'':'none';}
@@ -1628,9 +1658,6 @@ function imprimirLaudo(){
       .map(function(item){return _normalizarDados(JSON.parse(JSON.stringify(item||{})));})
       .filter(_laudoValidoParaSaida);
     if(!listaImportacao.length){toast('Nenhum laudo válido para impressão.','t-error');return;}
-    // Garantir que todos os laudos usem a assinatura atual
-    listaImportacao.forEach(function(ld){ld._assinSrc=_assinaturaDataURL||'';});
-
     listaImportacao.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd(ld.tipoLaudo==="anatomo"?"anatomo":"cito");});
     var nomeBase=_nomeArquivoLaudo(listaImportacao[0]).replace(/\sL\d+\b/ig,'').trim();
     var reg={chave:nomeBase,laudos:listaImportacao,salvoEm:new Date().toLocaleString('pt-BR')};
@@ -1665,8 +1692,6 @@ function imprimirLaudo(){
     var idxAtual=(parseInt(String(infoAtual.sufixo||'L1').replace(/[^0-9]/g,''),10)||1)-1;
     listaPendentes[idxAtual]=dadosAtual;
     listaPendentes=listaPendentes.filter(function(item){return !!item;}).filter(_laudoValidoParaSaida);
-    // Garantir que todos os laudos usem a assinatura atual
-    listaPendentes.forEach(function(ld){ld._assinSrc=_assinaturaDataURL||'';});
     if(!listaPendentes.length){toast('Nenhum laudo válido para imprimir.','t-error');return;}
     listaPendentes.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd((ld.dados?ld.dados.tipoLaudo:ld.tipoLaudo)==="anatomo"?"anatomo":"cito");});
     var nomeBase=_nomeArquivoLaudo(listaPendentes[0]).replace(/\sL\d+\b/ig,'').trim();
@@ -1746,11 +1771,7 @@ function limparSilencioso(){
   if(_medicoAtual){ var em=document.getElementById('medicoReq'); if(em) em.value=_medicoAtual; }
   // Preserva patologista e assinatura para o próximo laudo
   // Restaurar preview visual da assinatura
-  if(_assinaturaDataURL){
-    document.getElementById('assin-preview-img').src=_assinaturaDataURL;
-    document.getElementById('assin-preview-wrap').style.display='block';
-    document.getElementById('btn-rem-assin').style.display='inline-flex';
-  }
+  _atualizarUIAssinatura();
   document.getElementById('preview-sec').style.display='none';
   _atualizarNavImportacao();
   window.scrollTo(0,0);
@@ -1838,13 +1859,7 @@ renderMateriais();
   } else if(savedAssin){
     _assinaturaDataURL=savedAssin;
   }
-  if(_assinaturaDataURL){
-    document.getElementById('assin-preview-img').src=_assinaturaDataURL;
-    document.getElementById('assin-preview-wrap').style.display='block';
-    document.getElementById('btn-rem-assin').style.display='inline-flex';
-    var pat2=_patSelecionado?PATOLOGISTAS.find(function(p){return p.id===_patSelecionado;}):null;
-    document.getElementById('assin-nome-arq').textContent=pat2?(pat2.nome+' · '+pat2.crm):'Assinatura carregada';
-  }
+  _atualizarUIAssinatura();
 })();
 
 // Verificar se há dados via URL (vindo do CITOLOGIC localhost)
@@ -2599,6 +2614,7 @@ function _atualizarNavImportacao(){
   }
   [btnPrev,sbPrev].forEach(function(b){ if(!b) return; b.disabled=btnPrev.disabled; b.style.opacity=btnPrev.disabled?'0.4':'1'; b.style.pointerEvents=btnPrev.disabled?'none':'auto'; });
   [btnNext,sbNext].forEach(function(b){ if(!b) return; b.disabled=false; b.style.opacity='1'; b.style.pointerEvents='auto'; });
+  _atualizarUIAssinatura();
 }
 function _fecharImportacao(){
   var nav=document.getElementById('import-nav');
@@ -2682,9 +2698,7 @@ function _carregarImportIdx(idx){
   _limparCamposParaImportacao();
   fill(dados);
   renderMateriais();
-  var imgAssin=document.getElementById('p-assin-img');
-  if(_assinaturaDataURL){imgAssin.src=_assinaturaDataURL;imgAssin.classList.remove('assin-oculta');}
-  else{imgAssin.src='';imgAssin.classList.add('assin-oculta');}
+  _atualizarUIAssinatura();
   _atualizarNavImportacao();
   window.scrollTo(0,0);
   _focarCampoMaterial();
