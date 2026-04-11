@@ -111,7 +111,7 @@ label{font-size:.72rem;font-weight:700;color:var(--gray);text-transform:uppercas
 input[type=text],input[type=date],select,textarea{padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.9rem;color:#333;transition:border-color .2s;background:#fafafa;font-family:inherit;width:100%;}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);background:#fff;box-shadow:0 0 0 3px rgba(192,57,43,.1);}
 textarea{resize:vertical;min-height:90px;line-height:1.5;}
-#macro,#micro,#conclusao{line-height:1.5;font-size:10pt;text-align:left;padding:12px 14px;letter-spacing:.01em;}
+#macro,#micro,#conclusao{line-height:1.5;font-size:10pt;text-align:justify;padding:12px 14px;letter-spacing:.01em;}
 .nrow{display:flex;align-items:center;gap:4px;}
 .nrow input{flex:1;text-align:center;font-weight:700;}
 .nrow span{font-weight:700;color:#666;}
@@ -237,26 +237,16 @@ padding:4mm 0;
   .sidebar{display:none;}
 }
 
-.snip-panel{display:none;position:fixed;inset:0;background:rgba(7,12,24,.52);backdrop-filter:blur(2px);z-index:9500;align-items:center;justify-content:center;padding:22px;}
-.snip-panel.aberto{display:flex;}
-.snip-panel-box{width:min(980px,96vw);max-height:min(88vh,920px);background:linear-gradient(180deg,#101822 0%,#141d29 100%);border:1px solid rgba(85,128,181,.45);border-radius:18px;box-shadow:0 28px 80px rgba(0,0,0,.48);overflow:hidden;display:flex;flex-direction:column;}
-.snip-panel-head{background:linear-gradient(135deg,#0f1724,#14253d);color:#f5f8ff;padding:16px 22px;border-bottom:1px solid rgba(95,138,194,.3);display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
-.snip-panel-head strong{display:block;font-size:1.12rem;letter-spacing:.2px;}
-.snip-panel-head small{display:block;margin-top:4px;font-size:.82rem;color:#b8c6db;font-weight:500;}
-.snip-panel-head button{background:transparent;border:none;color:#dce7f8;font-size:1.45rem;cursor:pointer;line-height:1;padding:2px 4px;}
-.snip-panel-body{padding:18px 22px 20px;overflow:auto;}
-.snip-panel-preview{margin-bottom:16px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(103,146,196,.22);color:#d9e6f7;font-size:.86rem;line-height:1.5;white-space:pre-wrap;}
-.snip-panel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}
-.snip-panel-grid label{display:block;font-size:.78rem;font-weight:700;color:#f0c674;margin-bottom:6px;letter-spacing:.3px;}
-.snip-panel-grid input{width:100%;box-sizing:border-box;border:1.5px solid #31537b;border-radius:10px;padding:10px 12px;font-size:.95rem;background:#0f1720;color:#eef4ff;}
-.snip-panel-grid input:focus{outline:none;border-color:#67a2ff;box-shadow:0 0 0 3px rgba(103,162,255,.16);}
-.snip-panel-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
-.snip-panel-btn{border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:700;cursor:pointer;}
-.snip-panel-btn.sec{background:#243447;color:#e8f0ff;}
-.snip-panel-btn.pri{background:linear-gradient(135deg,#ef8c2f,#d96d0c);color:#fff;}
-.snip-panel-hint{margin-top:10px;font-size:.78rem;color:#b8c6db;text-align:right;}
-@media(max-width:900px){.snip-panel-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media(max-width:640px){.snip-panel{padding:12px;}.snip-panel-box{width:100%;max-height:92vh;border-radius:14px;}.snip-panel-body{padding:14px;}.snip-panel-grid{grid-template-columns:1fr;}}
+.snip-panel{display:none;position:fixed;right:18px;top:90px;width:320px;max-width:calc(100vw - 36px);background:#fff;border:1.5px solid #d8d8d8;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.22);z-index:9500;overflow:hidden;}
+.snip-panel.aberto{display:block;}
+.snip-panel-head{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:10px 14px;font-weight:700;font-size:.92rem;display:flex;align-items:center;justify-content:space-between;}
+.snip-panel-head button{background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;line-height:1;}
+.snip-panel-body{padding:12px;}
+.snip-panel-grid{display:grid;gap:10px;}
+.snip-panel-grid label{display:block;font-size:.78rem;font-weight:700;color:#555;margin-bottom:4px;}
+.snip-panel-grid input{width:100%;box-sizing:border-box;border:1.5px solid #cfcfcf;border-radius:8px;padding:8px 10px;font-size:.92rem;}
+.snip-panel-hint{margin-top:10px;font-size:.76rem;color:#666;}
+.snip-panel-box{width:100%;max-height:92vh;border-radius:14px;}.snip-panel-body{padding:14px;}.snip-panel-grid{grid-template-columns:1fr;}}
 
 
 /* Conclusão com hífen: recuo só nas quebras do mesmo item no preview/impressão */
@@ -2265,9 +2255,6 @@ function _confirmarSnippetPanel(){
   var p=_snippetPending;
   _fecharSnippetPanel(false);
   _snippetAplicarTexto(p.target,p.inicio,p.pos,texto,p.gatilho,p.upperCase);
-  setTimeout(function(){
-    try{ p.target.focus(); }catch(e){}
-  },0);
 }
 function _abrirSnippetPanel(target, inicio, pos, textoOriginal, gatilho, upperCase){
   var original=String(textoOriginal||'');
@@ -2296,28 +2283,16 @@ function _abrirSnippetPanel(target, inicio, pos, textoOriginal, gatilho, upperCa
     inp.addEventListener('keydown', function(ev){
       if(ev.key==='Enter'){
         ev.preventDefault();
-        var prox=arr[idx+1];
-        if(prox){
-          prox.focus();
-          prox.select();
-        }else{
-          _confirmarSnippetPanel();
-        }
+        _confirmarSnippetPanel();
       }else if(ev.key==='Escape'){
         ev.preventDefault();
         _fecharSnippetPanel(true);
       }
     });
-    inp.addEventListener('focus', function(){
-      try{ this.select(); }catch(e){}
-    });
   });
   setTimeout(function(){
     var first=grid.querySelector('input');
-    if(first){
-      first.focus();
-      try{ first.select(); }catch(e){}
-    }
+    if(first) first.focus();
   },0);
 }
 
@@ -2862,29 +2837,18 @@ document.addEventListener('DOMContentLoaded', function(){
   if(snippetCarregar().length===0 && _SNIPPETS_DEFAULT.length>0){
     snippetSalvar(_SNIPPETS_DEFAULT);
   }
-  _garantirSnippetSistema('ut2','O material recebido para análise encontra-se conservado em formalina. Trata-se de corpo uterino medindo {{medida1}} cm, com peso de {{peso}} g. A superfície externa está revestida por serosa peritoneal {{cor1}}. Aos cortes, observa-se miométrio {{cor2}}, com áreas {{cor3}}, fasciculadas, medindo até {{medida2}} cm. Foram identificados {{quantidade}} nódulos miomatosos, de aspecto fasciculado e {{cor4}}, sendo o maior com {{medida3}} cm. O endométrio apresenta coloração {{cor5}}, consistência {{elastica}}, e espessura de {{medida4}} cm. A cavidade endometrial é {{cavidade}}. Amostras representativas foram submetidas a exame histopatológico');
 });
 </script>
 
 
-<div class="snip-panel" id="snip-panel" onclick="if(event.target===this)_fecharSnippetPanel(true)">
-  <div class="snip-panel-box" role="dialog" aria-modal="true" aria-labelledby="snip-panel-title">
-    <div class="snip-panel-head">
-      <div>
-        <strong id="snip-panel-title">Preenchimento rápido do modelo</strong>
-        <small>Digite só as variáveis necessárias. O texto final será montado automaticamente.</small>
-      </div>
-      <button type="button" onclick="_fecharSnippetPanel(true)" title="Fechar">✕</button>
-    </div>
-    <div class="snip-panel-body">
-      <div class="snip-panel-preview" id="snip-panel-preview"></div>
-      <div class="snip-panel-grid" id="snip-panel-grid"></div>
-      <div class="snip-panel-actions">
-        <button type="button" class="snip-panel-btn sec" onclick="_fecharSnippetPanel(true)">Cancelar</button>
-        <button type="button" class="snip-panel-btn pri" onclick="_confirmarSnippetPanel()">Inserir no campo</button>
-      </div>
-      <div class="snip-panel-hint">Enter insere • Esc fecha</div>
-    </div>
+<div class="snip-panel" id="snip-panel">
+  <div class="snip-panel-head">
+    <span>Preencher snippet</span>
+    <button type="button" onclick="_fecharSnippetPanel(true)" title="Fechar">✕</button>
+  </div>
+  <div class="snip-panel-body">
+    <div class="snip-panel-grid" id="snip-panel-grid"></div>
+    <div class="snip-panel-hint">Pressione Enter para inserir. Esc fecha.</div>
   </div>
 </div>
 
