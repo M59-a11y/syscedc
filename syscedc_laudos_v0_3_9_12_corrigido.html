@@ -237,16 +237,26 @@ padding:4mm 0;
   .sidebar{display:none;}
 }
 
-.snip-panel{display:none;position:fixed;right:18px;top:90px;width:320px;max-width:calc(100vw - 36px);background:#fff;border:1.5px solid #d8d8d8;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.22);z-index:9500;overflow:hidden;}
-.snip-panel.aberto{display:block;}
-.snip-panel-head{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:10px 14px;font-weight:700;font-size:.92rem;display:flex;align-items:center;justify-content:space-between;}
-.snip-panel-head button{background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;line-height:1;}
-.snip-panel-body{padding:12px;}
-.snip-panel-grid{display:grid;gap:10px;}
-.snip-panel-grid label{display:block;font-size:.78rem;font-weight:700;color:#555;margin-bottom:4px;}
-.snip-panel-grid input{width:100%;box-sizing:border-box;border:1.5px solid #cfcfcf;border-radius:8px;padding:8px 10px;font-size:.92rem;}
-.snip-panel-hint{margin-top:10px;font-size:.76rem;color:#666;}
-.snip-panel-box{width:100%;max-height:92vh;border-radius:14px;}.snip-panel-body{padding:14px;}.snip-panel-grid{grid-template-columns:1fr;}}
+.snip-panel{display:none;position:fixed;inset:0;background:rgba(15,23,42,.38);backdrop-filter:blur(2px);z-index:9500;align-items:center;justify-content:center;padding:24px;}
+.snip-panel.aberto{display:flex;}
+.snip-panel-box{width:min(920px,96vw);max-height:min(88vh,900px);background:linear-gradient(180deg,#f9fbff 0%,#eef4fb 100%);border:1px solid rgba(54,95,145,.18);border-radius:18px;box-shadow:0 28px 80px rgba(15,23,42,.28);overflow:hidden;display:flex;flex-direction:column;}
+.snip-panel-head{background:linear-gradient(135deg,#1a1a2e,#1f3f66);color:#fff;padding:16px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+.snip-panel-title{display:block;font-weight:800;font-size:1.06rem;line-height:1.2;}
+.snip-panel-sub{display:block;margin-top:4px;font-size:.8rem;color:#d8e6fb;font-weight:500;}
+.snip-panel-head button{background:none;border:none;color:#fff;font-size:1.35rem;cursor:pointer;line-height:1;padding:0 2px;}
+.snip-panel-body{padding:18px 20px 20px;overflow:auto;}
+.snip-panel-preview{display:none;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:#ffffff;border:1px solid #d7e4f2;color:#334155;font-size:.86rem;line-height:1.5;white-space:pre-wrap;}
+.snip-panel-preview.visivel{display:block;}
+.snip-panel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.snip-panel-grid label{display:block;font-size:.78rem;font-weight:800;color:#3b4f68;margin-bottom:6px;letter-spacing:.3px;}
+.snip-panel-grid input{width:100%;box-sizing:border-box;border:1.5px solid #c5d4e5;border-radius:10px;padding:10px 12px;font-size:.95rem;background:#fff;color:#1f2937;}
+.snip-panel-grid input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.14);}
+.snip-panel-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap;}
+.snip-panel-btn{border:none;border-radius:10px;padding:10px 16px;font-size:.9rem;font-weight:700;cursor:pointer;}
+.snip-panel-btn.sec{background:#e2e8f0;color:#334155;}
+.snip-panel-btn.pri{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;}
+.snip-panel-hint{margin-top:10px;font-size:.78rem;color:#64748b;text-align:right;}
+@media(max-width:700px){.snip-panel{padding:12px;}.snip-panel-box{width:100%;max-height:92vh;border-radius:14px;}.snip-panel-body{padding:14px;}.snip-panel-grid{grid-template-columns:1fr;}}
 
 
 /* Conclusão com hífen: recuo só nas quebras do mesmo item no preview/impressão */
@@ -2235,7 +2245,10 @@ function _fecharSnippetPanel(cancelar){
   var grid=document.getElementById('snip-panel-grid');
   if(grid) grid.innerHTML='';
   var preview=document.getElementById('snip-panel-preview');
-  if(preview) preview.textContent='';
+  if(preview){
+    preview.textContent='';
+    preview.classList.remove('visivel');
+  }
   if(cancelar && _snippetPending && _snippetPending.target){
     try{ _snippetPending.target.focus(); }catch(e){}
   }
@@ -2276,14 +2289,22 @@ function _abrirSnippetPanel(target, inicio, pos, textoOriginal, gatilho, upperCa
     return '<div><label for="snip-var-'+chave+'">'+escHtml(rotulo)+'</label><input id="snip-var-'+chave+'" type="text" autocomplete="off" data-idx="'+idx+'" placeholder="Informe '+escHtml(rotulo.toLowerCase())+'"></div>';
   }).join('');
   var preview=document.getElementById('snip-panel-preview');
-  if(preview) preview.textContent=original.replace(/\{\{([^}]+)\}\}/g,'[$1]');
+  if(preview){
+    preview.textContent=original.replace(/\{\{([^}]+)\}\}/g,'[$1]');
+    preview.classList.add('visivel');
+  }
   var panel=document.getElementById('snip-panel');
   panel.classList.add('aberto');
   Array.prototype.forEach.call(grid.querySelectorAll('input'), function(inp, idx, arr){
+    inp.addEventListener('focus', function(){
+      try{ this.select(); }catch(e){}
+    });
     inp.addEventListener('keydown', function(ev){
       if(ev.key==='Enter'){
         ev.preventDefault();
-        _confirmarSnippetPanel();
+        var prox=arr[idx+1];
+        if(prox){ prox.focus(); }
+        else{ _confirmarSnippetPanel(); }
       }else if(ev.key==='Escape'){
         ev.preventDefault();
         _fecharSnippetPanel(true);
@@ -2841,14 +2862,24 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 
 
-<div class="snip-panel" id="snip-panel">
-  <div class="snip-panel-head">
-    <span>Preencher snippet</span>
-    <button type="button" onclick="_fecharSnippetPanel(true)" title="Fechar">✕</button>
-  </div>
-  <div class="snip-panel-body">
-    <div class="snip-panel-grid" id="snip-panel-grid"></div>
-    <div class="snip-panel-hint">Pressione Enter para inserir. Esc fecha.</div>
+<div class="snip-panel" id="snip-panel" onclick="if(event.target===this)_fecharSnippetPanel(true)">
+  <div class="snip-panel-box">
+    <div class="snip-panel-head">
+      <div>
+        <span class="snip-panel-title">Preencher snippet</span>
+        <span class="snip-panel-sub">Preencha só o necessário e o texto será inserido na macroscopia ou conclusão.</span>
+      </div>
+      <button type="button" onclick="_fecharSnippetPanel(true)" title="Fechar">✕</button>
+    </div>
+    <div class="snip-panel-body">
+      <div class="snip-panel-preview" id="snip-panel-preview"></div>
+      <div class="snip-panel-grid" id="snip-panel-grid"></div>
+      <div class="snip-panel-actions">
+        <button type="button" class="snip-panel-btn sec" onclick="_fecharSnippetPanel(true)">Cancelar</button>
+        <button type="button" class="snip-panel-btn pri" onclick="_confirmarSnippetPanel()">Inserir no campo</button>
+      </div>
+      <div class="snip-panel-hint">Enter avança para o próximo campo. No último, Enter insere. Esc fecha.</div>
+    </div>
   </div>
 </div>
 
