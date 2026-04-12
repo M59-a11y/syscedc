@@ -203,15 +203,13 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
   .wrap{margin:0!important;padding:0!important;max-width:none!important;}
   #preview-sec{
     display:block!important;
-    position:fixed!important;
-    inset:0!important;
     margin:0!important;
     padding:0!important;
     box-shadow:none!important;
     background:transparent!important;
     border-radius:0!important;
     overflow:visible!important;
-    z-index:2147483647!important;
+    position:static!important;
   }
   #laudo-print,[id^="laudo-print-"]{
     margin:0 auto!important;
@@ -220,7 +218,6 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
     height:297mm!important;
     overflow:hidden!important;
     position:relative!important;
-    z-index:2147483647!important;
   }
   #laudo-print .conteudo,[id^="laudo-print-"] .conteudo{overflow:hidden!important;}
   .card:not(#preview-sec){display:none!important;}
