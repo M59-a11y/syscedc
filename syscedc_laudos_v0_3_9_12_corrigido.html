@@ -505,11 +505,11 @@ if('serviceWorker' in navigator){
       <div class="fg">
         <!-- Seções do Anatomo Patológico -->
         <div id="sec-macro" class="fgrp"><label id="label-macro">Macroscopia</label>
-          <div style="position:relative"><textarea id="macro" rows="12" placeholder="Descreva os achados macroscópicos..." oninput="autoBackup();acMostrarTexto('macro',CAD_KEY_MACRO);checarRepetir(this)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('macro-ac');}else{acNavegar(event,'macro-ac');}" onblur="setTimeout(function(){acOcultar('macro-ac')},200)"></textarea><div class="ac-lista oculta" id="macro-ac"></div></div></div>
+          <div style="position:relative"><textarea id="macro" rows="8" placeholder="Descreva os achados macroscópicos..." oninput="autoBackup();acMostrarTexto('macro',CAD_KEY_MACRO);checarRepetir(this)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('macro-ac');}else{acNavegar(event,'macro-ac');}" onblur="setTimeout(function(){acOcultar('macro-ac')},200)"></textarea><div class="ac-lista oculta" id="macro-ac"></div></div></div>
         <div id="sec-micro" class="fgrp"><label>Microscopia / Diagnóstico Descritivo (opcional)</label>
-          <div style="position:relative"><textarea id="micro" rows="5" placeholder="Se houver..." oninput="autoBackup();acMostrarTexto('micro',CAD_KEY_MICRO)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('micro-ac');}else{acNavegar(event,'micro-ac');}" onblur="setTimeout(function(){acOcultar('micro-ac')},200)"></textarea><div class="ac-lista oculta" id="micro-ac"></div></div></div>
+          <div style="position:relative"><textarea id="micro" rows="8" placeholder="Se houver..." oninput="autoBackup();acMostrarTexto('micro',CAD_KEY_MICRO)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('micro-ac');}else{acNavegar(event,'micro-ac');}" onblur="setTimeout(function(){acOcultar('micro-ac')},200)"></textarea><div class="ac-lista oculta" id="micro-ac"></div></div></div>
         <div class="fgrp"><label id="label-conclusao">Conclusão</label>
-          <div style="position:relative"><textarea id="conclusao" rows="4" placeholder="Conclusão do laudo..." oninput="autoBackup();_garantirLinhaAntesObsNota(this);acMostrarTexto('conclusao',CAD_KEY_CONCLUSAO)" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&_deveAvancarLaudoDuplo(this)){event.preventDefault();_btnProximoUnificado();}else if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('conclusao-ac');}else{acNavegar(event,'conclusao-ac');}" onblur="setTimeout(function(){acOcultar('conclusao-ac')},200)"></textarea><div class="ac-lista oculta" id="conclusao-ac"></div></div></div>
+          <div style="position:relative"><textarea id="conclusao" rows="8" placeholder="Conclusão do laudo..." oninput="autoBackup();_garantirLinhaAntesObsNota(this);acMostrarTexto('conclusao',CAD_KEY_CONCLUSAO)" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&_deveAvancarLaudoDuplo(this)){event.preventDefault();_btnProximoUnificado();}else if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('conclusao-ac');}else{acNavegar(event,'conclusao-ac');}" onblur="setTimeout(function(){acOcultar('conclusao-ac')},200)"></textarea><div class="ac-lista oculta" id="conclusao-ac"></div></div></div>
       </div>
     </div>
   </div>
@@ -915,15 +915,26 @@ function _atualizarRotulosConteudo(){
   }
 }
 function _detectarSequenciaMaterial(tipoAtual){
-  tipoAtual=String(tipoAtual||'').trim().toUpperCase();
+  function _normMat(s){
+    return String(s||'')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/\s+/g,' ')
+      .trim()
+      .toUpperCase();
+  }
+  tipoAtual=_normMat(tipoAtual);
   var seqs=[
+    ['PELE (MARGEM CIRÚRGICA RADIAL - I)','PELE (MARGEM CIRÚRGICA RADIAL - II)','PELE (MARGEM CIRÚRGICA PROFUNDA)'],
     ['BIÓPSIA GÁSTRICA','BIÓPSIA GÁSTRICA (COLORAÇÃO ESPECIAL PARA H. PYLORI GIEMSA)'],
     ['APÊNDICE CECAL','MARGEM CIRÚRGICA PROXIMAL DO APÊNDICE','MESOAPÊNDICE'],
+    ['VESÍCULA BILIAR','COTO DE DUCTO CÍSTICO'],
     ['BIOPSIA DE PRÓSTATA (BASE DIREITA) - LETRA: A','BIOPSIA DE PRÓSTATA (ÁPICE DIREITO) - LETRA: B','BIOPSIA DE PRÓSTATA (TERÇO MÉDIO DIREITO) - LETRA: C','BIOPSIA DE PRÓSTATA (BASE ESQUERDA) - LETRA: D','BIOPSIA DE PRÓSTATA (ÁPICE ESQUERDO) - LETRA: E','BIOPSIA DE PRÓSTATA (TERÇO MÉDIO ESQUERDO) - LETRA: F']
   ];
   for(var i=0;i<seqs.length;i++){
-    var idx=seqs[i].indexOf(tipoAtual);
-    if(idx>=0) return {seq:seqs[i], idx:idx};
+    for(var j=0;j<seqs[i].length;j++){
+      if(_normMat(seqs[i][j])===tipoAtual) return {seq:seqs[i], idx:j};
+    }
   }
   return null;
 }
