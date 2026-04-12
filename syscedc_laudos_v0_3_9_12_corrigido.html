@@ -961,7 +961,41 @@ function _detectarSequenciaMaterial(tipoAtual){
       .trim()
       .toUpperCase();
   }
-  tipoAtual=_normMat(tipoAtual);
+
+  function _detectarSeqPeleLivre(raw){
+    var original=String(raw||'').replace(/\s+/g,' ').trim();
+    if(!original) return null;
+
+    var normOriginal=_normMat(original);
+    if(normOriginal.indexOf('PELE')<0) return null;
+
+    var base=original
+      .replace(/\s*\(\s*MARGEM\s+CIR[ÚU]RGICA\s+RADIAL\s*-\s*I\s*\)\s*$/i,'')
+      .replace(/\s*\(\s*MARGEM\s+CIR[ÚU]RGICA\s+RADIAL\s*-\s*II\s*\)\s*$/i,'')
+      .replace(/\s*\(\s*MARGEM\s+CIR[ÚU]RGICA\s+PROFUNDA\s*\)\s*$/i,'')
+      .replace(/\s+/g,' ')
+      .trim();
+
+    if(_normMat(base).indexOf('PELE')<0) return null;
+
+    var seq=[
+      base + ' (MARGEM CIRÚRGICA RADIAL - I)',
+      base + ' (MARGEM CIRÚRGICA RADIAL - II)',
+      base + ' (MARGEM CIRÚRGICA PROFUNDA)'
+    ];
+
+    if(/\(\s*MARGEM\s+CIR[ÚU]RGICA\s+RADIAL\s*-\s*I\s*\)\s*$/i.test(original)) return {seq:seq, idx:0};
+    if(/\(\s*MARGEM\s+CIR[ÚU]RGICA\s+RADIAL\s*-\s*II\s*\)\s*$/i.test(original)) return {seq:seq, idx:1};
+    if(/\(\s*MARGEM\s+CIR[ÚU]RGICA\s+PROFUNDA\s*\)\s*$/i.test(original)) return {seq:seq, idx:2};
+
+    return {seq:seq, idx:-1};
+  }
+
+  var tipoRaw=String(tipoAtual||'').trim();
+  var seqPeleLivre=_detectarSeqPeleLivre(tipoRaw);
+  if(seqPeleLivre) return seqPeleLivre;
+
+  tipoAtual=_normMat(tipoRaw);
   var seqs=[
     ['PELE (MARGEM CIRÚRGICA RADIAL - I)','PELE (MARGEM CIRÚRGICA RADIAL - II)','PELE (MARGEM CIRÚRGICA PROFUNDA)'],
     ['BIÓPSIA GÁSTRICA','BIÓPSIA GÁSTRICA (COLORAÇÃO ESPECIAL PARA H. PYLORI GIEMSA)'],
