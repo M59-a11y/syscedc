@@ -193,12 +193,53 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
 @media print{
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   html,body{margin:0!important;padding:0!important;background:#fff!important;}
+
+  /* Blindagem: esconde tudo e reexibe apenas a área do laudo */
+  body *{visibility:hidden!important;}
+  #preview-sec,#preview-sec *{visibility:visible!important;}
+  #laudo-print,[id^="laudo-print-"],#laudo-print *,[id^="laudo-print-"] *{visibility:visible!important;}
+
   .sys-header,.sidebar,.noprint,#import-nav,.toast{display:none!important;}
   .wrap{margin:0!important;padding:0!important;max-width:none!important;}
-  #preview-sec{display:block!important;margin:0!important;padding:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;overflow:visible!important;}
-  #laudo-print,[id^="laudo-print-"]{margin:0!important;box-shadow:none!important;width:210mm!important;height:297mm!important;overflow:hidden!important;}
+  #preview-sec{
+    display:block!important;
+    position:fixed!important;
+    inset:0!important;
+    margin:0!important;
+    padding:0!important;
+    box-shadow:none!important;
+    background:transparent!important;
+    border-radius:0!important;
+    overflow:visible!important;
+    z-index:2147483647!important;
+  }
+  #laudo-print,[id^="laudo-print-"]{
+    margin:0 auto!important;
+    box-shadow:none!important;
+    width:210mm!important;
+    height:297mm!important;
+    overflow:hidden!important;
+    position:relative!important;
+    z-index:2147483647!important;
+  }
   #laudo-print .conteudo,[id^="laudo-print-"] .conteudo{overflow:hidden!important;}
   .card:not(#preview-sec){display:none!important;}
+
+  /* Esconde overlays flutuantes comuns de extensões na impressão */
+  body > div[style*="position: fixed"],
+  body > div[style*="position:fixed"],
+  body > iframe,
+  body > aside,
+  [role="dialog"]:not(#preview-sec),
+  [aria-modal="true"]:not(#preview-sec),
+  [class*="grammarly"],
+  [class*="quill"],
+  [id*="grammarly"],
+  [id*="quill"]{
+    display:none!important;
+    visibility:hidden!important;
+  }
+
   @page{size:A4 portrait;margin:0;}
   /* ===== FONTES IMPRESSÃO: apenas Abadi MT Condensed ===== */
   .cab-emissao{font-family:'abadi-mt-condensed-light',sans-serif!important;line-height:118%!important;}
