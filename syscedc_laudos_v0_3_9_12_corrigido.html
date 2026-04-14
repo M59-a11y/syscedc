@@ -764,6 +764,12 @@ let _materiais = [];
 
 // ===== UTILS =====
 function fmtCPF(i){var v=i.value.replace(/\D/g,'').substring(0,11);if(v.length>=10)v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');else if(v.length>=7)v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3');else if(v.length>=4)v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2');i.value=v;}
+function mascararCPFPrint(v){
+  var d=String(v||'').replace(/\D/g,'').substring(0,11);
+  if(!d) return '';
+  if(d.length===11) return d.slice(0,3)+'.***.***-'+d.slice(9);
+  return String(v||'');
+}
 function fmtTel(i){var v=i.value.replace(/\D/g,'').substring(0,11);if(v.length===11)v=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');else if(v.length===10)v=v.replace(/(\d{2})(\d{4})(\d{4})/,'($1) $2-$3');i.value=v;}
 function fmtDataInput(i){
   var digits=i.value.replace(/\D/g,'').substring(0,8);
@@ -1425,7 +1431,7 @@ function gerarPreview(){
   set('p-nasc',(fmtData(d.dataNasc)||'')+(calcularIdade(d.dataNasc)?' | '+calcularIdade(d.dataNasc):''));
   set('p-sus',d.cartaoSus||'');
   set('p-mae',d.nomeMae||'');
-  set('p-cpf',d.cpf||'');
+  set('p-cpf',mascararCPFPrint(d.cpf||''));
   set('p-pront',d.prontuario||'');
   set('p-unid',d.unidade||'');
   set('p-med',d.medicoReq?'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,''):'');
@@ -1637,7 +1643,7 @@ function _renderLaudo(d){
   var numBase=String(d.numExame||'')+(d.numSerie?'-'+d.numSerie:'')+'/'+anoNum;
   set('p-num',sufixo?numBase+' '+sufixo:numBase);
   set('p-nasc',(fmtData(d.dataNasc)||'')+(calcularIdade(d.dataNasc)?' | '+calcularIdade(d.dataNasc):''));set('p-sus',d.cartaoSus||'');
-  set('p-mae',d.nomeMae||'');set('p-cpf',d.cpf||'');set('p-pront',d.prontuario||'');set('p-unid',d.unidade||'');
+  set('p-mae',d.nomeMae||'');set('p-cpf',mascararCPFPrint(d.cpf||''));set('p-pront',d.prontuario||'');set('p-unid',d.unidade||'');
   set('p-med',d.medicoReq?'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,''):'');
   set('p-dsolic',fmtData(d.dataSolic)||'');set('p-dent',fmtData(d.dataEntrada)||'');
   var isAnatomo=d.tipoLaudo==='anatomo',isRevisao=d.tipoLaudo==='revisao',isGemol=d.tipoLaudo==='gemol',isPaaf=d.tipoLaudo==='paaf',isAnatomoOuRevisao=(isAnatomo||isRevisao||isGemol),isCito=!isAnatomoOuRevisao;
