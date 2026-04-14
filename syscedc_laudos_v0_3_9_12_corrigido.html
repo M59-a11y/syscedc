@@ -1200,8 +1200,8 @@ function fill(dados){
   _patSelecionado = dados.patSelecionado || null;
   if(_patSelecionado){
     var pat=PATOLOGISTAS.find(function(p){return p.id===_patSelecionado;});
-    _assinaturaDataURL = (pat&&pat.assinSrc) ? pat.assinSrc : (_assinaturaDataURL||'');
-  } else if(dados._assinSrc!=null){
+    _assinaturaDataURL = (pat&&pat.assinSrc) ? pat.assinSrc : (dados._assinSrc || '');
+  } else {
     _assinaturaDataURL = dados._assinSrc || '';
   }
   _atualizarUIAssinatura();
@@ -1315,6 +1315,7 @@ function carregarAssinaturaAvulsa(inp){
     _salvarManualAtual();
     _gravarAssinaturaNoLaudoAtual();
     _atualizarUIAssinatura(f.name);
+    if(inp) inp.value='';
     /* toast suprimido */
   };
   r.readAsDataURL(f);
@@ -2066,7 +2067,7 @@ document.getElementById('prev-fechar').addEventListener('click', function(){ doc
 
 // Materiais e assinatura
 
-document.getElementById('btn-assin-avulso').addEventListener('click', function(){ document.getElementById('inp-assin').click(); });
+document.getElementById('btn-assin-avulso').addEventListener('click', function(){ var inp=document.getElementById('inp-assin'); if(inp) inp.value=''; document.getElementById('inp-assin').click(); });
 document.getElementById('btn-rem-assin').addEventListener('click', removerAssinatura);
 document.getElementById('inp-assin').addEventListener('change', function(){ carregarAssinaturaAvulsa(this); });
 
@@ -2680,7 +2681,10 @@ function _limparCamposParaImportacao(){
   var dl=document.getElementById('dl-tipoMatCito');
   if(sel) sel.value=(dl&&dl.querySelector('option'))?dl.querySelector('option').value:'';
   _materiais=[];
-  // Preservar assinatura ativa — será sobrescrita se o laudo importado tiver a sua própria
+  _patSelecionado=null;
+  _assinaturaDataURL='';
+  var inpAssin=document.getElementById('inp-assin');
+  if(inpAssin) inpAssin.value='';
   renderMateriais();
 }
 function _atualizarNavImportacao(){
