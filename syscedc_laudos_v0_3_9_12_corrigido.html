@@ -1196,12 +1196,15 @@ function fill(dados){
     : [];
   renderMateriais();
   _atualizarRotulosConteudo();
-  // Patologista/assinatura (sempre limpa se ausente, para não herdar do anterior)
+  // Patologista/assinatura
+  // Regra: se o laudo tem assinatura própria, restaurar a dele.
+  // Se veio sem assinatura no JSON, preservar a assinatura ativa já carregada
+  // para o fluxo de correção por importação não exigir recarga manual a cada laudo.
   _patSelecionado = dados.patSelecionado || null;
   if(_patSelecionado){
     var pat=PATOLOGISTAS.find(function(p){return p.id===_patSelecionado;});
-    _assinaturaDataURL = (pat&&pat.assinSrc) ? pat.assinSrc : (dados._assinSrc || '');
-  } else {
+    _assinaturaDataURL = (pat&&pat.assinSrc) ? pat.assinSrc : (_assinaturaDataURL||'');
+  } else if((dados._assinSrc||'').trim()){
     _assinaturaDataURL = dados._assinSrc || '';
   }
   _atualizarUIAssinatura();
@@ -2067,7 +2070,7 @@ document.getElementById('prev-fechar').addEventListener('click', function(){ doc
 
 // Materiais e assinatura
 
-document.getElementById('btn-assin-avulso').addEventListener('click', function(){ var inp=document.getElementById('inp-assin'); if(inp) inp.value=''; document.getElementById('inp-assin').click(); });
+document.getElementById('btn-assin-avulso').addEventListener('click', function(){ var inp=document.getElementById('inp-assin'); if(inp) inp.value=''; if(inp) inp.click(); });
 document.getElementById('btn-rem-assin').addEventListener('click', removerAssinatura);
 document.getElementById('inp-assin').addEventListener('change', function(){ carregarAssinaturaAvulsa(this); });
 
@@ -2681,10 +2684,7 @@ function _limparCamposParaImportacao(){
   var dl=document.getElementById('dl-tipoMatCito');
   if(sel) sel.value=(dl&&dl.querySelector('option'))?dl.querySelector('option').value:'';
   _materiais=[];
-  _patSelecionado=null;
-  _assinaturaDataURL='';
-  var inpAssin=document.getElementById('inp-assin');
-  if(inpAssin) inpAssin.value='';
+  // Preservar assinatura ativa — será sobrescrita se o laudo importado tiver a sua própria
   renderMateriais();
 }
 function _atualizarNavImportacao(){
@@ -2794,6 +2794,23 @@ function _processarBackup(f){
       else if(d&&typeof d==='object'&&d.nome) lista=[d];
       lista=lista.map(_normalizarDados).filter(function(x){return x&&x.nome;});
       if(lista.length===0)throw 0;
+      // Aplicar assinatura ativa como padrão apenas aos laudos importados que vieram sem assinatura.
+      // Isso preserva o fluxo de correção sem obrigar recarregar PNG em cada laudo,
+      // mas continua respeitando assinaturas próprias já gravadas em laudos específicos.
+      var assinaturaPadraoAtiva=_assinaturaDataURL||_ls.get('cedc_assin')||'';
+      var patPadraoAtivo=_patSelecionado||_ls.get('cedc_pat')||null;
+      if(assinaturaPadraoAtiva||patPadraoAtivo){
+        lista=lista.map(function(it){
+          if(!it) return it;
+          var temAssin=!!((it._assinSrc||'').trim());
+          var temPat=!!it.patSelecionado;
+          if(!temAssin && !temPat){
+            if(patPadraoAtivo) it.patSelecionado=patPadraoAtivo;
+            if(assinaturaPadraoAtiva) it._assinSrc=assinaturaPadraoAtiva;
+          }
+          return it;
+        });
+      }
       // Salvar laudo atual em memoria antes de substituir o array
       if(_importLaudos.length>0) _salvarLaudoImportAtual();
       // Mesclar: preservar laudos ja digitados em memoria que nao estejam no novo JSON
