@@ -1069,7 +1069,15 @@ function _carregarManualIdx(idx){
   // Restaurar materiais e assinatura dos dados salvos
   _materiais=dados._materiais?JSON.parse(JSON.stringify(dados._materiais)):
              dados.materiais ?JSON.parse(JSON.stringify(dados.materiais)) :[];
-  _assinaturaDataURL=dados._assinSrc||'';
+  _patSelecionado=dados.patSelecionado||null;
+  if((dados._assinSrc||'').trim()){
+    _assinaturaDataURL=dados._assinSrc||'';
+  }else if(_patSelecionado){
+    var patManual=PATOLOGISTAS.find(function(p){return p.id===_patSelecionado;});
+    _assinaturaDataURL=(patManual&&patManual.assinSrc)?patManual.assinSrc:'';
+  }else{
+    _assinaturaDataURL='';
+  }
   _atualizarUIAssinatura();
 
   fill(dados);
@@ -1301,11 +1309,15 @@ function _atualizarUIAssinatura(nomeExibicao){
 function _gravarAssinaturaNoLaudoAtual(){
   if(_importLaudos&&_importLaudos.length&&_importLaudos[_importIdx]){
     _importLaudos[_importIdx]._assinSrc=_assinaturaDataURL||'';
+    _importLaudos[_importIdx].patSelecionado=_patSelecionado||null;
   }
   if(_manualMultiploAtivo&&_manualMultiploAtivo()){
     var info=_manualInfoAtual();
     var idx=Math.max((parseInt(String(info.sufixo||'L1').replace(/[^0-9]/g,''),10)||1)-1,0);
-    if(_manualLaudos&&_manualLaudos[idx]) _manualLaudos[idx]._assinSrc=_assinaturaDataURL||'';
+    if(_manualLaudos&&_manualLaudos[idx]){
+      _manualLaudos[idx]._assinSrc=_assinaturaDataURL||'';
+      _manualLaudos[idx].patSelecionado=_patSelecionado||null;
+    }
   }
 }
 
@@ -2674,7 +2686,12 @@ function _importacaoAtiva(){
 }
 function _salvarLaudoImportAtual(){
   if(!_importLaudos.length) return;
-  _importLaudos[_importIdx]=Object.assign({},_importLaudos[_importIdx],coletar(),{_materiais:JSON.parse(JSON.stringify(_materiais)),_assinSrc:_assinaturaDataURL||''});
+  _importLaudos[_importIdx]=Object.assign({},_importLaudos[_importIdx],coletar(),{
+    _materiais:JSON.parse(JSON.stringify(_materiais)),
+    materiais:JSON.parse(JSON.stringify(_materiais)),
+    _assinSrc:_assinaturaDataURL||'',
+    patSelecionado:_patSelecionado||null
+  });
 }
 function _limparCamposParaImportacao(){
   ['nome','dataNasc','nomeMae','numExame','numSerie','numAno','cartaoSus','cpf','prontuario','tel','unidade','medicoReq','dataSolic','dataEntrada','dataEmissao','macro','micro','conclusao','metodologia'].forEach(function(id){
@@ -2824,7 +2841,8 @@ function _processarBackup(f){
           if((ant.conclusao||'').trim()&&!(nov.conclusao||'').trim()) nov.conclusao=ant.conclusao;
           if((ant.micro||'').trim()&&!(nov.micro||'').trim()) nov.micro=ant.micro;
           if(ant._materiais&&ant._materiais.length&&(!nov._materiais||!nov._materiais.length)) nov._materiais=ant._materiais;
-          if(ant._assinSrc) nov._assinSrc=ant._assinSrc;
+          if(ant._assinSrc && !(nov._assinSrc||'').trim()) nov._assinSrc=ant._assinSrc;
+          if(ant.patSelecionado && !nov.patSelecionado) nov.patSelecionado=ant.patSelecionado;
         }
       }
       _importIdx=0;
@@ -2910,7 +2928,8 @@ function _inserirLaudoApos(){
     micro:'',
     conclusao:'',
     metodologia:'',
-    _assinSrc:base._assinSrc||''
+    _assinSrc:base._assinSrc||'',
+    patSelecionado:base.patSelecionado||null
   };
   // Inserir após a posição atual
   _importLaudos.splice(_importIdx+1, 0, novo);
