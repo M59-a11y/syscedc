@@ -767,7 +767,7 @@ function fmtCPF(i){var v=i.value.replace(/\D/g,'').substring(0,11);if(v.length>=
 function mascararCPFPrint(v){
   var d=String(v||'').replace(/\D/g,'').substring(0,11);
   if(!d) return '';
-  if(d.length===11) return d.slice(0,3)+'.***.***-'+d.slice(9);
+  if(d.length===11) return '***.'+d.slice(3,6)+'.'+d.slice(6,9)+'-**';
   return String(v||'');
 }
 function fmtTel(i){var v=i.value.replace(/\D/g,'').substring(0,11);if(v.length===11)v=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');else if(v.length===10)v=v.replace(/(\d{2})(\d{4})(\d{4})/,'($1) $2-$3');i.value=v;}
