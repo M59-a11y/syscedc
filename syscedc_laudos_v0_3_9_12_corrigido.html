@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SYSCEDC – Sistema de Laudos v0.3.9.12 Consolidado</title>
+<title>SYSCEDC – Sistema de Laudos v0.3.9.11</title>
 <style>
 
 :root{--red:#c0392b;--dark:#1a1a2e;--gray:#555;--border:#ddd;--green:#006633;}
@@ -61,16 +61,13 @@ input:focus,textarea:focus{cursor:text;}
 /* BADGE LAUDO ATUAL */
 #badge-laudo{
   position:fixed;
-  bottom:58px;
-  right:16px;
-  width:52px;
-  height:52px;
+  bottom:24px;right:24px;
+  width:52px;height:52px;
   border-radius:50%;
   background:#1a1a2e;
   border:2px solid rgba(201,169,110,0.5);
   display:none;
-  align-items:center;
-  justify-content:center;
+  align-items:center;justify-content:center;
   z-index:1100;
   box-shadow:0 4px 16px rgba(0,0,0,.4);
   transition:all .3s cubic-bezier(.22,1,.36,1);
@@ -85,26 +82,12 @@ input:focus,textarea:focus{cursor:text;}
 }
 #badge-laudo.visivel{display:flex;}
 /* BARRA NAVEGAÇÃO IMPORTAÇÃO */
-#import-nav{
-display:none!important;
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-z-index:1001;
-background:#1a1a2e;
-color:#fff;
-padding:12px 20px;
-align-items:center;
-justify-content:center;
-gap:16px;
-box-shadow:0 -3px 10px rgba(0,0,0,.4);
-}
-body{padding-bottom:60px;}
-#import-nav.visivel{display:flex!important;}
+#import-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:1001;background:#1a1a2e;color:#fff;padding:10px 60px 10px 20px;align-items:center;justify-content:center;gap:16px;box-shadow:0 -3px 10px rgba(0,0,0,.4);}body{padding-bottom:60px;}
+#import-nav.visivel{display:flex;}#import-nav{display:flex!important;}
 /* Ocultar da sidebar botões que já estão no rodapé */
 .sidebar #sb-imprimir,.sidebar #sb-anterior,.sidebar #sb-proximo,.sidebar #sb-proximo-nav{display:none!important;}
 /* Badge — mover para não sobrepor botão */
+#badge-laudo{bottom:58px;right:16px;}
 #import-nav-info{flex:1;font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #import-nav .nav-btn{padding:9px 24px;font-size:.88rem;border:none;border-radius:6px;cursor:pointer;font-weight:600;}
 #import-nav .nav-btn:disabled{opacity:.4;cursor:not-allowed;}
@@ -3028,29 +3011,6 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
   </div>
 </div>
-
-
-<script>
-/* BLINDAGEM VISUAL IMPORT-NAV */
-(function(){
-  function syncImportNav(){
-    var nav = document.getElementById('import-nav');
-    if(!nav) return;
-    nav.style.display = nav.classList.contains('visivel') ? 'flex' : 'none';
-  }
-  document.addEventListener('DOMContentLoaded', syncImportNav);
-  window.addEventListener('load', syncImportNav);
-  var obs = new MutationObserver(function(muts){
-    for(var i=0;i<muts.length;i++){
-      if(muts[i].attributeName === 'class'){ syncImportNav(); break; }
-    }
-  });
-  document.addEventListener('DOMContentLoaded', function(){
-    var nav = document.getElementById('import-nav');
-    if(nav) obs.observe(nav, {attributes:true});
-  });
-})();
-</script>
 
 </body>
 </html>
