@@ -86,7 +86,7 @@ input:focus,textarea:focus{cursor:text;}
 #badge-laudo.visivel{display:flex;}
 /* BARRA NAVEGAÇÃO IMPORTAÇÃO */
 #import-nav{
-display:none;
+display:none!important;
 position:fixed;
 bottom:0;
 left:0;
@@ -3028,6 +3028,29 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
   </div>
 </div>
+
+
+<script>
+/* BLINDAGEM VISUAL IMPORT-NAV */
+(function(){
+  function syncImportNav(){
+    var nav = document.getElementById('import-nav');
+    if(!nav) return;
+    nav.style.display = nav.classList.contains('visivel') ? 'flex' : 'none';
+  }
+  document.addEventListener('DOMContentLoaded', syncImportNav);
+  window.addEventListener('load', syncImportNav);
+  var obs = new MutationObserver(function(muts){
+    for(var i=0;i<muts.length;i++){
+      if(muts[i].attributeName === 'class'){ syncImportNav(); break; }
+    }
+  });
+  document.addEventListener('DOMContentLoaded', function(){
+    var nav = document.getElementById('import-nav');
+    if(nav) obs.observe(nav, {attributes:true});
+  });
+})();
+</script>
 
 </body>
 </html>
