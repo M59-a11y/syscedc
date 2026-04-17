@@ -166,97 +166,95 @@ function _ls(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } 
 
 function _ehEdsonRamalho(unidade){
   if(!unidade) return false;
-  var u = String(unidade).toUpperCase();
+  var u = unidade.toUpperCase();
   return u.indexOf('EDSON RAMALHO') !== -1 || u.indexOf('GEN. EDSON') !== -1 || u.indexOf('GEN EDSON') !== -1;
 }
 
 function _tipoLabel(tipo){
-  var map = {anatomo:'Anatomo',paaf:'PAAF',citogeral:'Cito Geral',revisao:'Revisão',gemol:'GEMOL'};
+  var map = {anatomo:'Anatomo',paaf:'PAAF',citogeral:'Cito Geral',revisao:'Revisão'};
   return map[tipo] || 'Anatomo';
 }
 function _tipoBadge(tipo){
-  var map = {anatomo:'badge-anatomo',paaf:'badge-paaf',citogeral:'badge-cito',revisao:'badge-revisao',gemol:'badge-revisao'};
+  var map = {anatomo:'badge-anatomo',paaf:'badge-paaf',citogeral:'badge-cito',revisao:'badge-revisao'};
   return map[tipo] || 'badge-anatomo';
 }
 
-function _somenteDigitos(s){
-  return String(s||'').replace(/\D/g,'');
-}
-
-function _anoBase(v){
-  return String(v||'').trim().split(/\s+/)[0] || '';
-}
-
 function _fmtNum(d){
-  var num = _somenteDigitos(d && d.numExame);
-  if(!num) num = '—';
-  var serie = _somenteDigitos(d && d.numSerie);
-  if(!serie) serie = '1';
-  var ano = _anoBase(d && d.numAno);
-  return num + '-' + serie + (ano ? '/' + ano : '');
+  var num = d.numExame || '—';
+  var serie = d.numSerie ? '-'+d.numSerie : '';
+  var ano = (d.numAno||'').split(/\s+/)[0] || '';
+  // Omitir sufixo L1, L2... — só número base
+  return num + serie + (ano ? '/'+ano : '');
 }
 
-function _fmtData(v){
-  var iso = _normalizarDataISO(v);
+function _fmtData(iso){
   if(!iso) return '—';
   var p = iso.split('-');
-  return p[2] + '/' + p[1] + '/' + p[0];
+  if(p.length===3) return p[2]+'/'+p[1]+'/'+p[0];
+  // já pode ser dd/mm/aaaa
+  return iso;
 }
 
-function _normalizarDataISO(str){
+function _dataParaISO(str){
+  // aceita dd/mm/aaaa ou aaaa-mm-dd
   if(!str) return '';
-  str = String(str).trim();
-  var m;
-  if((m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return m[1]+'-'+m[2]+'-'+m[3];
-  if((m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/))) return m[3]+'-'+m[2]+'-'+m[1];
-  if((m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+\d{1,2}:\d{2}(?::\d{2})?$/))) return m[3]+'-'+m[2]+'-'+m[1];
-  return '';
-}
-
-function _registroValido(d){
-  if(!d || typeof d !== 'object') return false;
-  var num = _somenteDigitos(d.numExame);
-  var nome = String(d.nome||'').trim();
-  var ano = _anoBase(d.numAno);
-  if(!num || !nome || !ano) return false;
-  if(!_ehEdsonRamalho(d.unidade)) return false;
-  return true;
-}
-
-function _criarItemFlat(d, salvoEm, chavePai, idx){
-  return {
-    dados: d || {},
-    salvoEm: salvoEm || '',
-    chavePai: chavePai || '',
-    idxLaudo: idx || 0
-  };
+  if(str.indexOf('/')!==-1){
+    var p=str.split('/');
+    if(p.length===3) return p[2]+'-'+p[1]+'-'+p[0];
+  }
+  return str;
 }
 
 function carregarLaudos(){
   var raw = _ls('cedc_laudos');
   if(!raw) return [];
-  var arr = [];
-  try{ arr = JSON.parse(raw) || []; } catch(e){ return []; }
-  var flat = [];
+  try{ return JSON.parse(raw); } catch(e){ return []; }
+}
 
-  arr.forEach(function(reg){
-    if(!reg || typeof reg !== 'object') return;
-
-    if(Array.isArray(reg.laudos)){
-      reg.laudos.forEach(function(ld, idx){
-        if(ld && typeof ld === 'object'){
-          flat.push(_criarItemFlat(ld, reg.salvoEm, reg.chave, idx));
-        }
-      });
-      return;
-    }
-
-    if(reg.dados && typeof reg.dados === 'object'){
-      flat.push(_criarItemFlat(reg.dados, reg.salvoEm, reg.chave, 0));
-    }
-  });
-
-  return flat;
+function _normalizarTexto(s){
+  return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+}
+function _dataDoRegistro(reg){
+  var d = reg && reg.dados ? reg.dados : {};
+  var dataEmis = d.dataEmissao || '';
+  if(!dataEmis && reg && reg.salvoEm){
+    var partes = String(reg.salvoEm).split(' ')[0];
+    dataEmis = _dataParaISO(partes);
+  }
+  return dataEmis || '';
+}
+function _timestampSalvoEm(s){
+  if(!s) return 0;
+  var m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})(?:,?\s+(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if(!m) return 0;
+  return new Date(
+    parseInt(m[3],10),
+    parseInt(m[2],10)-1,
+    parseInt(m[1],10),
+    parseInt(m[4]||'0',10),
+    parseInt(m[5]||'0',10),
+    parseInt(m[6]||'0',10)
+  ).getTime();
+}
+function _registroValido(reg){
+  var d = reg && reg.dados ? reg.dados : {};
+  var ano = (d.numAno||'').split(/\s+/)[0] || '';
+  if(!_ehEdsonRamalho(d.unidade)) return false;
+  if(!(d.nome||'').trim()) return false;
+  if(!(d.numExame||'').toString().trim()) return false;
+  if(!ano || !/^\d{4}$/.test(ano)) return false;
+  if(reg && reg.salvoEm && !_timestampSalvoEm(reg.salvoEm)) return false;
+  return true;
+}
+function _chavePaciente(reg){
+  var d = reg && reg.dados ? reg.dados : {};
+  return [
+    _normalizarTexto(d.nome),
+    _normalizarTexto(d.medicoReq),
+    _normalizarTexto(d.tipoLaudo || 'anatomo'),
+    _normalizarTexto(d.unidade),
+    _dataDoRegistro(reg)
+  ].join('|');
 }
 
 function aplicarFiltros(){
@@ -264,55 +262,48 @@ function aplicarFiltros(){
   var ate = document.getElementById('filtro-ate').value;
   var medico = (document.getElementById('filtro-medico').value||'').trim().toUpperCase();
 
-  var vistos = {};
   var todosOrdenados = _todosLaudos.slice();
-
   todosOrdenados.sort(function(a,b){
-    var da = _normalizarDataISO(a.salvoEm) || '0000-00-00';
-    var db = _normalizarDataISO(b.salvoEm) || '0000-00-00';
-    if(db !== da) return db.localeCompare(da);
-    return String(b.salvoEm||'').localeCompare(String(a.salvoEm||''));
+    return _timestampSalvoEm(b.salvoEm) - _timestampSalvoEm(a.salvoEm);
   });
 
-  var lista = todosOrdenados.filter(function(reg){
+  // Elimina autosaves antigos do mesmo paciente/data/médico/tipo/unidade,
+  // mantendo só o registro mais recente, que tende a ser o número final correto.
+  var vistosPaciente = {};
+  var consolidados = [];
+  todosOrdenados.forEach(function(reg){
+    if(!_registroValido(reg)) return;
     var d = reg.dados || {};
+    var dataEmis = _dataDoRegistro(reg);
 
-    if(!_registroValido(d)) return false;
+    if(de && dataEmis && dataEmis < de) return;
+    if(ate && dataEmis && dataEmis > ate) return;
+    if(medico && (d.medicoReq||'').toUpperCase().indexOf(medico)===-1) return;
 
-    var dataEmis = _normalizarDataISO(d.dataEmissao);
-    if(!dataEmis) dataEmis = _normalizarDataISO(reg.salvoEm);
+    var chavePaciente = _chavePaciente(reg);
+    if(vistosPaciente[chavePaciente]) return;
+    vistosPaciente[chavePaciente] = true;
+    consolidados.push(reg);
+  });
 
-    if(de && dataEmis && dataEmis < de) return false;
-    if(ate && dataEmis && dataEmis > ate) return false;
-
-    if(medico){
-      var med = String(d.medicoReq||'').toUpperCase();
-      if(med.indexOf(medico) === -1) return false;
-    }
-
-    var num = _somenteDigitos(d.numExame);
-    var serie = _somenteDigitos(d.numSerie) || '1';
-    var ano = _anoBase(d.numAno);
-    var chaveBase = num + '-' + serie + '/' + ano;
-    if(vistos[chaveBase]) return false;
-    vistos[chaveBase] = true;
-
+  // Segurança extra: deduplicar também pelo número exibido.
+  var vistosNumero = {};
+  var lista = consolidados.filter(function(reg){
+    var d = reg.dados || {};
+    var ano = (d.numAno||'').split(/\s+/)[0] || '';
+    var chaveBase = (d.numExame||'') + '-' + (d.numSerie||'1') + '/' + ano;
+    if(vistosNumero[chaveBase]) return false;
+    vistosNumero[chaveBase] = true;
     return true;
   });
 
   lista.sort(function(a,b){
-    var na = parseInt(_somenteDigitos((a.dados||{}).numExame) || '0', 10);
-    var nb = parseInt(_somenteDigitos((b.dados||{}).numExame) || '0', 10);
-    if(na !== nb) return na - nb;
-
-    var sa = parseInt(_somenteDigitos((a.dados||{}).numSerie) || '1', 10);
-    var sb = parseInt(_somenteDigitos((b.dados||{}).numSerie) || '1', 10);
-    return sa - sb;
+    var na = parseInt((a.dados||{}).numExame||'0',10);
+    var nb = parseInt((b.dados||{}).numExame||'0',10);
+    return na - nb;
   });
-
   renderTabela(lista, de, ate);
 }
-
 function limparFiltros(){
   document.getElementById('filtro-de').value='';
   document.getElementById('filtro-ate').value='';
@@ -339,7 +330,7 @@ function renderTabela(lista, de, ate){
 
   var periodoTxt = '—';
   if(de || ate){
-    periodoTxt = (de ? _fmtData(de) : 'início') + ' a ' + (ate ? _fmtData(ate) : 'hoje');
+    periodoTxt = (_fmtData(de)||'início') + ' a ' + (_fmtData(ate)||'hoje');
   } else {
     periodoTxt = 'Todos';
   }
@@ -353,18 +344,19 @@ function renderTabela(lista, de, ate){
       +'<td class="td-num">'+escHtml(_fmtNum(d))+'</td>'
       +'<td class="td-nome">'+escHtml(d.nome||'—')+'</td>'
       +'<td><span class="badge '+_tipoBadge(d.tipoLaudo)+'">'+escHtml(_tipoLabel(d.tipoLaudo))+'</span></td>'
-      +'<td class="td-med">'+escHtml(d.medicoReq?'DR(A) '+String(d.medicoReq).replace(/^DR\(A\)\s*/i,''):'—')+'</td>'
-      +'<td class="td-data">'+escHtml(_fmtData(d.dataEmissao || reg.salvoEm))+'</td>'
+      +'<td class="td-med">'+escHtml(d.medicoReq?'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,''):' —')+'</td>'
+      +'<td class="td-data">'+escHtml(_fmtData(d.dataEmissao))+'</td>'
       +'<td class="td-data" style="font-size:.78rem;color:#999;">'+escHtml(reg.salvoEm||'—')+'</td>';
     tbody.appendChild(tr);
   });
 }
 
-function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// Inicializar
 window.addEventListener('DOMContentLoaded', function(){
   _todosLaudos = carregarLaudos();
-
+  // Definir data inicial como primeiro dia do mês atual
   var hoje = new Date();
   var primeiroDia = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-01';
   var hojeISO = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
