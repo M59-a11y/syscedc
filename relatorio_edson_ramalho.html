@@ -226,6 +226,19 @@ function aplicarFiltros(){
     var d = reg.dados || {};
     if(!_ehEdsonRamalho(d.unidade)) return false;
 
+    // Ignorar registros incompletos / fantasmas do localStorage
+    var numExame = String(d.numExame||'').trim();
+    var nome = String(d.nome||'').trim();
+    var ano = String((d.numAno||'').split(/\s+/)[0] || '').trim();
+    var serie = String(d.numSerie||'').trim() || '1';
+
+    // número do exame deve ser estritamente numérico
+    if(!/^\d+$/.test(numExame)) return false;
+    if(!nome || !ano) return false;
+
+    // salvoEm inválido também é ignorado
+    if(reg.salvoEm && !/^\d{2}\/\d{2}\/\d{4}(\s+\d{2}:\d{2}:\d{2})?$/.test(String(reg.salvoEm).trim())) return false;
+
     // Filtro período — usa dataEmissao ou salvoEm
     var dataEmis = d.dataEmissao || '';
     if(!dataEmis && reg.salvoEm){
@@ -240,9 +253,7 @@ function aplicarFiltros(){
     if(medico && (d.medicoReq||'').toUpperCase().indexOf(medico)===-1) return false;
 
     // Deduplicar pela chave base (numExame + numSerie + ano, sem sufixo)
-    var d2 = reg.dados || {};
-    var ano = (d2.numAno||'').split(/\s+/)[0] || '';
-    var chaveBase = (d2.numExame||'') + '-' + (d2.numSerie||'') + '/' + ano;
+    var chaveBase = numExame + '-' + serie + '/' + ano;
     if(vistos[chaveBase]) return false;
     vistos[chaveBase] = true;
 
