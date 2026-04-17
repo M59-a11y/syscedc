@@ -5,349 +5,190 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatório – Hospital Gen. Edson Ramalho</title>
 <style>
-:root{
-  --ink:#17263c;
-  --ink-2:#334155;
-  --line:#cfd6de;
-  --line-2:#e8edf2;
-  --paper:#ffffff;
-  --soft:#f5f7fa;
-  --accent:#0f766e;
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#1f2937}
-.wrap{max-width:1120px;margin:18px auto;padding:0 14px 28px}
-.screen-toolbar,.screen-filters,.screen-note{display:block}
-.screen-toolbar{
-  background:linear-gradient(135deg,#16233a,#203555);
-  color:#fff;border-radius:10px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:18px;
-  box-shadow:0 8px 24px rgba(15,23,42,.14);margin-bottom:14px
-}
-.brand small{display:block;opacity:.86;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:4px}
-.brand strong{display:block;font-size:18px;line-height:1.2}
-.brand span{display:block;font-size:13px;opacity:.9;margin-top:4px}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{border:0;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer}
+:root{--azul:#16233a;--azul2:#223554;--linha:#d8dee6;--fundo:#f3f5f7;--texto:#1f2937;--muted:#667085}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--fundo);color:var(--texto)}
+.wrap{max-width:1100px;margin:16px auto;padding:0 14px 24px}
+.toolbar,.filtros,.obs{display:block}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:14px 18px;border-radius:10px;margin-bottom:12px}
+.tt1{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;opacity:.88;margin-bottom:3px}
+.tt2{font-size:26px;font-weight:700;line-height:1.05}
+.tt3{font-size:13px;opacity:.92;margin-top:3px}
+.btn{border:0;border-radius:8px;padding:10px 15px;font-size:14px;font-weight:700;cursor:pointer}
 .btn-print{background:#2563eb;color:#fff}
 .btn-clean{background:#475569;color:#fff}
-.screen-filters{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 3px 12px rgba(15,23,42,.05)}
-.filters-title{font-size:12px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink-2);margin-bottom:12px}
-.filters-grid{display:grid;grid-template-columns:180px 180px minmax(220px,1fr) auto auto;gap:12px;align-items:end}
-label{display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#475569;margin-bottom:6px}
-input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
-input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
-.report{background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 16px rgba(15,23,42,.05);overflow:hidden}
-.report-head{padding:18px 20px 14px;border-bottom:2px solid var(--ink)}
-.report-top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
-.report-left .sup{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#475569;margin-bottom:6px}
-.report-left .title{font-size:28px;font-weight:700;color:#0f172a;line-height:1.15;margin:0 0 3px}
-.report-left .subtitle{font-size:14px;color:#475569;margin:0}
-.report-right{text-align:right;min-width:230px}
-.report-right .label{font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#475569}
-.report-right .value{font-size:21px;font-weight:700;color:#0f172a;margin-top:6px}
+.filtros{background:#fff;border:1px solid var(--linha);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.filtros h3{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:#475569}
+.grid{display:grid;grid-template-columns:190px 190px auto auto;gap:12px;align-items:end}
+label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:700;color:#475569;margin-bottom:6px}
+input{width:100%;padding:10px 12px;border:1px solid var(--linha);border-radius:8px;font:inherit;background:#fff}
+.report{background:#fff;border:1px solid var(--linha);border-radius:10px;overflow:hidden}
+.head{padding:18px 18px 12px;border-bottom:2px solid #111827}
+.head-top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.sup{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#475569;font-weight:700}
+.h1{font-size:28px;font-weight:700;margin:4px 0 2px;color:#0f172a}
+.sub{font-size:13px;color:#475569}
+.periodo-box{text-align:right}
+.periodo-box .lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#475569;font-weight:700}
+.periodo-box .val{font-size:20px;font-weight:700;margin-top:5px}
 .meta{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:10px;margin-top:12px}
-.meta-card{border:1px solid var(--line);padding:10px 12px;border-radius:8px;background:#fff}
-.meta-card .k{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:5px}
-.meta-card .v{font-size:14px;font-weight:700;color:#111827;line-height:1.25}
-.meta-card .s{font-size:12px;color:#64748b;margin-top:3px;line-height:1.25}
-.table-box{padding:12px 14px 18px}
-.table-title{font-size:12px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#475569;margin:0 0 8px}
+.meta-card{border:1px solid var(--linha);border-radius:8px;padding:10px 12px}
+.meta-k{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:#667085;font-weight:700}
+.meta-v{font-size:14px;font-weight:700;margin-top:4px}
+.meta-s{font-size:12px;color:#667085;margin-top:3px}
+.box{padding:12px 14px 18px}
+.table-title{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;font-weight:700;color:#475569;margin:0 0 8px}
 .table-wrap{overflow:auto}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
-thead th{background:var(--ink);color:#fff;padding:8px 8px;font-size:11px;letter-spacing:1px;text-transform:uppercase;text-align:left}
-tbody td{padding:8px 8px;border-bottom:1px solid var(--line-2);font-size:12px;vertical-align:top;line-height:1.25}
+thead th{background:#16233a;color:#fff;padding:8px 7px;font-size:11px;text-transform:uppercase;letter-spacing:.9px;text-align:left}
+tbody td{padding:8px 7px;border-bottom:1px solid #e8edf2;font-size:12px;vertical-align:top;line-height:1.25}
 tbody tr:nth-child(even){background:#fafcff}
-.col-idx{width:34px;text-align:center}
-.col-exame{width:120px}
-.col-class{width:100px}
-.col-data{width:108px}
-.num{font-weight:700;color:#111827;white-space:nowrap}
-.nome{font-weight:700;color:#1f2937;text-transform:uppercase}
-.classif{display:inline-block;border:1px solid #c7dcef;border-radius:999px;padding:2px 8px;background:#f1f8ff;color:#1d4f7a;font-size:11px;font-weight:700}
-.medico{color:#334155}
-.vazio{display:none;text-align:center;padding:40px 16px;color:#64748b;font-size:14px}
-.report-foot{border-top:1px solid var(--line);padding:8px 14px;font-size:11px;color:#64748b;text-align:center}
-.screen-note{font-size:12px;color:#64748b;text-align:center;margin-top:10px}
-.print-header,.print-footer{display:none}
+.c-idx{width:36px;text-align:center}.c-exame{width:120px}.c-class{width:105px}.c-data{width:108px}
+.num{font-weight:700;white-space:nowrap}.nome{font-weight:700;text-transform:uppercase}.classif{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #c7dcef;background:#f1f8ff;color:#1d4f7a;font-size:11px;font-weight:700}.muted{color:#334155}
+.vazio{display:none;text-align:center;padding:28px 12px;color:#667085}
+.foot{padding:8px 14px;border-top:1px solid var(--linha);text-align:center;font-size:11px;color:#667085}
+.obs{text-align:center;font-size:12px;color:#667085;margin-top:10px}
+.print-header,.print-footer,.print-space{display:none}
 @page{size:A4 portrait;margin:14mm 10mm 14mm 10mm}
-@media (max-width:900px){
-  .filters-grid{grid-template-columns:1fr}
-  .report-top,.meta{grid-template-columns:1fr;display:grid}
-  .report-right{text-align:left;min-width:0}
-}
+@media (max-width:900px){.grid,.meta,.head-top{grid-template-columns:1fr;display:grid}.periodo-box{text-align:left}}
 @media print{
-  html,body{background:#fff}
-  body{font-size:10pt;color:#000}
-  .wrap{max-width:none;margin:0;padding:0}
-  .screen-toolbar,.screen-filters,.screen-note{display:none!important}
-  .report{border:none;border-radius:0;box-shadow:none;overflow:visible}
-  .report-head{display:none}
-  .table-box{padding:0}
-  .table-title{display:none}
-  .table-wrap{overflow:visible}
-  .print-header,.print-footer{display:block}
-  .print-header{position:fixed;top:0;left:0;right:0;height:24mm;padding-bottom:3mm;background:#fff}
-  .print-header .line1{font-size:9pt;font-weight:700;letter-spacing:.8pt;text-transform:uppercase}
-  .print-header .line2{font-size:14pt;font-weight:700;margin-top:2mm}
-  .print-header .line3{font-size:9pt;margin-top:1.2mm}
-  .print-header .line4{display:flex;justify-content:space-between;gap:10mm;margin-top:2.2mm;font-size:9pt;border-top:1.2pt solid #111827;padding-top:2mm}
-  .print-space{height:28mm}
-  thead{display:table-header-group}
-  tfoot{display:table-footer-group}
-  tr,img{page-break-inside:avoid}
-  table{font-size:8.9pt}
-  thead th{padding:6px 6px;background:#16233a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  tbody td{padding:6px 6px;border-bottom:.6pt solid #dbe2ea}
-  tbody tr:nth-child(even){background:#f7f9fb!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .classif{padding:1px 7px;font-size:8pt;background:#eef6ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .report-foot{display:none}
+  html,body{background:#fff} .wrap{max-width:none;margin:0;padding:0} .toolbar,.filtros,.obs,.head,.foot{display:none!important}
+  .report{border:none;border-radius:0;overflow:visible} .box{padding:0} .table-title{display:none} .table-wrap{overflow:visible}
+  .print-header,.print-footer,.print-space{display:block} .print-space{height:28mm}
+  .print-header{position:fixed;top:0;left:0;right:0;height:24mm;background:#fff}
+  .ph1{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:.8pt}
+  .ph2{font-size:14pt;font-weight:700;margin-top:2mm}
+  .ph3{font-size:9pt;margin-top:1mm}
+  .ph4{display:flex;justify-content:space-between;gap:8mm;border-top:1.2pt solid #111827;padding-top:2mm;margin-top:2mm;font-size:9pt}
+  thead{display:table-header-group} thead th{background:#16233a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:6px 6px}
+  tbody td{padding:6px 6px;border-bottom:.6pt solid #dbe2ea} tbody tr:nth-child(even){background:#f7f9fb!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .classif{background:#eef6ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:8pt;padding:1px 7px}
   .print-footer{position:fixed;bottom:0;left:0;right:0;height:8mm;border-top:.7pt solid #bcc7d3;padding-top:2mm;text-align:center;font-size:8pt;color:#5b6775}
-  .col-idx{width:6%}
-  .col-exame{width:16%}
-  .col-class{width:14%}
-  .col-data{width:14%}
 }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="screen-toolbar">
-    <div class="brand">
-      <small>SYSCEDC · Relatório institucional</small>
-      <strong>Hospital Gen. Edson Ramalho</strong>
-      <span>Relatório de laudos digitados nesta unidade</span>
+  <div class="toolbar">
+    <div>
+      <div class="tt1">SYSCEDC · Relatório institucional</div>
+      <div class="tt2">Hospital Gen. Edson Ramalho</div>
+      <div class="tt3">Relatório de laudos digitados nesta unidade</div>
     </div>
-    <div class="actions">
+    <div>
       <button class="btn btn-clean" onclick="limparFiltros()">Limpar</button>
       <button class="btn btn-print" onclick="window.print()">Imprimir</button>
     </div>
   </div>
 
-  <div class="screen-filters">
-    <div class="filters-title">Filtros</div>
-    <div class="filters-grid">
+  <div class="filtros">
+    <h3>Período do relatório</h3>
+    <div class="grid">
       <div><label>Data inicial</label><input type="date" id="filtro-de"></div>
       <div><label>Data final</label><input type="date" id="filtro-ate"></div>
-      <div><label>Médico requisitante</label><input type="text" id="filtro-medico" placeholder="Digite parte do nome..."></div>
+      <div></div>
       <div><button class="btn btn-print" onclick="aplicarFiltros()">Filtrar</button></div>
-      <div><button class="btn btn-clean" onclick="limparFiltros()">Limpar</button></div>
     </div>
   </div>
 
   <div class="report">
     <div class="print-header">
-      <div class="line1">SYSCEDC · Sistema de Informação do CEDC</div>
-      <div class="line2">Relatório de Laudos — Hospital Gen. Edson Ramalho</div>
-      <div class="line3">Relação de pacientes digitados nesta unidade</div>
-      <div class="line4">
-        <div><strong>Período:</strong> <span id="print-periodo">—</span></div>
-        <div><strong>Emitido em:</strong> <span id="print-emissao">—</span></div>
-        <div><strong>Total:</strong> <span id="print-total">0</span></div>
-      </div>
+      <div class="ph1">SYSCEDC · Sistema de Informação do CEDC</div>
+      <div class="ph2">Relatório de Laudos — Hospital Gen. Edson Ramalho</div>
+      <div class="ph3">Relação de pacientes digitados nesta unidade</div>
+      <div class="ph4"><div><strong>Período:</strong> <span id="print-periodo">—</span></div><div><strong>Emitido em:</strong> <span id="print-emissao">—</span></div><div><strong>Total:</strong> <span id="print-total">0</span></div></div>
     </div>
 
-    <div class="report-head">
-      <div class="report-top">
-        <div class="report-left">
+    <div class="head">
+      <div class="head-top">
+        <div>
           <div class="sup">SYSCEDC · Sistema de Informação do CEDC</div>
-          <h1 class="title">Relatório de Laudos — Hospital Gen. Edson Ramalho</h1>
-          <p class="subtitle">Relação de pacientes digitados nesta unidade</p>
+          <div class="h1">Relatório de Laudos — Hospital Gen. Edson Ramalho</div>
+          <div class="sub">Relação de pacientes digitados nesta unidade</div>
         </div>
-        <div class="report-right">
-          <div class="label">Período do relatório</div>
-          <div class="value" id="screen-periodo">—</div>
+        <div class="periodo-box">
+          <div class="lbl">Período do relatório</div>
+          <div class="val" id="screen-periodo">—</div>
         </div>
       </div>
       <div class="meta">
-        <div class="meta-card">
-          <div class="k">Unidade</div>
-          <div class="v">Hospital Gen. Edson Ramalho</div>
-          <div class="s">Relatório fixo desta unidade no SYSCEDC</div>
-        </div>
-        <div class="meta-card">
-          <div class="k">Data de emissão</div>
-          <div class="v" id="meta-emissao">—</div>
-          <div class="s">Gerado automaticamente pelo sistema</div>
-        </div>
-        <div class="meta-card">
-          <div class="k">Registros encontrados</div>
-          <div class="v" id="meta-total">0</div>
-          <div class="s">Pacientes listados no período</div>
-        </div>
+        <div class="meta-card"><div class="meta-k">Unidade</div><div class="meta-v">Hospital Gen. Edson Ramalho</div><div class="meta-s">Relatório fixo desta unidade no SYSCEDC</div></div>
+        <div class="meta-card"><div class="meta-k">Data de emissão</div><div class="meta-v" id="meta-emissao">—</div><div class="meta-s">Gerado automaticamente pelo sistema</div></div>
+        <div class="meta-card"><div class="meta-k">Registros encontrados</div><div class="meta-v" id="meta-total">0</div><div class="meta-s">Pacientes listados no período</div></div>
       </div>
     </div>
 
-    <div class="table-box">
+    <div class="box">
       <div class="print-space"></div>
       <p class="table-title">Laudos — Hospital Gen. Edson Ramalho</p>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr>
-              <th class="col-idx">#</th>
-              <th class="col-exame">Nº do exame</th>
-              <th>Nome do paciente</th>
-              <th class="col-class">Classificação</th>
-              <th>Médico requisitante</th>
-              <th class="col-data">Data de emissão</th>
-            </tr>
+            <tr><th class="c-idx">#</th><th class="c-exame">Nº do exame</th><th>Nome do paciente</th><th class="c-class">Classificação</th><th>Médico requisitante</th><th class="c-data">Data de emissão</th></tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <div class="vazio" id="vazio">Nenhum laudo encontrado para o Hospital Gen. Edson Ramalho.</div>
+      <div class="vazio" id="vazio">Nenhum laudo encontrado para o Hospital Gen. Edson Ramalho no período informado.</div>
     </div>
 
-    <div class="report-foot">SYSCEDC · Hospital Gen. Edson Ramalho · Relatório institucional</div>
+    <div class="foot">SYSCEDC · Hospital Gen. Edson Ramalho · Relatório institucional</div>
     <div class="print-footer">SYSCEDC · Hospital Gen. Edson Ramalho · Relatório institucional</div>
   </div>
-  <div class="screen-note">Os dados são lidos do armazenamento local do SYSCEDC neste computador.</div>
+  <div class="obs">Os dados são lidos do armazenamento local do SYSCEDC neste computador.</div>
 </div>
-
 <script>
 var _todosLaudos = [];
-var HOSPITAL_ALIASES = [
-  'HOSPITAL GEN EDSON RAMALHO',
-  'HOSPITAL GEN. EDSON RAMALHO',
-  'GEN EDSON RAMALHO',
-  'GEN. EDSON RAMALHO',
-  'EDSON RAMALHO'
-];
 function _ls(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
-function _norm(s){
-  return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
-}
+function _norm(s){ return (s||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
 function _ehEdsonRamalho(unidade){
   var u = _norm(unidade);
-  return HOSPITAL_ALIASES.some(function(a){ return u === _norm(a); });
+  return u.indexOf('EDSON RAMALHO') !== -1 || u.indexOf('GEN EDSON') !== -1 || u.indexOf('HOSPITAL GEN EDSON RAMALHO') !== -1;
 }
-function _tipoLabel(tipo){
-  var map = {anatomo:'Anatomo',paaf:'PAAF',citogeral:'Cito Geral',revisao:'Revisão'};
-  return map[tipo] || 'Anatomo';
-}
-function _fmtNum(d){
-  var num = String(d.numExame || '').trim();
-  var serie = String(d.numSerie || '').trim();
-  var ano = String(d.numAno || '').trim().split(/\s+/)[0] || '';
-  if(!num) return '—';
-  return num + (serie ? '-' + serie : '') + (ano ? '/' + ano : '');
-}
-function _fmtData(iso){
-  if(!iso) return '—';
-  if(iso.indexOf('/') !== -1) return iso;
-  var p = iso.split('-');
-  return p.length===3 ? (p[2]+'/'+p[1]+'/'+p[0]) : iso;
-}
-function _dataParaISO(str){
-  if(!str) return '';
-  if(str.indexOf('/')!==-1){
-    var p=str.split('/');
-    return p.length===3 ? (p[2]+'-'+p[1]+'-'+p[0]) : '';
-  }
-  return str;
-}
-function _agoraFmt(){
-  var d = new Date();
-  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-}
-function carregarLaudos(){
-  var raw = _ls('cedc_laudos');
-  if(!raw) return [];
-  try{ return JSON.parse(raw); } catch(e){ return []; }
-}
-function _dataRegistro(reg){
-  var d = reg.dados || {};
-  if(d.dataEmissao) return d.dataEmissao;
-  if(reg.salvoEm){
-    var partes = reg.salvoEm.split(' ')[0];
-    return _dataParaISO(partes);
-  }
-  return '';
-}
-function _chaveExata(reg){
-  var d = reg.dados || {};
-  return [
-    _norm(d.unidade), _fmtNum(d), _norm(d.nome), _norm(d.medicoReq), _dataRegistro(reg), _norm(d.tipoLaudo)
-  ].join('|');
-}
+function _tipoLabel(tipo){ var map={anatomo:'Anatomo',paaf:'PAAF',citogeral:'Cito Geral',revisao:'Revisão'}; return map[tipo] || 'Anatomo'; }
+function _fmtNum(d){ var num=String(d.numExame||'').trim(), serie=String(d.numSerie||'').trim(), ano=String(d.numAno||'').trim().split(/\s+/)[0]||''; if(!num) return '—'; return num+(serie?'-'+serie:'')+(ano?'/'+ano:''); }
+function _fmtData(iso){ if(!iso) return '—'; if(iso.indexOf('/')!==-1) return iso; var p=iso.split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; }
+function _dataParaISO(str){ if(!str) return ''; if(str.indexOf('/')!==-1){ var p=str.split('/'); return p.length===3 ? p[2]+'-'+p[1]+'-'+p[0] : ''; } return str; }
+function _agoraFmt(){ var d=new Date(); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function carregarLaudos(){ var raw=_ls('cedc_laudos'); if(!raw) return []; try{return JSON.parse(raw);}catch(e){return [];} }
+function _dataRegistro(reg){ var d=reg.dados||{}; if(d.dataEmissao) return d.dataEmissao; if(reg.salvoEm){ var parte=reg.salvoEm.split(' ')[0]; return _dataParaISO(parte); } return ''; }
+function _chaveExata(reg){ var d=reg.dados||{}; return [_norm(d.unidade),_fmtNum(d),_norm(d.nome),_norm(d.medicoReq),_dataRegistro(reg),_norm(d.tipoLaudo)].join('|'); }
 function aplicarFiltros(){
-  var de = document.getElementById('filtro-de').value;
-  var ate = document.getElementById('filtro-ate').value;
-  var medico = _norm(document.getElementById('filtro-medico').value||'');
-
-  var exatos = Object.create(null);
-  var lista = _todosLaudos.filter(function(reg){
-    var d = reg.dados || {};
+  var de=document.getElementById('filtro-de').value;
+  var ate=document.getElementById('filtro-ate').value;
+  var exatos=Object.create(null);
+  var lista=_todosLaudos.filter(function(reg){
+    var d=reg.dados||{};
     if(!_ehEdsonRamalho(d.unidade)) return false;
-    if(!_norm(d.nome) || !_fmtNum(d) || !_dataRegistro(reg)) return false;
-
-    var dataEmis = _dataRegistro(reg);
-    if(de && dataEmis < de) return false;
-    if(ate && dataEmis > ate) return false;
-    if(medico && _norm(d.medicoReq).indexOf(medico) === -1) return false;
-
-    var chave = _chaveExata(reg);
+    if(!_norm(d.nome) || !_fmtNum(d)) return false;
+    var data=_dataRegistro(reg);
+    if(de && (!data || data < de)) return false;
+    if(ate && (!data || data > ate)) return false;
+    var chave=_chaveExata(reg);
     if(exatos[chave]) return false;
-    exatos[chave] = true;
+    exatos[chave]=true;
     return true;
   });
-
-  lista.sort(function(a,b){
-    var da = _dataRegistro(a), db = _dataRegistro(b);
-    if(da !== db) return da.localeCompare(db);
-    var na = parseInt(((a.dados||{}).numExame||'0'),10);
-    var nb = parseInt(((b.dados||{}).numExame||'0'),10);
-    return na - nb;
-  });
-
-  renderTabela(lista, de, ate);
+  lista.sort(function(a,b){ var da=_dataRegistro(a), db=_dataRegistro(b); if(da!==db) return da.localeCompare(db); var na=parseInt(((a.dados||{}).numExame||'0'),10), nb=parseInt(((b.dados||{}).numExame||'0'),10); return na-nb; });
+  renderTabela(lista,de,ate);
 }
 function limparFiltros(){
-  document.getElementById('filtro-medico').value='';
-  var hoje = new Date();
-  var primeiroDia = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-01';
-  var hojeISO = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
-  document.getElementById('filtro-de').value = primeiroDia;
-  document.getElementById('filtro-ate').value = hojeISO;
+  var hoje=new Date();
+  var primeiroDia=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-01';
+  var hojeISO=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
+  document.getElementById('filtro-de').value=primeiroDia;
+  document.getElementById('filtro-ate').value=hojeISO;
   aplicarFiltros();
 }
 function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function renderTabela(lista, de, ate){
-  var tbody = document.getElementById('tbody');
-  var vazio = document.getElementById('vazio');
-  tbody.innerHTML='';
-  if(!lista.length){
-    vazio.style.display='block';
-  } else {
-    vazio.style.display='block';
-    vazio.style.display='none';
-  }
-  lista.forEach(function(reg, i){
-    var d = reg.dados || {};
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td class="col-idx">'+(i+1)+'</td>'+
-      '<td class="num">'+escHtml(_fmtNum(d))+'</td>'+
-      '<td class="nome">'+escHtml(d.nome||'—')+'</td>'+
-      '<td><span class="classif">'+escHtml(_tipoLabel(d.tipoLaudo))+'</span></td>'+
-      '<td class="medico">'+escHtml(d.medicoReq ? 'DR(A) ' + d.medicoReq.replace(/^DR\(A\)\s*/i,'') : '—')+'</td>'+
-      '<td>'+escHtml(_fmtData(_dataRegistro(reg)))+'</td>';
-    tbody.appendChild(tr);
-  });
-  var periodoTxt = (de || ate) ? ((_fmtData(de)||'—') + ' a ' + (_fmtData(ate)||'—')) : 'Todos';
-  var emissao = _agoraFmt();
-  document.getElementById('screen-periodo').textContent = periodoTxt;
-  document.getElementById('meta-emissao').textContent = emissao;
-  document.getElementById('meta-total').textContent = String(lista.length);
-  document.getElementById('print-periodo').textContent = periodoTxt;
-  document.getElementById('print-emissao').textContent = emissao;
-  document.getElementById('print-total').textContent = String(lista.length);
+function renderTabela(lista,de,ate){
+  var tbody=document.getElementById('tbody'); var vazio=document.getElementById('vazio'); tbody.innerHTML='';
+  if(!lista.length){ vazio.style.display='block'; } else { vazio.style.display='none'; }
+  lista.forEach(function(reg,i){ var d=reg.dados||{}; var tr=document.createElement('tr'); tr.innerHTML='<td class="c-idx">'+(i+1)+'</td><td class="num">'+escHtml(_fmtNum(d))+'</td><td class="nome">'+escHtml(d.nome||'—')+'</td><td><span class="classif">'+escHtml(_tipoLabel(d.tipoLaudo))+'</span></td><td class="muted">'+escHtml(d.medicoReq ? 'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,'') : '—')+'</td><td>'+escHtml(_fmtData(_dataRegistro(reg)))+'</td>'; tbody.appendChild(tr); });
+  var periodoTxt=(de||ate)?((_fmtData(de)||'—')+' a '+(_fmtData(ate)||'—')):'Todos'; var emissao=_agoraFmt();
+  document.getElementById('screen-periodo').textContent=periodoTxt; document.getElementById('meta-emissao').textContent=emissao; document.getElementById('meta-total').textContent=String(lista.length); document.getElementById('print-periodo').textContent=periodoTxt; document.getElementById('print-emissao').textContent=emissao; document.getElementById('print-total').textContent=String(lista.length);
 }
-window.addEventListener('DOMContentLoaded', function(){
-  _todosLaudos = carregarLaudos();
-  limparFiltros();
-});
+window.addEventListener('DOMContentLoaded', function(){ _todosLaudos=carregarLaudos(); limparFiltros(); });
 </script>
 </body>
 </html>
