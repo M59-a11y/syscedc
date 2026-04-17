@@ -10,12 +10,12 @@
 body{font-family:Arial,Helvetica,sans-serif;background:var(--fundo);color:var(--texto)}
 .wrap{max-width:1100px;margin:16px auto;padding:0 14px 24px}
 .toolbar,.filtros,.obs{display:block}
-.toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;padding:14px 18px;border-radius:10px;margin-bottom:12px}
-.tt1{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;opacity:.88;margin-bottom:3px}
-.tt2{font-size:26px;font-weight:700;line-height:1.05}
-.tt3{font-size:13px;opacity:.92;margin-top:3px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;background:#fff;color:var(--texto);padding:12px 16px;border:1px solid var(--linha);border-radius:10px;margin-bottom:12px}
+.tt1{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:#64748b;margin-bottom:2px}
+.tt2{font-size:22px;font-weight:700;line-height:1.05;color:#0f172a}
+.tt3{font-size:12px;color:#475569;margin-top:3px}
 .btn{border:0;border-radius:8px;padding:10px 15px;font-size:14px;font-weight:700;cursor:pointer}
-.btn-print{background:#2563eb;color:#fff}
+.btn-print{background:#0f766e;color:#fff}
 .btn-clean{background:#475569;color:#fff}
 .filtros{background:#fff;border:1px solid var(--linha);border-radius:10px;padding:14px 16px;margin-bottom:12px}
 .filtros h3{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:#475569}
@@ -40,11 +40,11 @@ input{width:100%;padding:10px 12px;border:1px solid var(--linha);border-radius:8
 .table-title{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;font-weight:700;color:#475569;margin:0 0 8px}
 .table-wrap{overflow:auto}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
-thead th{background:#16233a;color:#fff;padding:8px 7px;font-size:11px;text-transform:uppercase;letter-spacing:.9px;text-align:left}
-tbody td{padding:8px 7px;border-bottom:1px solid #e8edf2;font-size:12px;vertical-align:top;line-height:1.25}
+thead th{background:#eef2f7;color:#334155;padding:6px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.7px;text-align:left;border-bottom:1px solid #cfd8e3}
+tbody td{padding:6px 6px;border-bottom:1px solid #e8edf2;font-size:11px;vertical-align:top;line-height:1.15}
 tbody tr:nth-child(even){background:#fafcff}
-.c-idx{width:36px;text-align:center}.c-exame{width:120px}.c-class{width:105px}.c-data{width:108px}
-.num{font-weight:700;white-space:nowrap}.nome{font-weight:700;text-transform:uppercase}.classif{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #c7dcef;background:#f1f8ff;color:#1d4f7a;font-size:11px;font-weight:700}.muted{color:#334155}
+.c-idx{width:34px;text-align:center}.c-exame{width:105px}.c-data{width:95px}
+.num{font-weight:700;white-space:nowrap}.nome{font-weight:700;text-transform:uppercase;font-size:10.5px;line-height:1.1}.muted{color:#334155}
 .vazio{display:none;text-align:center;padding:28px 12px;color:#667085}
 .foot{padding:8px 14px;border-top:1px solid var(--linha);text-align:center;font-size:11px;color:#667085}
 .obs{text-align:center;font-size:12px;color:#667085;margin-top:10px}
@@ -60,9 +60,9 @@ tbody tr:nth-child(even){background:#fafcff}
   .ph2{font-size:14pt;font-weight:700;margin-top:2mm}
   .ph3{font-size:9pt;margin-top:1mm}
   .ph4{display:flex;justify-content:space-between;gap:8mm;border-top:1.2pt solid #111827;padding-top:2mm;margin-top:2mm;font-size:9pt}
-  thead{display:table-header-group} thead th{background:#16233a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:6px 6px}
-  tbody td{padding:6px 6px;border-bottom:.6pt solid #dbe2ea} tbody tr:nth-child(even){background:#f7f9fb!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .classif{background:#eef6ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:8pt;padding:1px 7px}
+  thead{display:table-header-group} thead th{background:#f1f5f9!important;color:#334155!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:5px 5px;border-bottom:.8pt solid #cbd5e1}
+  tbody td{padding:5px 5px;border-bottom:.6pt solid #dbe2ea;font-size:8.3pt;line-height:1.08} tbody tr:nth-child(even){background:#fafcff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .nome{font-size:8pt;line-height:1.05}
   .print-footer{position:fixed;bottom:0;left:0;right:0;height:8mm;border-top:.7pt solid #bcc7d3;padding-top:2mm;text-align:center;font-size:8pt;color:#5b6775}
 }
 </style>
@@ -124,7 +124,7 @@ tbody tr:nth-child(even){background:#fafcff}
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th class="c-idx">#</th><th class="c-exame">Nº do exame</th><th>Nome do paciente</th><th class="c-class">Classificação</th><th>Médico requisitante</th><th class="c-data">Data de emissão</th></tr>
+            <tr><th class="c-idx">#</th><th class="c-exame">Nº do exame</th><th>Nome do paciente</th><th class="c-data">Data de emissão</th></tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -184,7 +184,7 @@ function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&l
 function renderTabela(lista,de,ate){
   var tbody=document.getElementById('tbody'); var vazio=document.getElementById('vazio'); tbody.innerHTML='';
   if(!lista.length){ vazio.style.display='block'; } else { vazio.style.display='none'; }
-  lista.forEach(function(reg,i){ var d=reg.dados||{}; var tr=document.createElement('tr'); tr.innerHTML='<td class="c-idx">'+(i+1)+'</td><td class="num">'+escHtml(_fmtNum(d))+'</td><td class="nome">'+escHtml(d.nome||'—')+'</td><td><span class="classif">'+escHtml(_tipoLabel(d.tipoLaudo))+'</span></td><td class="muted">'+escHtml(d.medicoReq ? 'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,'') : '—')+'</td><td>'+escHtml(_fmtData(_dataRegistro(reg)))+'</td>'; tbody.appendChild(tr); });
+  lista.forEach(function(reg,i){ var d=reg.dados||{}; var tr=document.createElement('tr'); tr.innerHTML='<td class="c-idx">'+(i+1)+'</td><td class="num">'+escHtml(_fmtNum(d))+'</td><td class="nome">'+escHtml(d.nome||'—')+'</td><td>'+escHtml(_fmtData(_dataRegistro(reg)))+'</td>'; tbody.appendChild(tr); });
   var periodoTxt=(de||ate)?((_fmtData(de)||'—')+' a '+(_fmtData(ate)||'—')):'Todos'; var emissao=_agoraFmt();
   document.getElementById('screen-periodo').textContent=periodoTxt; document.getElementById('meta-emissao').textContent=emissao; document.getElementById('meta-total').textContent=String(lista.length); document.getElementById('print-periodo').textContent=periodoTxt; document.getElementById('print-emissao').textContent=emissao; document.getElementById('print-total').textContent=String(lista.length);
 }
