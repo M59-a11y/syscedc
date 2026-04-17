@@ -166,106 +166,150 @@ function _ls(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } 
 
 function _ehEdsonRamalho(unidade){
   if(!unidade) return false;
-  var u = unidade.toUpperCase();
+  var u = String(unidade).toUpperCase();
   return u.indexOf('EDSON RAMALHO') !== -1 || u.indexOf('GEN. EDSON') !== -1 || u.indexOf('GEN EDSON') !== -1;
 }
 
 function _tipoLabel(tipo){
-  var map = {anatomo:'Anatomo',paaf:'PAAF',citogeral:'Cito Geral',revisao:'Revisão'};
+  var map = {anatomo:'Anatomo',paaf:'PAAF',citogeral:'Cito Geral',revisao:'Revisão',gemol:'GEMOL'};
   return map[tipo] || 'Anatomo';
 }
 function _tipoBadge(tipo){
-  var map = {anatomo:'badge-anatomo',paaf:'badge-paaf',citogeral:'badge-cito',revisao:'badge-revisao'};
+  var map = {anatomo:'badge-anatomo',paaf:'badge-paaf',citogeral:'badge-cito',revisao:'badge-revisao',gemol:'badge-revisao'};
   return map[tipo] || 'badge-anatomo';
 }
 
-function _fmtNum(d){
-  var num = d.numExame || '—';
-  var serie = d.numSerie ? '-'+d.numSerie : '';
-  var ano = (d.numAno||'').split(/\s+/)[0] || '';
-  // Omitir sufixo L1, L2... — só número base
-  return num + serie + (ano ? '/'+ano : '');
+function _somenteDigitos(s){
+  return String(s||'').replace(/\D/g,'');
 }
 
-function _fmtData(iso){
+function _anoBase(v){
+  return String(v||'').trim().split(/\s+/)[0] || '';
+}
+
+function _fmtNum(d){
+  var num = _somenteDigitos(d && d.numExame);
+  if(!num) num = '—';
+  var serie = _somenteDigitos(d && d.numSerie);
+  if(!serie) serie = '1';
+  var ano = _anoBase(d && d.numAno);
+  return num + '-' + serie + (ano ? '/' + ano : '');
+}
+
+function _fmtData(v){
+  var iso = _normalizarDataISO(v);
   if(!iso) return '—';
   var p = iso.split('-');
-  if(p.length===3) return p[2]+'/'+p[1]+'/'+p[0];
-  // já pode ser dd/mm/aaaa
-  return iso;
+  return p[2] + '/' + p[1] + '/' + p[0];
 }
 
-function _dataParaISO(str){
-  // aceita dd/mm/aaaa ou aaaa-mm-dd
+function _normalizarDataISO(str){
   if(!str) return '';
-  if(str.indexOf('/')!==-1){
-    var p=str.split('/');
-    if(p.length===3) return p[2]+'-'+p[1]+'-'+p[0];
-  }
-  return str;
+  str = String(str).trim();
+  var m;
+  if((m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return m[1]+'-'+m[2]+'-'+m[3];
+  if((m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/))) return m[3]+'-'+m[2]+'-'+m[1];
+  if((m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+\d{1,2}:\d{2}(?::\d{2})?$/))) return m[3]+'-'+m[2]+'-'+m[1];
+  return '';
+}
+
+function _registroValido(d){
+  if(!d || typeof d !== 'object') return false;
+  var num = _somenteDigitos(d.numExame);
+  var nome = String(d.nome||'').trim();
+  var ano = _anoBase(d.numAno);
+  if(!num || !nome || !ano) return false;
+  if(!_ehEdsonRamalho(d.unidade)) return false;
+  return true;
+}
+
+function _criarItemFlat(d, salvoEm, chavePai, idx){
+  return {
+    dados: d || {},
+    salvoEm: salvoEm || '',
+    chavePai: chavePai || '',
+    idxLaudo: idx || 0
+  };
 }
 
 function carregarLaudos(){
   var raw = _ls('cedc_laudos');
   if(!raw) return [];
-  try{ return JSON.parse(raw); } catch(e){ return []; }
+  var arr = [];
+  try{ arr = JSON.parse(raw) || []; } catch(e){ return []; }
+  var flat = [];
+
+  arr.forEach(function(reg){
+    if(!reg || typeof reg !== 'object') return;
+
+    if(Array.isArray(reg.laudos)){
+      reg.laudos.forEach(function(ld, idx){
+        if(ld && typeof ld === 'object'){
+          flat.push(_criarItemFlat(ld, reg.salvoEm, reg.chave, idx));
+        }
+      });
+      return;
+    }
+
+    if(reg.dados && typeof reg.dados === 'object'){
+      flat.push(_criarItemFlat(reg.dados, reg.salvoEm, reg.chave, 0));
+    }
+  });
+
+  return flat;
 }
 
 function aplicarFiltros(){
-  var de = document.getElementById('filtro-de').value;   // aaaa-mm-dd
+  var de = document.getElementById('filtro-de').value;
   var ate = document.getElementById('filtro-ate').value;
   var medico = (document.getElementById('filtro-medico').value||'').trim().toUpperCase();
 
-  // Deduplicar: manter só o registro mais recente por número base (sem sufixo L1/L2)
   var vistos = {};
-  var todosOrdenados = _todosLaudos.slice(); // não alterar original
-  // Ordenar por salvoEm decrescente para ficar com o mais recente
-  todosOrdenados.sort(function(a,b){ return (b.salvoEm||'').localeCompare(a.salvoEm||''); });
+  var todosOrdenados = _todosLaudos.slice();
+
+  todosOrdenados.sort(function(a,b){
+    var da = _normalizarDataISO(a.salvoEm) || '0000-00-00';
+    var db = _normalizarDataISO(b.salvoEm) || '0000-00-00';
+    if(db !== da) return db.localeCompare(da);
+    return String(b.salvoEm||'').localeCompare(String(a.salvoEm||''));
+  });
 
   var lista = todosOrdenados.filter(function(reg){
     var d = reg.dados || {};
-    if(!_ehEdsonRamalho(d.unidade)) return false;
 
-    // Ignorar registros incompletos / fantasmas do localStorage
-    var numExame = String(d.numExame||'').trim();
-    var nome = String(d.nome||'').trim();
-    var ano = String((d.numAno||'').split(/\s+/)[0] || '').trim();
-    var serie = String(d.numSerie||'').trim() || '1';
+    if(!_registroValido(d)) return false;
 
-    // número do exame deve ser estritamente numérico
-    if(!/^\d+$/.test(numExame)) return false;
-    if(!nome || !ano) return false;
+    var dataEmis = _normalizarDataISO(d.dataEmissao);
+    if(!dataEmis) dataEmis = _normalizarDataISO(reg.salvoEm);
 
-    // salvoEm inválido também é ignorado
-    if(reg.salvoEm && !/^\d{2}\/\d{2}\/\d{4}(\s+\d{2}:\d{2}:\d{2})?$/.test(String(reg.salvoEm).trim())) return false;
-
-    // Filtro período — usa dataEmissao ou salvoEm
-    var dataEmis = d.dataEmissao || '';
-    if(!dataEmis && reg.salvoEm){
-      // salvoEm é dd/mm/aaaa hh:mm:ss — extrair data
-      var partes = reg.salvoEm.split(' ')[0]; // dd/mm/aaaa
-      dataEmis = _dataParaISO(partes);
-    }
     if(de && dataEmis && dataEmis < de) return false;
     if(ate && dataEmis && dataEmis > ate) return false;
 
-    // Filtro médico
-    if(medico && (d.medicoReq||'').toUpperCase().indexOf(medico)===-1) return false;
+    if(medico){
+      var med = String(d.medicoReq||'').toUpperCase();
+      if(med.indexOf(medico) === -1) return false;
+    }
 
-    // Deduplicar pela chave base (numExame + numSerie + ano, sem sufixo)
-    var chaveBase = numExame + '-' + serie + '/' + ano;
+    var num = _somenteDigitos(d.numExame);
+    var serie = _somenteDigitos(d.numSerie) || '1';
+    var ano = _anoBase(d.numAno);
+    var chaveBase = num + '-' + serie + '/' + ano;
     if(vistos[chaveBase]) return false;
     vistos[chaveBase] = true;
 
     return true;
   });
 
-  // Ordenar por número do exame (menor para maior)
   lista.sort(function(a,b){
-    var na = parseInt((a.dados||{}).numExame||'0',10);
-    var nb = parseInt((b.dados||{}).numExame||'0',10);
-    return na - nb;
+    var na = parseInt(_somenteDigitos((a.dados||{}).numExame) || '0', 10);
+    var nb = parseInt(_somenteDigitos((b.dados||{}).numExame) || '0', 10);
+    if(na !== nb) return na - nb;
+
+    var sa = parseInt(_somenteDigitos((a.dados||{}).numSerie) || '1', 10);
+    var sb = parseInt(_somenteDigitos((b.dados||{}).numSerie) || '1', 10);
+    return sa - sb;
   });
+
   renderTabela(lista, de, ate);
 }
 
@@ -295,7 +339,7 @@ function renderTabela(lista, de, ate){
 
   var periodoTxt = '—';
   if(de || ate){
-    periodoTxt = (_fmtData(de)||'início') + ' a ' + (_fmtData(ate)||'hoje');
+    periodoTxt = (de ? _fmtData(de) : 'início') + ' a ' + (ate ? _fmtData(ate) : 'hoje');
   } else {
     periodoTxt = 'Todos';
   }
@@ -309,19 +353,18 @@ function renderTabela(lista, de, ate){
       +'<td class="td-num">'+escHtml(_fmtNum(d))+'</td>'
       +'<td class="td-nome">'+escHtml(d.nome||'—')+'</td>'
       +'<td><span class="badge '+_tipoBadge(d.tipoLaudo)+'">'+escHtml(_tipoLabel(d.tipoLaudo))+'</span></td>'
-      +'<td class="td-med">'+escHtml(d.medicoReq?'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,''):' —')+'</td>'
-      +'<td class="td-data">'+escHtml(_fmtData(d.dataEmissao))+'</td>'
+      +'<td class="td-med">'+escHtml(d.medicoReq?'DR(A) '+String(d.medicoReq).replace(/^DR\(A\)\s*/i,''):'—')+'</td>'
+      +'<td class="td-data">'+escHtml(_fmtData(d.dataEmissao || reg.salvoEm))+'</td>'
       +'<td class="td-data" style="font-size:.78rem;color:#999;">'+escHtml(reg.salvoEm||'—')+'</td>';
     tbody.appendChild(tr);
   });
 }
 
-function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// Inicializar
 window.addEventListener('DOMContentLoaded', function(){
   _todosLaudos = carregarLaudos();
-  // Definir data inicial como primeiro dia do mês atual
+
   var hoje = new Date();
   var primeiroDia = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-01';
   var hojeISO = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
