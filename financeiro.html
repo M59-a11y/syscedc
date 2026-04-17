@@ -438,9 +438,7 @@ function contagensPDF(){
 function getBaseCount(tipo, dia){
   var k = mesKeyAtual();
   var total = 0;
-  var a = contagensSyscedc();
   var p = contagensPDF();
-  if(a[k] && a[k][tipo] && a[k][tipo][dia]) total += a[k][tipo][dia];
   if(p[k] && p[k][tipo] && p[k][tipo][dia]) total += p[k][tipo][dia];
   return total;
 }
