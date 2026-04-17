@@ -363,32 +363,48 @@ var _anoAtual = new Date().getFullYear();
 var _mesAtual = new Date().getMonth();
 var _teAlvo = null;
 
-function dados(){ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }
-function salvar(d){ localStorage.setItem(LS_KEY, JSON.stringify(d)); }
+// syscedc_financeiro: APENAS ajustes manuais feitos pelo usuário clicando nas células
+// syscedc_prod_log:   fonte real do SYSCEDC — 1 entrada por laudo impresso {tipo, data:'YYYY-MM-DD'}
+// syscedc_financeiro_siscan: laudos importados de PDF SISCAN
+function dadosManuais(){ return JSON.parse(localStorage.getItem(LS_KEY)||'{}'); }
+function salvarManuais(d){ localStorage.setItem(LS_KEY, JSON.stringify(d)); }
 function pdfDados(){ return JSON.parse(localStorage.getItem(LS_PDF)||'{}'); }
 function salvarPdf(d){ localStorage.setItem(LS_PDF, JSON.stringify(d)); }
 function chave(ano, mes){ return ano+'-'+(mes<9?'0':'')+(mes+1); }
 function mesKeyAtual(){ return chave(_anoAtual, _mesAtual); }
 
+// Ajuste manual: sobrepõe a contagem automática para um dia específico
 function getManual(tipo, dia){
-  var d = dados();
+  var d = dadosManuais();
   var k = mesKeyAtual();
-  return d[k] && d[k][tipo] && Object.prototype.hasOwnProperty.call(d[k][tipo], dia) ? d[k][tipo][dia] : null;
+  var diaStr = String(dia);
+  if(d[k] && d[k][tipo]){
+    if(Object.prototype.hasOwnProperty.call(d[k][tipo], diaStr)) return d[k][tipo][diaStr];
+    if(Object.prototype.hasOwnProperty.call(d[k][tipo], dia))    return d[k][tipo][dia];
+  }
+  return null;
 }
 function setManual(tipo, dia, val){
-  var d = dados();
+  var d = dadosManuais();
   var k = mesKeyAtual();
+  var diaStr = String(dia);
   if(!d[k]) d[k] = {};
   if(!d[k][tipo]) d[k][tipo] = {};
-  if(val > 0) d[k][tipo][dia] = val;
-  else delete d[k][tipo][dia];
+  delete d[k][tipo][dia];
+  delete d[k][tipo][diaStr];
+  if(val > 0) d[k][tipo][diaStr] = val;
   if(d[k][tipo] && !Object.keys(d[k][tipo]).length) delete d[k][tipo];
   if(d[k] && !Object.keys(d[k]).length) delete d[k];
-  salvar(d);
+  salvarManuais(d);
 }
 
 function normalizar(txt){
   return String(txt||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
+}
+function extrairDataISO(txt){
+  // formato YYYY-MM-DD gravado pelo _registrarProd do SYSCEDC
+  var m = String(txt||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? {ano:parseInt(m[1],10), mes:parseInt(m[2],10)-1, dia:parseInt(m[3],10)} : null;
 }
 function extrairDataBR(txt){
   var m = String(txt||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -398,29 +414,28 @@ function extrairMesKeyBR(txt){
   var d = extrairDataBR(txt);
   return d ? chave(d.ano,d.mes) : null;
 }
-function tipoSyscedc(reg){
-  var tipo = reg && reg.dados ? reg.dados.tipoLaudo : '';
-  if(tipo === 'anatomo') return 'anatomo';
-  if(tipo === 'citogeral' || tipo === 'paaf') return 'cito';
-  return null;
-}
+
+// Lê syscedc_prod_log — fonte verdadeira, 1 entrada = 1 laudo impresso
 function contagensSyscedc(){
   var mapa = {};
-  var laudos;
-  try{ laudos = JSON.parse(localStorage.getItem(LS_LAUDOS)||'[]'); }catch(e){ laudos = []; }
-  if(!Array.isArray(laudos)) return mapa;
-  laudos.forEach(function(reg){
-    if(!reg || !reg.chave || !reg.dados || !reg.dados.numExame) return;
-    var tipo = tipoSyscedc(reg);
-    if(!tipo) return;
-    var dt = extrairDataBR(reg.salvoEm || '');
+  var log;
+  try{ log = JSON.parse(localStorage.getItem('syscedc_prod_log')||'[]'); }catch(e){ log = []; }
+  if(!Array.isArray(log)) return mapa;
+  log.forEach(function(entry){
+    if(!entry || !entry.tipo || !entry.data) return;
+    var dt = extrairDataISO(entry.data);
     if(!dt) return;
+    var tipo = String(entry.tipo).toLowerCase().trim();
+    // normalizar: paaf e citogeral do SYSCEDC vão para 'cito'
+    if(tipo !== 'anatomo' && tipo !== 'histo' && tipo !== 'histomama' && tipo !== 'paaf') tipo = 'cito';
     var k = chave(dt.ano, dt.mes);
     if(!mapa[k]) mapa[k] = {anatomo:{}, cito:{}, histo:{}, histomama:{}, paaf:{}};
+    if(!mapa[k][tipo]) mapa[k][tipo] = {};
     mapa[k][tipo][dt.dia] = (mapa[k][tipo][dt.dia] || 0) + 1;
   });
   return mapa;
 }
+
 function contagensPDF(){
   var registros = pdfDados();
   var mapa = {};
@@ -435,16 +450,19 @@ function contagensPDF(){
   });
   return mapa;
 }
+
 function getBaseCount(tipo, dia){
   var k = mesKeyAtual();
   var total = 0;
+  var s = contagensSyscedc();
   var p = contagensPDF();
+  if(s[k] && s[k][tipo] && s[k][tipo][dia]) total += s[k][tipo][dia];
   if(p[k] && p[k][tipo] && p[k][tipo][dia]) total += p[k][tipo][dia];
   return total;
 }
 function getDia(tipo, dia){
   var manual = getManual(tipo, dia);
-  return manual===null ? getBaseCount(tipo, dia) : manual;
+  return manual !== null ? manual : getBaseCount(tipo, dia);
 }
 function nomeTipo(tipo){
   if(tipo==='anatomo') return 'Anatomo';
@@ -628,10 +646,10 @@ document.addEventListener('click',function(e){
 
 function limparMes(){
   if(!confirm('Limpar importações e ajustes manuais de '+MESES[_mesAtual]+' de '+_anoAtual+'? Os laudos salvos no SYSCEDC continuarão sendo contados.')) return;
-  var d=dados();
+  var d=dadosManuais();
   var k=mesKeyAtual();
   delete d[k];
-  salvar(d);
+  salvarManuais(d);
   var pdf=pdfDados();
   Object.keys(pdf).forEach(function(id){
     var reg = pdf[id];
