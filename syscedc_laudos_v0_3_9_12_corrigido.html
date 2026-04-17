@@ -1232,7 +1232,10 @@ function renderMateriais(){
   var numBase=document.getElementById('numExame').value.trim()||'????';
   var serie=document.getElementById('numSerie').value.trim()||'1';
   var anoRaw=document.getElementById('numAno').value.trim()||'2026';
-  var ano=anoRaw.split(/\s+/)[0];
+  var infoNumAno=_parseNumAnoInfo(anoRaw);
+  var ano=infoNumAno.ano||'2026';
+  var sufixoAtual=String(infoNumAno.sufixo||'L1').toUpperCase();
+  var numeroInicial=(parseInt(sufixoAtual.replace(/[^0-9]/g,''),10)||1);
   // Sugestões de tipo de material do localStorage
   var sugestoesMat=cadCarregar('syscedc_tipos_mat');
   var datalistId='dl-tipos-mat';
@@ -1241,7 +1244,7 @@ function renderMateriais(){
   html+='</datalist>';
   for(var i=0;i<_materiais.length;i++){
     var m=_materiais[i];
-    var suf=i===0?'L1':'L'+(i+1);
+    var suf='L'+(numeroInicial+i);
     var numCompleto=numBase+'-'+serie+'/'+ano+' '+suf;
     // SATISFATÓRIO como padrão se adequabilidade ainda não foi definida
     if(!m.adequab) m.adequab='SATISFATÓRIO';
