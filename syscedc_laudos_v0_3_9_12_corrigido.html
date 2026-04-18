@@ -1236,12 +1236,7 @@ function renderMateriais(){
   var ano=infoNumAno.ano||'2026';
   var sufixoAtual=String(infoNumAno.sufixo||'L1').toUpperCase();
   var numeroInicial=(parseInt(sufixoAtual.replace(/[^0-9]/g,''),10)||1);
-  // Sugestões de tipo de material do localStorage
-  var sugestoesMat=cadCarregar('syscedc_tipos_mat');
-  var datalistId='dl-tipos-mat';
-  var html='<datalist id="'+datalistId+'">';
-  sugestoesMat.forEach(function(s){html+='<option value="'+escHtml(s)+'">'+escHtml(s)+'</option>';});
-  html+='</datalist>';
+  var html='';
   for(var i=0;i<_materiais.length;i++){
     var m=_materiais[i];
     var suf='L'+(numeroInicial+i);
@@ -1250,8 +1245,8 @@ function renderMateriais(){
     if(!m.adequab) m.adequab='SATISFATÓRIO';
     html+='<div class="mat-item">'
       +'<span class="mat-num">'+escHtml(numCompleto)+'</span>'
-      +'<input type="text" list="'+datalistId+'" value="'+escHtml(m.tipo||'')+'" placeholder="Tipo de material" class="material-input" style="flex:1;" '
-      +'oninput="_materiais['+i+'].tipo=this.value.toUpperCase();this.value=this.value.toUpperCase();_salvarTipoMat(this.value);autoBackup()" onkeydown="if(event.key===\' \'){if(snippetExpandirInput(this)){event.preventDefault();_materiais['+i+'].tipo=this.value;autoBackup();}}">'
+      +'<input type="text" value="'+escHtml(m.tipo||'')+'" placeholder="Tipo de material" class="material-input" data-mat-idx="'+i+'" autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex:1;" '
+      +'oninput="matInlineInput(this)" onkeydown="matInlineKeydown(event,this)" onblur="matInlineBlur(this)">'
       +'<select style="width:200px;" onchange="_materiais['+i+'].adequab=this.value;autoBackup()">'
       +'<option value="SATISFATÓRIO"'+(m.adequab==='SATISFATÓRIO'?' selected':'')+'>Satisfatório</option>'
       +'<option value="INSATISFATÓRIO"'+(m.adequab==='INSATISFATÓRIO'?' selected':'')+'>Insatisfatório</option>'
@@ -1271,6 +1266,76 @@ function _salvarTipoMat(val){
   if(!val||val.length<3)return;
   var lista=cadCarregar('syscedc_tipos_mat');
   if(lista.indexOf(val)===-1){lista.push(val);cadSalvar('syscedc_tipos_mat',lista);}
+}
+
+function _matInlineSugestao(prefixo){
+  prefixo=(prefixo||'').toUpperCase();
+  if(!prefixo)return '';
+  var lista=cadCarregar('syscedc_tipos_mat')||[];
+  for(var i=0;i<lista.length;i++){
+    var item=String(lista[i]||'').toUpperCase();
+    if(item && item.indexOf(prefixo)===0 && item!==prefixo) return item;
+  }
+  return '';
+}
+function _matInlineAtualizarModelo(input){
+  var idx=parseInt(input&&input.dataset?input.dataset.matIdx:'',10);
+  if(isNaN(idx)||!_materiais[idx]) return;
+  _materiais[idx].tipo=(input.value||'').toUpperCase();
+}
+function matInlineInput(input){
+  if(!input) return;
+  input.value=(input.value||'').toUpperCase();
+  var typed=input.value;
+  if(input.dataset.matDeleting==='1'){
+    input.dataset.matDeleting='0';
+    _matInlineAtualizarModelo(input);
+    autoBackup();
+    return;
+  }
+  var selStart=input.selectionStart||0;
+  var selEnd=input.selectionEnd||0;
+  if(selEnd>selStart && selEnd===typed.length){
+    typed=typed.slice(0,selStart);
+  }
+  var sugestao=_matInlineSugestao(typed);
+  if(sugestao){
+    input.value=sugestao;
+    try{ input.setSelectionRange(typed.length, sugestao.length); }catch(e){}
+  }
+  _matInlineAtualizarModelo(input);
+  autoBackup();
+}
+function matInlineKeydown(ev,input){
+  if(!input) return;
+  var k=ev.key;
+  input.dataset.matDeleting=(k==='Backspace'||k==='Delete') ? '1' : '0';
+  if(k===' '){
+    if(snippetExpandirInput(input)){
+      ev.preventDefault();
+      input.value=(input.value||'').toUpperCase();
+      _matInlineAtualizarModelo(input);
+      autoBackup();
+      return;
+    }
+  }
+  if(k==='ArrowRight' || k==='Tab' || k==='Enter'){
+    var s=input.selectionStart||0;
+    var e=input.selectionEnd||0;
+    if(e>s){
+      try{ input.setSelectionRange(e,e); }catch(err){}
+      _matInlineAtualizarModelo(input);
+      autoBackup();
+      if(k==='Enter') ev.preventDefault();
+    }
+  }
+}
+function matInlineBlur(input){
+  if(!input) return;
+  input.value=(input.value||'').toUpperCase();
+  _matInlineAtualizarModelo(input);
+  _salvarTipoMat(input.value);
+  autoBackup();
 }
 
 ['numExame','numSerie','numAno'].forEach(function(id){
