@@ -2308,10 +2308,19 @@ function _macroAnterior(){
   return '';
 }
 function checarRepetir(textarea){
-  var val=textarea.value;
-  if(!/repetir\./i.test(val)) return;
-  var textoAnterior=_macroAnterior();
-  if(!textoAnterior){return;}
+  var val = textarea.value;
+
+  // pega macroscopia anterior
+  var textoAnterior = (typeof _macroAnterior === 'function') ? _macroAnterior() : '';
+
+  if(!textoAnterior) return;
+
+  // aceita r1. ou repetir.
+  if(/(r1\.|repetir\.)/i.test(val)){
+    textarea.value = val.replace(/(r1\.|repetir\.)/i, textoAnterior);
+    autoBackup();
+  }
+}
   textarea.value=val.replace(/repetir\./i, textoAnterior);
   autoBackup();
 }
