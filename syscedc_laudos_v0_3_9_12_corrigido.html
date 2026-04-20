@@ -526,7 +526,7 @@ if('serviceWorker' in navigator){
       <div class="fg fg2">
         <div class="fgrp" id="grp-tipo-cito">
           <label id="label-tipo-cito">Tipo de Material</label>
-          <input type="text" id="tipoMatCito" list="dl-tipoMatCito" placeholder="Tipo de Material" oninput="this.value=this.value.toUpperCase();autoBackup()" onkeydown="if(event.key===' '&&snippetExpandirInput(this)){event.preventDefault();this.value=this.value.toUpperCase();autoBackup();}">
+          <input type="text" id="tipoMatCito" list="dl-tipoMatCito" placeholder="Tipo de Material" oninput="var p=this.selectionStart;this.value=this.value.toUpperCase().replace(/^\.+\s*/,'');autoBackup();try{if(typeof p==='number')this.setSelectionRange(p,p);}catch(e){}" onkeydown="if(event.key===' '&&snippetExpandirInput(this)){event.preventDefault();this.value=this.value.toUpperCase().replace(/^\.+\s*/,'');autoBackup();}">
           <datalist id="dl-tipoMatCito"></datalist>
         </div>
         <div class="fgrp">
@@ -1268,16 +1268,6 @@ function _salvarTipoMat(val){
   if(lista.indexOf(val)===-1){lista.push(val);cadSalvar('syscedc_tipos_mat',lista);}
 }
 
-function _matInlineSugestao(prefixo){
-  prefixo=(prefixo||'').toUpperCase();
-  if(!prefixo)return '';
-  var lista=cadCarregar('syscedc_tipos_mat')||[];
-  for(var i=0;i<lista.length;i++){
-    var item=String(lista[i]||'').toUpperCase();
-    if(item && item.indexOf(prefixo)===0 && item!==prefixo) return item;
-  }
-  return '';
-}
 function _matInlineAtualizarModelo(input){
   var idx=parseInt(input&&input.dataset?input.dataset.matIdx:'',10);
   if(isNaN(idx)||!_materiais[idx]) return;
@@ -1285,54 +1275,29 @@ function _matInlineAtualizarModelo(input){
 }
 function matInlineInput(input){
   if(!input) return;
-  input.value=(input.value||'').toUpperCase();
-  var typed=input.value;
-  if(input.dataset.matDeleting==='1'){
-    input.dataset.matDeleting='0';
-    _matInlineAtualizarModelo(input);
-    autoBackup();
-    return;
-  }
-  var selStart=input.selectionStart||0;
-  var selEnd=input.selectionEnd||0;
-  if(selEnd>selStart && selEnd===typed.length){
-    typed=typed.slice(0,selStart);
-  }
-  var sugestao=_matInlineSugestao(typed);
-  if(sugestao){
-    input.value=sugestao;
-    try{ input.setSelectionRange(typed.length, sugestao.length); }catch(e){}
-  }
+  var pos=input.selectionStart;
+  input.value=(input.value||'').toUpperCase().replace(/^\.+\s*/,'');
   _matInlineAtualizarModelo(input);
   autoBackup();
+  try{
+    if(typeof pos==='number') input.setSelectionRange(pos,pos);
+  }catch(e){}
 }
 function matInlineKeydown(ev,input){
   if(!input) return;
   var k=ev.key;
-  input.dataset.matDeleting=(k==='Backspace'||k==='Delete') ? '1' : '0';
   if(k===' '){
     if(snippetExpandirInput(input)){
       ev.preventDefault();
-      input.value=(input.value||'').toUpperCase();
+      input.value=(input.value||'').toUpperCase().replace(/^\.+\s*/,'');
       _matInlineAtualizarModelo(input);
       autoBackup();
-      return;
-    }
-  }
-  if(k==='ArrowRight' || k==='Tab' || k==='Enter'){
-    var s=input.selectionStart||0;
-    var e=input.selectionEnd||0;
-    if(e>s){
-      try{ input.setSelectionRange(e,e); }catch(err){}
-      _matInlineAtualizarModelo(input);
-      autoBackup();
-      if(k==='Enter') ev.preventDefault();
     }
   }
 }
 function matInlineBlur(input){
   if(!input) return;
-  input.value=(input.value||'').toUpperCase();
+  input.value=(input.value||'').toUpperCase().replace(/^\.+\s*/,'');
   _matInlineAtualizarModelo(input);
   _salvarTipoMat(input.value);
   autoBackup();
