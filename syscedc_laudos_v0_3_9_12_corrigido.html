@@ -1420,6 +1420,7 @@ function _salvarAuto(){
   var reg={chave:chave,dados:d,salvoEm:new Date().toLocaleString('pt-BR'),auto:true};
   if(idx>=0)laudos[idx]=reg;else laudos.unshift(reg);
   _ls.set('cedc_laudos',JSON.stringify(laudos));
+  _ls.set('cedc_ultimo_rascunho',JSON.stringify(reg));
 }
 function _salvarAutoComNome(nome){
   var d=coletar();
@@ -1430,6 +1431,37 @@ function _salvarAutoComNome(nome){
   var reg={chave:chave,dados:d,salvoEm:new Date().toLocaleString('pt-BR'),auto:true};
   if(idx>=0)laudos[idx]=reg;else laudos.unshift(reg);
   _ls.set('cedc_laudos',JSON.stringify(laudos));
+  _ls.set('cedc_ultimo_rascunho',JSON.stringify(reg));
+}
+function _formularioPrincipalVazio(){
+  return !v('nome')&&!v('numExame')&&!v('macro')&&!v('micro')&&!v('conclusao');
+}
+function _restaurarUltimoRascunhoSeNecessario(){
+  if(!_formularioPrincipalVazio())return;
+  if((_importLaudos&&_importLaudos.length)||(_manualLaudos&&_manualLaudos.length))return;
+  var raw=_ls.get('cedc_ultimo_rascunho');
+  if(!raw)return;
+  try{
+    var reg=JSON.parse(raw);
+    if(!reg||!reg.dados)return;
+    fill(reg.dados);
+    if(reg.dados._materiais&&Array.isArray(reg.dados._materiais)&&reg.dados._materiais.length>0){
+      _materiais=JSON.parse(JSON.stringify(reg.dados._materiais));
+      renderMateriais();
+    }else if(reg.dados.materiais&&Array.isArray(reg.dados.materiais)){
+      _materiais=JSON.parse(JSON.stringify(reg.dados.materiais));
+      renderMateriais();
+    }
+    _atualizarUIAssinatura();
+    toast('Rascunho recuperado automaticamente.','t-info',2200);
+  }catch(e){}
+}
+function _registrarSaidaSegura(nomeArquivo){
+  var d=coletar();
+  if(!d.nome&&!d.numExame)return;
+  var chave=nomeArquivo||('cedc_'+(d.numExame||'draft')+'_'+(d.numSerie||'1')+'_'+d.numAno);
+  _salvarAutoComNome(chave);
+  _ls.set('cedc_ultima_saida',JSON.stringify({chave:chave,salvoEm:new Date().toLocaleString('pt-BR'),nomeArquivo:nomeArquivo||'',dados:d}));
 }
 
 // ===== PREVIEW =====
@@ -1785,6 +1817,7 @@ function _imprimirItemDaFila(){}
 
 // ===== IMPRIMIR =====
 function imprimirLaudo(){
+  _salvarAuto();
   var d=coletar();
   if(!d.nome){toast('Informe o nome antes de imprimir.','t-error');return;}
   if(!d.numExame){toast('Informe o número do exame antes de imprimir.','t-error');return;}
@@ -1844,6 +1877,7 @@ function imprimirLaudo(){
     if(!listaPendentes.length){toast('Nenhum laudo válido para imprimir.','t-error');return;}
     listaPendentes.forEach(function(ld){histSalvar(CAD_KEY_MACRO,ld.macro);histSalvar(CAD_KEY_MICRO,ld.micro);histSalvar(CAD_KEY_CONCLUSAO,ld.conclusao);_registrarProd((ld.dados?ld.dados.tipoLaudo:ld.tipoLaudo)==="anatomo"?"anatomo":"cito");});
     var nomeBase=_nomeArquivoLaudo(listaPendentes[0]).replace(/\sL\d+\b/ig,'').trim();
+    _registrarSaidaSegura(nomeBase);
     var reg={chave:nomeBase,laudos:listaPendentes,salvoEm:new Date().toLocaleString('pt-BR')};
     var blob=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
     var url=URL.createObjectURL(blob);
@@ -1864,6 +1898,7 @@ function imprimirLaudo(){
   _registrarProd((_tipoLaudo==="anatomo"||_tipoLaudo==="gemol")?"anatomo":"cito");
   if(!_laudoValidoParaSaida(d)){toast('Preencha ao menos MACRO ou CONCLUSÃO para salvar/imprimir este laudo.','t-error');return;}
   var nomeConf2=_nomeArquivoLaudo(_normalizarDados(JSON.parse(JSON.stringify(d)))).replace(/\sL\d+\b/ig,'').trim();
+  _registrarSaidaSegura(nomeConf2);
 
   gerarPreview();
   var imgAssin2=document.getElementById('p-assin-img');
@@ -2985,6 +3020,10 @@ function _inserirLaudoApos(){
 
 // Eventos adicionais (cadastros, modal, navegação)
 document.addEventListener('DOMContentLoaded', function(){
+  _restaurarUltimoRascunhoSeNecessario();
+  window.addEventListener('beforeunload', function(){
+    try{_salvarAuto();}catch(e){}
+  });
   // Backup diário às 12h
   try{
     var _agora=new Date();
