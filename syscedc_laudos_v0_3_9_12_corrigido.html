@@ -364,6 +364,23 @@ padding:4mm 0;
   }
 }
 
+
+/* MODAL INTELIGENTE - VESÍCULA BILIAR (isolado, não afeta impressão) */
+.ves-modal-box{max-width:860px!important;width:94%;}
+.ves-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:12px;}
+.ves-grid.ves-2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.ves-section{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:12px;background:#fbfcfe;}
+.ves-section-title{font-size:.78rem;font-weight:800;color:#1a1a2e;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ves-checks{display:flex;flex-wrap:wrap;gap:8px;}
+.ves-check{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #d8e0ea;border-radius:999px;background:#fff;padding:8px 10px;cursor:pointer;font-size:.82rem;font-weight:700;color:#34495e;text-transform:none;letter-spacing:0;}
+.ves-check input{width:auto;accent-color:#c0392b;}
+.ves-preview{white-space:pre-wrap;line-height:1.45;background:#fff;border:1px solid #d7e4f2;border-radius:10px;padding:10px 12px;color:#334155;font-size:.86rem;min-height:62px;}
+.ves-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.ves-mini-btn{margin-left:8px;padding:4px 9px;border:0;border-radius:999px;background:#2980b9;color:#fff;font-size:.7rem;font-weight:800;cursor:pointer;vertical-align:middle;}
+.ves-mini-btn:hover{background:#2471a3;}
+@media(max-width:720px){.ves-grid,.ves-grid.ves-2{grid-template-columns:1fr;}.ves-modal-box{width:96%!important;}}
+@media print{#modal-vesicula,.ves-mini-btn{display:none!important;visibility:hidden!important;}}
+
 </style>
 <link rel="icon" type="image/x-icon" href="cedc.ico">
 <link rel="manifest" href="manifest.json">
@@ -597,7 +614,7 @@ if('serviceWorker' in navigator){
     <div class="cb">
       <div class="fg">
         <!-- Seções do Anatomo Patológico -->
-        <div id="sec-macro" class="fgrp"><label id="label-macro">Macroscopia</label>
+        <div id="sec-macro" class="fgrp"><label id="label-macro">Macroscopia <button type="button" class="ves-mini-btn" onclick="abrirModalVesicula()" title="Abrir modelo inteligente de vesícula biliar">🧪 Vesícula</button></label>
           <div style="position:relative"><textarea id="macro" rows="8" placeholder="Descreva os achados macroscópicos..." oninput="autoBackup();acMostrarTexto('macro',CAD_KEY_MACRO);checarRepetir(this)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('macro-ac');}else{acNavegar(event,'macro-ac');}" onblur="setTimeout(function(){acOcultar('macro-ac')},200)"></textarea><div class="ac-lista oculta" id="macro-ac"></div></div></div>
         <div id="sec-micro" class="fgrp"><label>Microscopia / Diagnóstico Descritivo (opcional)</label>
           <div style="position:relative"><textarea id="micro" rows="8" placeholder="Se houver..." oninput="autoBackup();acMostrarTexto('micro',CAD_KEY_MICRO)" onkeydown="if((event.key===' '||event.key==='.'||event.key===','||event.key===';'||event.key===':')&&snippetExpandir(this,event.key)){event.preventDefault();acOcultar('micro-ac');}else{acNavegar(event,'micro-ac');}" onblur="setTimeout(function(){acOcultar('micro-ac')},200)"></textarea><div class="ac-lista oculta" id="micro-ac"></div></div></div>
@@ -2575,6 +2592,12 @@ function snippetExpandir(textarea, gatilho){
   var atalho=match[1].toLowerCase();
   var inicio=pos-match[1].length;
 
+  // Snippet especial: vesícula biliar inteligente (ves1.)
+  if(atalho==='ves1' && textarea && textarea.id==='macro'){
+    abrirModalVesicula(textarea,inicio,pos,gatilho);
+    return true;
+  }
+
   // Palavra especial: repetir
   if(atalho==='repetir'){
     var textoAnterior=_macroAnterior();
@@ -3121,8 +3144,182 @@ document.addEventListener('DOMContentLoaded', function(){
     snippetSalvar(_SNIPPETS_DEFAULT);
   }
 });
+
+
+/* =========================================================
+   MODAL INTELIGENTE - VESÍCULA BILIAR
+   Código isolado: não altera impressão, navegação, assinatura ou laudos múltiplos.
+   ========================================================= */
+var _vesiculaCtx=null;
+
+function _vesVal(id){
+  var el=document.getElementById(id);
+  return el ? String(el.value||'').trim() : '';
+}
+function _vesLista(arr){
+  arr=(arr||[]).filter(Boolean);
+  if(arr.length<=1) return arr.join('');
+  if(arr.length===2) return arr[0]+' e '+arr[1];
+  return arr.slice(0,-1).join(', ')+' e '+arr[arr.length-1];
+}
+function abrirModalVesicula(textarea,inicio,pos,gatilho){
+  _vesiculaCtx={textarea:textarea||document.getElementById('macro'),inicio:inicio,pos:pos,gatilho:gatilho||''};
+  var modal=document.getElementById('modal-vesicula');
+  if(!modal) return false;
+  modal.classList.add('aberto');
+  toggleCalculosVesicula();
+  previewMacroVesicula();
+  setTimeout(function(){var el=document.getElementById('ves_comp'); if(el){el.focus(); try{el.select();}catch(e){}}},0);
+  return true;
+}
+function fecharModalVesicula(){
+  var modal=document.getElementById('modal-vesicula');
+  if(modal) modal.classList.remove('aberto');
+  if(_vesiculaCtx && _vesiculaCtx.textarea){ try{_vesiculaCtx.textarea.focus();}catch(e){} }
+}
+function limparModalVesicula(){
+  ['ves_comp','ves_larg','ves_esp','ves_inc','ves_cor','ves_textura','ves_parede','ves_cons','ves_mucosa','ves_calc_tipo','ves_calc_qtd','ves_calc_med','ves_calc_asp'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  toggleCalculosVesicula();
+  previewMacroVesicula();
+  var f=document.getElementById('ves_comp'); if(f) f.focus();
+}
+function toggleCalculosVesicula(){
+  var box=document.getElementById('ves_calc_campos');
+  if(box) box.style.display=(_vesVal('ves_calc_tipo')==='com')?'block':'none';
+}
+function gerarTextoMacroVesicula(){
+  var comp=_vesVal('ves_comp'), larg=_vesVal('ves_larg'), esp=_vesVal('ves_esp');
+  var inc=_vesVal('ves_inc'), cor=_vesVal('ves_cor'), textura=_vesVal('ves_textura');
+  var parede=_vesVal('ves_parede'), cons=_vesVal('ves_cons'), mucosa=_vesVal('ves_mucosa');
+  var calcTipo=_vesVal('ves_calc_tipo'), calcQtd=_vesVal('ves_calc_qtd'), calcMed=_vesVal('ves_calc_med'), calcAsp=_vesVal('ves_calc_asp');
+  var partes=[];
+  var frase='Material fixado em formalina, constituído por vesícula biliar';
+  if(comp && larg) frase+=' medindo '+comp+' x '+larg+' cm';
+  else if(comp) frase+=' medindo '+comp+' cm';
+  frase+='.';
+  partes.push(frase);
+
+  var desc=[];
+  if(inc) desc.push('previamente aberta por incisão '+inc);
+  if(cor) desc.push('coloração '+cor);
+  if(textura) desc.push('textura '+textura);
+  if(desc.length) partes.push('A superfície externa apresenta '+_vesLista(desc)+'.');
+
+  var descParede=[];
+  if(parede) descParede.push(parede);
+  if(esp) descParede.push('medindo '+esp+' cm de espessura');
+  if(cons) descParede.push('consistência '+cons);
+  if(descParede.length) partes.push('A parede é '+_vesLista(descParede)+'.');
+
+  if(mucosa) partes.push('A mucosa é '+mucosa+'.');
+
+  if(calcTipo==='sem'){
+    partes.push('A cavidade vesicular encontra-se sem cálculos.');
+  }else if(calcTipo==='vazio'){
+    partes.push('O lúmen encontra-se vazio.');
+  }else if(calcTipo==='com'){
+    var f='A cavidade vesicular contém';
+    if(calcQtd) f+=' '+calcQtd;
+    f+=' cálculos';
+    if(calcAsp) f+=' '+calcAsp;
+    if(calcMed) f+=', o maior medindo '+calcMed+' cm';
+    f+='.';
+    partes.push(f);
+  }
+
+  partes.push('Foram encaminhadas amostras representativas para exame histopatológico.');
+  return partes.join(' ');
+}
+function previewMacroVesicula(){
+  var prev=document.getElementById('ves_preview');
+  if(prev) prev.textContent=gerarTextoMacroVesicula();
+}
+function inserirMacroVesicula(){
+  var texto=gerarTextoMacroVesicula();
+  var ctx=_vesiculaCtx||{};
+  var macro=ctx.textarea||document.getElementById('macro');
+  if(!macro) return;
+  var atual=macro.value||'';
+  if(typeof ctx.inicio==='number' && typeof ctx.pos==='number'){
+    macro.value=atual.substring(0,ctx.inicio)+texto+atual.substring(ctx.pos);
+    var fim=ctx.inicio+texto.length;
+    macro.setSelectionRange(fim,fim);
+  }else{
+    macro.value=atual.trim()? atual.replace(/\s*$/,'')+'\n'+texto : texto;
+    macro.setSelectionRange(macro.value.length,macro.value.length);
+  }
+  try{autoBackup();}catch(e){}
+  fecharModalVesicula();
+  try{macro.focus();}catch(e){}
+}
+
 </script>
 
+
+
+<!-- MODAL INTELIGENTE - VESÍCULA BILIAR -->
+<div class="modal-overlay" id="modal-vesicula">
+  <div class="modal-box ves-modal-box">
+    <div class="modal-head">
+      <span>🧪 Macroscopia Inteligente — Vesícula Biliar</span>
+      <button type="button" onclick="fecharModalVesicula()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ves-section">
+        <div class="ves-section-title">📏 Medidas principais</div>
+        <div class="ves-grid">
+          <div class="fgrp"><label>Comprimento (cm)</label><input type="text" id="ves_comp" placeholder="Ex: 8,0" oninput="previewMacroVesicula()"></div>
+          <div class="fgrp"><label>Largura (cm)</label><input type="text" id="ves_larg" placeholder="Ex: 3,0" oninput="previewMacroVesicula()"></div>
+          <div class="fgrp"><label>Espessura parede (cm)</label><input type="text" id="ves_esp" placeholder="Ex: 0,3" oninput="previewMacroVesicula()"></div>
+        </div>
+      </div>
+
+      <div class="ves-section">
+        <div class="ves-section-title">🔎 Superfície externa</div>
+        <div class="ves-grid">
+          <div class="fgrp"><label>Incisão</label><select id="ves_inc" onchange="previewMacroVesicula()"><option value="">Não informar</option><option value="sagital">sagital</option><option value="transversal">transversal</option><option value="irregular">irregular</option></select></div>
+          <div class="fgrp"><label>Coloração</label><select id="ves_cor" onchange="previewMacroVesicula()"><option value="">Não informar</option><option value="pardacenta">pardacenta</option><option value="acinzentada">acinzentada</option><option value="esverdeada">esverdeada</option><option value="amarelada">amarelada</option></select></div>
+          <div class="fgrp"><label>Textura / superfície</label><select id="ves_textura" onchange="previewMacroVesicula()"><option value="">Não informar</option><option value="lisa">lisa</option><option value="rugosa">rugosa</option><option value="com lacerações">com lacerações</option></select></div>
+        </div>
+      </div>
+
+      <div class="ves-section">
+        <div class="ves-section-title">🧫 Parede, mucosa e lúmen</div>
+        <div class="ves-grid">
+          <div class="fgrp"><label>Parede</label><select id="ves_parede" onchange="previewMacroVesicula()"><option value="">Não informar</option><option value="regular">regular</option><option value="irregular">irregular</option><option value="espessada">espessada</option></select></div>
+          <div class="fgrp"><label>Consistência</label><select id="ves_cons" onchange="previewMacroVesicula()"><option value="">Não informar</option><option value="maleável">maleável</option><option value="elástica">elástica</option><option value="firme-elástica">firme-elástica</option></select></div>
+          <div class="fgrp"><label>Mucosa</label><select id="ves_mucosa" onchange="previewMacroVesicula()"><option value="">Não informar</option><option value="pardacenta e rugosa">pardacenta e rugosa</option><option value="esverdeada e rugosa">esverdeada e rugosa</option><option value="verde e granular">verde e granular</option></select></div>
+        </div>
+      </div>
+
+      <div class="ves-section">
+        <div class="ves-section-title">🪨 Cálculos biliares</div>
+        <div class="fgrp" style="margin-bottom:10px;"><label>Situação</label><select id="ves_calc_tipo" onchange="toggleCalculosVesicula();previewMacroVesicula()"><option value="">Não informar</option><option value="sem">Sem cálculos</option><option value="com">Com cálculos</option><option value="vazio">Lúmen vazio</option></select></div>
+        <div id="ves_calc_campos" style="display:none;">
+          <div class="ves-grid ves-2">
+            <div class="fgrp"><label>Quantidade / descrição</label><input type="text" id="ves_calc_qtd" placeholder="Ex: poucos / vários" oninput="previewMacroVesicula()"></div>
+            <div class="fgrp"><label>Maior cálculo (cm)</label><input type="text" id="ves_calc_med" placeholder="Ex: 0,5" oninput="previewMacroVesicula()"></div>
+          </div>
+          <div class="fgrp"><label>Aspecto dos cálculos</label><input type="text" id="ves_calc_asp" placeholder="Ex: amarelados" oninput="previewMacroVesicula()"></div>
+        </div>
+      </div>
+
+      <div class="ves-section">
+        <div class="ves-section-title">👁️ Prévia do texto</div>
+        <div class="ves-preview" id="ves_preview"></div>
+      </div>
+
+      <div class="ves-actions">
+        <button type="button" class="btn btn-gray" onclick="limparModalVesicula()">Limpar</button>
+        <button type="button" class="btn btn-blue" onclick="fecharModalVesicula()">Cancelar</button>
+        <button type="button" class="btn btn-green" onclick="inserirMacroVesicula()">Inserir na Macroscopia</button>
+      </div>
+      <div style="font-size:.78rem;color:#64748b;text-align:right;margin-top:8px;">Atalho: digite <b>ves1.</b> na macroscopia para abrir este modelo.</div>
+    </div>
+  </div>
+</div>
 
 <div class="snip-panel" id="snip-panel" onclick="if(event.target===this)_fecharSnippetPanel(true)">
   <div class="snip-panel-box">
