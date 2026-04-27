@@ -834,6 +834,18 @@ let _assinaturaDataURL = '';
 let _patSelecionado = null;
 let _materiais = [];
 
+// Assinatura vinculada ao laudo atual.
+// Importante: o backup JSON precisa levar a assinatura do próprio laudo,
+// para que correções/importações não reaproveitem o médico errado do laudo anterior.
+function _assinaturaAtualParaBackup(){
+  return (_assinaturaDataURL && String(_assinaturaDataURL).trim()) ? _assinaturaDataURL : '';
+}
+function _patologistaNomePorId(id){
+  if(!id) return '';
+  var pat=PATOLOGISTAS.find(function(p){return p.id===id;});
+  return pat ? pat.nome : '';
+}
+
 // ===== UTILS =====
 function fmtCPF(i){var v=i.value.replace(/\D/g,'').substring(0,11);if(v.length>=10)v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');else if(v.length>=7)v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3');else if(v.length>=4)v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2');i.value=v;}
 function mascararCPFPrint(v){
@@ -1242,7 +1254,11 @@ function coletar(){
     tipoMatCito:v('tipoMatCito'),metodologia:v('metodologia'),
     tipoLaudo:_tipoLaudo,
     materiais:JSON.parse(JSON.stringify(_materiais)),
-    patSelecionado:_patSelecionado};
+    _materiais:JSON.parse(JSON.stringify(_materiais)),
+    // salva a assinatura junto do laudo, inclusive Citologia/PAAF
+    _assinSrc:_assinaturaAtualParaBackup(),
+    patSelecionado:_patSelecionado||null,
+    patologista:_patologistaNomePorId(_patSelecionado)};
 }
 
 function fill(dados){
@@ -1283,15 +1299,16 @@ function fill(dados){
   renderMateriais();
   _atualizarRotulosConteudo();
   // Patologista/assinatura
-  // Regra: se o laudo tem assinatura própria, restaurar a dele.
-  // Se veio sem assinatura no JSON, preservar a assinatura ativa já carregada
-  // para o fluxo de correção por importação não exigir recarga manual a cada laudo.
+  // Regra segura: cada laudo restaura somente a assinatura salva nele.
+  // Se o JSON antigo não trouxer assinatura, limpamos a assinatura para evitar médico errado.
   _patSelecionado = dados.patSelecionado || null;
-  if(_patSelecionado){
-    var pat=PATOLOGISTAS.find(function(p){return p.id===_patSelecionado;});
-    _assinaturaDataURL = (pat&&pat.assinSrc) ? pat.assinSrc : (_assinaturaDataURL||'');
-  } else if((dados._assinSrc||'').trim()){
+  if((dados._assinSrc||'').trim()){
     _assinaturaDataURL = dados._assinSrc || '';
+  } else if(_patSelecionado){
+    var pat=PATOLOGISTAS.find(function(p){return p.id===_patSelecionado;});
+    _assinaturaDataURL = (pat&&pat.assinSrc) ? pat.assinSrc : '';
+  } else {
+    _assinaturaDataURL = '';
   }
   _atualizarUIAssinatura();
 }
@@ -1440,6 +1457,7 @@ function carregarAssinaturaAvulsa(inp){
     _assinaturaDataURL=e.target.result;_ls.set('cedc_assin',_assinaturaDataURL);_ls.remove('cedc_pat');_patSelecionado=null;
     _salvarManualAtual();
     _gravarAssinaturaNoLaudoAtual();
+    _salvarAuto();
     _atualizarUIAssinatura(f.name);
     if(inp) inp.value='';
     /* toast suprimido */
@@ -1451,6 +1469,7 @@ function removerAssinatura(){
   _assinaturaDataURL='';_patSelecionado=null;
   _gravarAssinaturaNoLaudoAtual();
   _salvarManualAtual();
+  _salvarAuto();
   document.getElementById('inp-assin').value='';
   _atualizarUIAssinatura();
 }
@@ -2305,15 +2324,22 @@ function editarLaudoSalvo(idxFiltrado){
     } else if(dados.materiais&&Array.isArray(dados.materiais)){
       _materiais=JSON.parse(JSON.stringify(dados.materiais));renderMateriais();
     }
-    if(dados.patSelecionado){
+    if((dados._assinSrc||'').trim()){
+      _assinaturaDataURL = dados._assinSrc;
+      _patSelecionado = dados.patSelecionado || null;
+    } else if(dados.patSelecionado){
       _patSelecionado = dados.patSelecionado;
       var pat = PATOLOGISTAS.find(function(p){return p.id===dados.patSelecionado;});
-      if(pat && pat.assinSrc) _assinaturaDataURL = pat.assinSrc;
-      // Atualizar visual dos cards de patologistas se estiverem renderizados
-      document.querySelectorAll('.pat-card').forEach(function(c){
-        c.classList.toggle('sel', c.getAttribute('data-id')===dados.patSelecionado);
-      });
+      _assinaturaDataURL = (pat && pat.assinSrc) ? pat.assinSrc : '';
+    } else {
+      _patSelecionado = null;
+      _assinaturaDataURL = '';
     }
+    _atualizarUIAssinatura();
+    // Atualizar visual dos cards de patologistas se estiverem renderizados
+    document.querySelectorAll('.pat-card').forEach(function(c){
+      c.classList.toggle('sel', _patSelecionado && c.getAttribute('data-id')===_patSelecionado);
+    });
     window.scrollTo(0,0);
     // toast suprimido
   },100);
@@ -3005,23 +3031,8 @@ function _processarBackup(f){
       else if(d&&typeof d==='object'&&d.nome) lista=[d];
       lista=lista.map(_normalizarDados).filter(function(x){return x&&x.nome;});
       if(lista.length===0)throw 0;
-      // Aplicar assinatura ativa como padrão apenas aos laudos importados que vieram sem assinatura.
-      // Isso preserva o fluxo de correção sem obrigar recarregar PNG em cada laudo,
-      // mas continua respeitando assinaturas próprias já gravadas em laudos específicos.
-      var assinaturaPadraoAtiva=_assinaturaDataURL||_ls.get('cedc_assin')||'';
-      var patPadraoAtivo=_patSelecionado||_ls.get('cedc_pat')||null;
-      if(assinaturaPadraoAtiva||patPadraoAtivo){
-        lista=lista.map(function(it){
-          if(!it) return it;
-          var temAssin=!!((it._assinSrc||'').trim());
-          var temPat=!!it.patSelecionado;
-          if(!temAssin && !temPat){
-            if(patPadraoAtivo) it.patSelecionado=patPadraoAtivo;
-            if(assinaturaPadraoAtiva) it._assinSrc=assinaturaPadraoAtiva;
-          }
-          return it;
-        });
-      }
+      // Não aplicar assinatura ativa como padrão durante importação.
+      // Se o JSON não trouxe assinatura, o laudo fica sem assinatura para evitar médico errado.
       // Salvar laudo atual em memoria antes de substituir o array
       if(_importLaudos.length>0) _salvarLaudoImportAtual();
       // Mesclar: preservar laudos ja digitados em memoria que nao estejam no novo JSON
