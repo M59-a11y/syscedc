@@ -2337,6 +2337,37 @@ var CAD_KEY_MICRO    = 'syscedc_hist_micro';
 var CAD_KEY_CONCLUSAO= 'syscedc_hist_conclusao';
 var CAD_KEY_SNIPPETS  = 'syscedc_snippets';
 
+/* Ordenação profissional dos cadastros/snippets
+   - Exibição sempre em ordem alfabética/por atalho
+   - Usa pt-BR e ignora acentos/maiúsculas
+   - Não quebra índices: remoção usa o índice real do armazenamento */
+function _ordemPtBr(a,b){
+  return String(a||'').localeCompare(String(b||''),'pt-BR',{sensitivity:'base',numeric:true});
+}
+function _ordenarTextosPtBr(lista){
+  return (Array.isArray(lista)?lista:[]).slice().sort(_ordemPtBr);
+}
+function _ordenarSnippets(lista){
+  return (Array.isArray(lista)?lista:[]).slice().sort(function(a,b){
+    var c=_ordemPtBr(a&&a.atalho,b&&b.atalho);
+    return c!==0?c:_ordemPtBr(a&&a.texto,b&&b.texto);
+  });
+}
+function _limparDuplicadosTextos(lista){
+  var vistos={};
+  return (Array.isArray(lista)?lista:[]).map(function(v){return String(v||'').trim().toUpperCase();}).filter(function(v){
+    if(!v||vistos[v])return false; vistos[v]=true; return true;
+  });
+}
+function _limparDuplicadosSnippets(lista){
+  var vistos={};
+  return (Array.isArray(lista)?lista:[]).map(function(s){
+    return {atalho:String((s&&s.atalho)||'').trim().toLowerCase(),texto:String((s&&s.texto)||'').trim()};
+  }).filter(function(s){
+    if(!s.atalho||!s.texto||vistos[s.atalho])return false; vistos[s.atalho]=true; return true;
+  });
+}
+
 function snippetCarregar(){ return JSON.parse(_ls.get(CAD_KEY_SNIPPETS)||'[]'); }
 function snippetSalvar(lista){ _ls.set(CAD_KEY_SNIPPETS, JSON.stringify(lista)); }
 function _garantirSnippetSistema(atalho,texto){
@@ -2345,12 +2376,12 @@ function _garantirSnippetSistema(atalho,texto){
     var idx=lista.findIndex(function(s){return (s&&s.atalho)===atalho;});
     if(idx===-1){
       lista.push({atalho:atalho,texto:texto});
-      snippetSalvar(lista);
+      snippetSalvar(_ordenarSnippets(_limparDuplicadosSnippets(lista)));
       return;
     }
     if(!lista[idx] || lista[idx].texto!==texto){
       lista[idx]={atalho:atalho,texto:texto};
-      snippetSalvar(lista);
+      snippetSalvar(_ordenarSnippets(_limparDuplicadosSnippets(lista)));
     }
   }catch(e){}
 }
@@ -2364,7 +2395,7 @@ function snippetAdicionar(){
   var idx=lista.findIndex(function(s){return s.atalho===atalho;});
   if(idx!==-1){if(!confirm('Atalho "'+atalho+'" já existe. Substituir?'))return; lista.splice(idx,1);}
   lista.unshift({atalho:atalho,texto:texto});
-  snippetSalvar(lista);
+  snippetSalvar(_ordenarSnippets(_limparDuplicadosSnippets(lista)));
   document.getElementById('cad-inp-snip-atalho').value='';
   document.getElementById('cad-inp-snip-texto').value='';
   snippetRenderLista();
@@ -2380,6 +2411,7 @@ function snippetRenderLista(){
   if(!lista.length){ul.innerHTML='<li class="cad-vazio">Nenhum snippet encontrado.</li>';return;}
   ul.innerHTML='';
   var listaCompleta=snippetCarregar();
+  lista=_ordenarSnippets(lista);
   lista.forEach(function(s){
     var idxReal=listaCompleta.findIndex(function(x){return x.atalho===s.atalho&&x.texto===s.texto;});
     var li=document.createElement('li');
@@ -2690,10 +2722,11 @@ function cadRenderLista(tipo){
   var ul=document.getElementById('cad-lista-'+tipo);
   ul.innerHTML='';
   if(lista.length===0){ul.innerHTML='<li class="cad-vazio">Nenhum cadastro ainda.</li>';return;}
-  lista.forEach(function(item,idx){
+  _ordenarTextosPtBr(lista).forEach(function(item){
+    var idx=lista.indexOf(item);
     var li=document.createElement('li');
     li.className='cad-item';
-    li.innerHTML='<span>'+item+'</span><button onclick="cadRemover(\''+tipo+'\','+idx+')">✕</button>';
+    li.innerHTML='<span>'+escHtml(item)+'</span><button onclick="cadRemover(\''+tipo+'\','+idx+')">✕</button>';
     ul.appendChild(li);
   });
 }
@@ -2704,7 +2737,10 @@ function cadAdicionar(tipo){
   if(!val)return;
   var chave=tipo==='unidades'?CAD_KEY_UNIDADES:CAD_KEY_MEDICOS;
   var lista=cadCarregar(chave);
-  if(lista.indexOf(val)===-1){lista.push(val);cadSalvar(chave,lista);}
+  if(lista.indexOf(val)===-1){
+    lista.push(val);
+    cadSalvar(chave,_ordenarTextosPtBr(_limparDuplicadosTextos(lista)));
+  }
   inp.value='';
   cadRenderLista(tipo);
 }
@@ -2720,9 +2756,9 @@ function cadRemover(tipo,idx){
 }
 
 function cadExportar(){
-  var unidades=cadCarregar(CAD_KEY_UNIDADES);
-  var medicos=cadCarregar(CAD_KEY_MEDICOS);
-  var snippets=snippetCarregar();
+  var unidades=_ordenarTextosPtBr(_limparDuplicadosTextos(cadCarregar(CAD_KEY_UNIDADES)));
+  var medicos=_ordenarTextosPtBr(_limparDuplicadosTextos(cadCarregar(CAD_KEY_MEDICOS)));
+  var snippets=_ordenarSnippets(_limparDuplicadosSnippets(snippetCarregar()));
   if(unidades.length===0&&medicos.length===0&&snippets.length===0){return;}
   var obj={syscedc_cadastros:true,salvoEm:new Date().toLocaleString('pt-BR'),unidades:unidades,medicos:medicos,snippets:snippets};
   var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
@@ -2740,9 +2776,9 @@ function cadImportar(inp){
     try{
       var obj=JSON.parse(ev.target.result);
       if(!obj||!obj.syscedc_cadastros)throw 0;
-      var unidades=Array.isArray(obj.unidades)?obj.unidades:[];
-      var medicos=Array.isArray(obj.medicos)?obj.medicos:[];
-      var snippets=Array.isArray(obj.snippets)?obj.snippets:[];
+      var unidades=_ordenarTextosPtBr(_limparDuplicadosTextos(Array.isArray(obj.unidades)?obj.unidades:[]));
+      var medicos=_ordenarTextosPtBr(_limparDuplicadosTextos(Array.isArray(obj.medicos)?obj.medicos:[]));
+      var snippets=_ordenarSnippets(_limparDuplicadosSnippets(Array.isArray(obj.snippets)?obj.snippets:[]));
       var totalAtual=(cadCarregar(CAD_KEY_UNIDADES).length)+(cadCarregar(CAD_KEY_MEDICOS).length)+(snippetCarregar().length);
       var msg='Importar '+unidades.length+' unidade(s), '+medicos.length+' médico(s) e '+snippets.length+' snippet(s)?';
       if(totalAtual>0)msg+='\n\nOs cadastros atuais serão SUBSTITUÍDOS.';
@@ -2780,7 +2816,7 @@ function acMostrar(campoId,tipo){
   var inp=document.getElementById(campoId);
   var ac=document.getElementById(campoId+'-ac');
   var q=inp.value.trim().toUpperCase();
-  var lista=cadCarregar(tipo==='unidades'?CAD_KEY_UNIDADES:CAD_KEY_MEDICOS);
+  var lista=_ordenarTextosPtBr(cadCarregar(tipo==='unidades'?CAD_KEY_UNIDADES:CAD_KEY_MEDICOS));
   var filtro=q?lista.filter(function(i){return i.toUpperCase().indexOf(q)!==-1;}):lista;
   if(filtro.length===0){ac.classList.add('oculta');return;}
   ac.innerHTML='';
