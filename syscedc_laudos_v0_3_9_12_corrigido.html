@@ -151,7 +151,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
 /* TIPOGRAFIA DO LAUDO */
 .l-syscedc{font-family:'abadi-mt-condensed-light',sans-serif;font-size:14.5pt;line-height:118%;color:#444;padding-bottom:2mm;margin-bottom:2.5mm;font-weight:bold;}
 .l-titulo{font-family:'abadi-mt-condensed-light',sans-serif;font-size:14pt;line-height:118%;text-align:center;text-transform:uppercase;border-top:2px solid #000;border-bottom:1.5px solid #000;padding:4mm 0;margin-bottom:0;font-weight:bold;}
-.l-ident{padding:2mm 0;border-bottom:1.5px solid #000;}
+.l-ident{padding:2mm 0;border-bottom:1.5px solid #000;position:relative;}
 .ident-r1{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5mm;}
 .i-nome{font-family:'abadi-mt-condensed-light',sans-serif;font-weight:bold;font-size:12.5pt;line-height:118%;text-transform:uppercase;color:#000;}
 .i-num{font-family:'abadi-mt-condensed-light',sans-serif;font-weight:400;font-size:12.5pt;line-height:118%;color:#000;white-space:nowrap;}
@@ -160,6 +160,9 @@ textarea{resize:vertical;min-height:90px;line-height:1.5;}
 .i-val{font-family:'abadi-mt-condensed-light',sans-serif;font-weight:400;color:#000;}
 .i-mono{font-family:'abadi-mt-condensed-light',sans-serif;letter-spacing:0;}
 .ident-r4{display:grid;grid-template-columns:1fr;gap:0.2mm 4mm;margin-top:0.5mm;}
+.ident-docs{position:absolute;top:7.2mm;right:0;text-align:right;font-family:'abadi-mt-condensed-light',sans-serif;font-size:8.5pt;line-height:118%;font-weight:400;color:#000;white-space:nowrap;}
+.ident-docs div{margin:0 0 .3mm 0;}
+.ident-docs .i-lbl,.ident-docs .i-val{font-size:8.5pt;line-height:118%;font-weight:400;}
 .i-blbl{font-family:'abadi-mt-condensed-light',sans-serif;font-size:8pt;font-weight:400;color:#444;text-transform:uppercase;}
 .i-bval{font-family:'abadi-mt-condensed-light',sans-serif;font-weight:400;font-size:8pt;line-height:118%;text-transform:uppercase;color:#000;}
 .l-res-titulo{font-family:'abadi-mt-condensed-light',sans-serif;text-align:center;font-size:13pt;font-weight:bold;text-transform:uppercase;margin:2mm 0 1.5mm 0;}
@@ -679,6 +682,7 @@ if('serviceWorker' in navigator){
             <span id="col-cpf"><span class="i-lbl">CPF: </span><span class="i-val i-mono" id="p-cpf"></span></span>
             <span id="col-pront-mae" style="display:none;white-space:nowrap;text-align:right;"><span class="i-lbl">PRONTUÁRIO: </span><span class="i-val i-mono" id="p-pront-mae"></span></span>
           </div>
+          <div class="ident-docs" id="p-docs-direita"></div>
           <div class="ident-r4">
             <div style="display:flex;align-items:baseline;margin-bottom:0.5mm;">
               <div id="row-unid" style="display:flex;gap:3mm;align-items:baseline;flex:1;">
@@ -856,6 +860,18 @@ function mascararCPFPrint(v){
   if(!d) return '';
   if(d.length===11) return '***.'+d.slice(3,6)+'.'+d.slice(6,9)+'-**';
   return String(v||'');
+}
+
+function montarDocsDireitaPrint(d){
+  var linhas=[];
+  if(d && d.cartaoSus){linhas.push('<div><span class="i-lbl">CARTÃO SUS: </span><span class="i-val i-mono">'+escHtml(d.cartaoSus)+'</span></div>');}
+  if(d && d.cpf){linhas.push('<div><span class="i-lbl">CPF: </span><span class="i-val i-mono">'+escHtml(mascararCPFPrint(d.cpf))+'</span></div>');}
+  if(d && d.prontuario){linhas.push('<div><span class="i-lbl">PRONTUÁRIO: </span><span class="i-val i-mono">'+escHtml(d.prontuario)+'</span></div>');}
+  return linhas.join('');
+}
+function aplicarDocsDireitaPrint(d){
+  var el=document.getElementById('p-docs-direita');
+  if(el) el.innerHTML=montarDocsDireitaPrint(d||{});
 }
 function fmtTel(i){var v=i.value.replace(/\D/g,'').substring(0,11);if(v.length===11)v=v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');else if(v.length===10)v=v.replace(/(\d{2})(\d{4})(\d{4})/,'($1) $2-$3');i.value=v;}
 function fmtDataInput(i){
@@ -1599,6 +1615,7 @@ function gerarPreview(){
   set('p-med',d.medicoReq?'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,''):'');
   set('p-dsolic',fmtData(d.dataSolic)||'');
   set('p-dent',fmtData(d.dataEntrada)||'');
+  aplicarDocsDireitaPrint(d);
 
   var isAnatomo = d.tipoLaudo === 'anatomo';
   var isRevisao = d.tipoLaudo === 'revisao';
@@ -1685,22 +1702,22 @@ function gerarPreview(){
   function showRow(id,val){var el=document.getElementById(id);if(el)el.style.display=val?'':'none';}
   function showCol(id,val){var el=document.getElementById(id);if(el)el.style.display=val?'':'none';}
   showCol('col-nasc', d.dataNasc);
-  showCol('col-sus',  d.cartaoSus);
+  showCol('col-sus',  false);
   showRow('row-nasc-sus', d.dataNasc||d.cartaoSus);
   showCol('col-mae', d.nomeMae);
-  showCol('col-cpf', d.cpf);
+  showCol('col-cpf', false);
   showRow('row-mae-cpf',  d.nomeMae||d.cpf||d.prontuario);
   var elProntMae2=document.getElementById('col-pront-mae');
   var elProntMaeVal2=document.getElementById('p-pront-mae');
   var elPront2=document.getElementById('col-pront');
   if(isGemol){
-    if(elProntMae2){elProntMae2.style.display=d.prontuario?'':'none';}
+    if(elProntMae2){elProntMae2.style.display='none';}
     if(elProntMaeVal2)elProntMaeVal2.textContent=d.prontuario||'';
     if(elPront2)elPront2.style.display='none';
   } else {
     if(elProntMae2)elProntMae2.style.display='none';
     if(elProntMaeVal2)elProntMaeVal2.textContent='';
-    showCol('col-pront', d.prontuario);
+    showCol('col-pront', false);
   }
   showRow('row-unid',     d.unidade);
   showRow('row-med',      d.medicoReq);
@@ -1808,6 +1825,7 @@ function _renderLaudo(d){
   set('p-mae',d.nomeMae||'');set('p-cpf',mascararCPFPrint(d.cpf||''));set('p-pront',d.prontuario||'');set('p-unid',d.unidade||'');
   set('p-med',d.medicoReq?'DR(A) '+d.medicoReq.replace(/^DR\(A\)\s*/i,''):'');
   set('p-dsolic',fmtData(d.dataSolic)||'');set('p-dent',fmtData(d.dataEntrada)||'');
+  aplicarDocsDireitaPrint(d);
   var isAnatomo=d.tipoLaudo==='anatomo',isRevisao=d.tipoLaudo==='revisao',isGemol=d.tipoLaudo==='gemol',isPaaf=d.tipoLaudo==='paaf',isAnatomoOuRevisao=(isAnatomo||isRevisao||isGemol),isCito=!isAnatomoOuRevisao;
   var titulos={'anatomo':'Laudo do Exame Anatomo Patológico','paaf':_isCitologiaLiquidos(d)?'Citologia Oncótica de Líquidos':'Punção Aspirativa por Agulha Fina (PAAF)','citogeral':'Citologia Geral','revisao':'Laudo de Revisão de Lâmina','gemol':'Laudo do Exame Anatomo Patológico – IML/PB'};
   set('p-titulo',titulos[d.tipoLaudo]||titulos['anatomo']);
@@ -1850,20 +1868,20 @@ function _renderLaudo(d){
   if(assinSrc){imgAssin.src=assinSrc;imgAssin.classList.remove('assin-oculta');}else{imgAssin.src='';imgAssin.classList.add('assin-oculta');}
   function showRow(id,val){var el=document.getElementById(id);if(el)el.style.display=val?'':'none';}
   function showCol(id,val){var el=document.getElementById(id);if(el)el.style.display=val?'':'none';}
-  showCol('col-nasc',d.dataNasc);showCol('col-sus',d.cartaoSus);showRow('row-nasc-sus',d.dataNasc||d.cartaoSus);
-  showCol('col-mae',d.nomeMae);showCol('col-cpf',d.cpf);showRow('row-mae-cpf',d.nomeMae||d.cpf||d.prontuario);
+  showCol('col-nasc',d.dataNasc);showCol('col-sus',false);showRow('row-nasc-sus',d.dataNasc||d.cartaoSus);
+  showCol('col-mae',d.nomeMae);showCol('col-cpf',false);showRow('row-mae-cpf',d.nomeMae||d.cpf||d.prontuario);
   // GEMOL: prontuário vai para a linha da mãe; nos demais, fica na linha da unidade
   var elProntMae=document.getElementById('col-pront-mae');
   var elProntMaeVal=document.getElementById('p-pront-mae');
   var elPront=document.getElementById('col-pront');
   if(isGemol){
-    if(elProntMae){elProntMae.style.display=d.prontuario?'':'none';}
+    if(elProntMae){elProntMae.style.display='none';}
     if(elProntMaeVal)elProntMaeVal.textContent=d.prontuario||'';
     if(elPront)elPront.style.display='none';
   } else {
     if(elProntMae)elProntMae.style.display='none';
     if(elProntMaeVal)elProntMaeVal.textContent='';
-    showCol('col-pront',d.prontuario);
+    showCol('col-pront',false);
   }
   showRow('row-unid',d.unidade);showRow('row-med',d.medicoReq);showRow('row-dsolic',d.dataSolic);showRow('row-dent',d.dataEntrada);
 }
