@@ -297,17 +297,20 @@ padding:4mm 0;
 @media(max-width:700px){.snip-panel{padding:12px;}.snip-panel-box{width:100%;max-height:92vh;border-radius:14px;}.snip-panel-body{padding:14px;}.snip-panel-grid{grid-template-columns:1fr;}}
 
 
-/* Conclusão com hífen: recuo só nas quebras do mesmo item no preview/impressão */
-.l-sec-txt.concl .bullet-line{
+/* Hífen no corpo do laudo: recuo suspenso em todos os módulos/segções do preview/impressão
+   Quando uma linha iniciada por "-" quebra, a continuação alinha na primeira letra do texto. */
+.l-sec-txt{white-space:normal;}
+.l-sec-txt .bullet-line{
   display:grid;
   grid-template-columns:auto 1fr;
   column-gap:.35em;
   align-items:start;
+  text-align:left;
 }
-.l-sec-txt.concl .bullet-mark{white-space:pre;}
-.l-sec-txt.concl .bullet-text{min-width:0;}
-.l-sec-txt.concl .bullet-plain{display:block;}
-.l-sec-txt.concl .bullet-empty{display:block;min-height:1em;}
+.l-sec-txt .bullet-mark{white-space:pre;}
+.l-sec-txt .bullet-text{min-width:0;white-space:pre-wrap;word-break:normal;overflow-wrap:break-word;text-align:left;}
+.l-sec-txt .bullet-plain{display:block;white-space:pre-wrap;word-break:normal;overflow-wrap:break-word;text-align:justify;}
+.l-sec-txt .bullet-empty{display:block;min-height:1em;}
 
 
 /* =========================================================
@@ -1189,7 +1192,7 @@ function _fmtConclusaoInlineHtml(txt){
     .replace(/\*([^*]+)\*/g,'<i>$1</i>');
   return txt;
 }
-function _fmtLinhaConclusaoHtml(linha){
+function _fmtLinhaLaudoHtml(linha){
   if(linha==null) linha='';
   if(linha==='') return '<div class="bullet-empty">&nbsp;</div>';
   var m=linha.match(/^(\s*)-\s+(.*)$/);
@@ -1198,12 +1201,15 @@ function _fmtLinhaConclusaoHtml(linha){
   }
   return '<div class="bullet-plain">'+_fmtConclusaoInlineHtml(linha)+'</div>';
 }
-function _renderConclusaoFormatada(texto){
-  var el=document.getElementById('p-concl');
+function _renderTextoLaudoFormatado(id,texto){
+  var el=document.getElementById(id);
   if(!el) return;
   var txt=(texto||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   if(!txt){el.textContent='';return;}
-  el.innerHTML=txt.split('\n').map(_fmtLinhaConclusaoHtml).join('');
+  el.innerHTML=txt.split('\n').map(_fmtLinhaLaudoHtml).join('');
+}
+function _renderConclusaoFormatada(texto){
+  _renderTextoLaudoFormatado('p-concl',texto);
 }
 
 function set(id,val){var e=document.getElementById(id);if(e)e.textContent=val||'';}
@@ -1644,7 +1650,7 @@ function gerarPreview(){
   var elMacTit=document.getElementById('p-macro-tit');
   if(elMacTit) elMacTit.textContent=isRevisao?'Descrição:':'Macroscopia:';
   var bm=document.getElementById('bloco-micro');
-  if((isAnatomo||isGemol) && d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}
+  if((isAnatomo||isGemol) && d.micro&&d.micro.trim()){_renderTextoLaudoFormatado('p-micro',d.micro);bm.style.display='';}
   else{bm.style.display='none';}
 
   // Conclusão / Resultado
@@ -1652,7 +1658,7 @@ function gerarPreview(){
   set('p-concl-tit', titConcl);
   var elCT=document.getElementById('p-concl-tit');
   if(elCT) elCT.style.display=titConcl?'':'none';
-  set('p-macro',d.macro||'');
+  _renderTextoLaudoFormatado('p-macro',d.macro||'');
   _renderConclusaoFormatada(d.conclusao||'');
 
   // Distribuição vertical para citologia: espaçamentos fixos, sem empurrar para o fundo
@@ -1821,7 +1827,7 @@ function _renderLaudo(d){
   var temMacro=isAnatomoOuRevisao&&!!(d.macro||'').trim();
   document.getElementById('bloco-macro').style.display=temMacro?'':'none';
   var bm=document.getElementById('bloco-micro');
-  if((isAnatomo||isGemol)&&d.micro&&d.micro.trim()){set('p-micro',d.micro);bm.style.display='';}else{bm.style.display='none';}
+  if((isAnatomo||isGemol)&&d.micro&&d.micro.trim()){_renderTextoLaudoFormatado('p-micro',d.micro);bm.style.display='';}else{bm.style.display='none';}
   // Revisao: sem conclusão no preview
   var bConcl=document.getElementById('bloco-concl');
   if(bConcl) bConcl.style.display=isRevisao?'none':'';
@@ -1832,7 +1838,7 @@ function _renderLaudo(d){
   var titConcl=(isAnatomo||isGemol)?(temMacro?'Conclusão:':'Microscopia e Conclusão:'):(isPaaf?(_isCitologiaLiquidos(d)?'Resultado da Citologia Oncótica:':'Resultado da Punção Aspirativa:'):'Resultado:');
   set('p-concl-tit',titConcl);
   var elCT=document.getElementById('p-concl-tit');if(elCT)elCT.style.display=titConcl?'':'none';
-  set('p-macro',d.macro||'');_renderConclusaoFormatada(d.conclusao||'');
+  _renderTextoLaudoFormatado('p-macro',d.macro||'');_renderConclusaoFormatada(d.conclusao||'');
   var conteudo=document.querySelector('#laudo-print .conteudo');if(conteudo)conteudo.style.justifyContent='';
   var bpa2=document.getElementById('bloco-pre-analitico');if(bpa2)bpa2.style.marginTop=isCito?'6mm':'';
   var blConcl=document.getElementById('bloco-concl');
